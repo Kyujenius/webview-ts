@@ -14,6 +14,8 @@ import type {
   BridgeMessage,
   BridgeResponse,
   BridgeEvent,
+  BridgeError,
+  ErrorContext,
   MiddlewareContext,
   WebPlugin,
   ActionDefinitionShape,
@@ -71,9 +73,49 @@ export class BridgeManager<
   }
 
   /**
-   * Call native action
+   * Call native action with retry support
    */
   async call<TAction extends ActionNames<TActions>>(
+    action: TAction,
+    payload?: InferPayload<TActions, TAction>,
+    options?: BridgeCallOptions
+  ): Promise<InferResponse<TActions, TAction>> {
+    const retryConfig = options?.retry ?? this.config.retry;
+    const maxAttempts = (retryConfig?.maxAttempts ?? 0) + 1;
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await this.executeCall(action, payload, options);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        const bridgeError: BridgeError = {
+          code: (error as any)?.code ?? 'BRIDGE_ERROR',
+          message: lastError.message,
+          details: (error as any)?.details,
+        };
+        this.config.onError?.(bridgeError, {
+          action: action as string,
+          payload,
+          attempt,
+          timestamp: Date.now(),
+        });
+        if (attempt < maxAttempts && retryConfig) {
+          const delay = retryConfig.exponentialBackoff
+            ? retryConfig.delay * Math.pow(2, attempt - 1)
+            : retryConfig.delay;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  /**
+   * Execute a single call attempt
+   */
+  private async executeCall<TAction extends ActionNames<TActions>>(
     action: TAction,
     payload?: InferPayload<TActions, TAction>,
     options?: BridgeCallOptions
