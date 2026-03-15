@@ -108,11 +108,6 @@ export interface LoggerMiddlewareOptions {
  */
 export interface ValidatorMiddlewareOptions {
   /**
-   * Validation schema (Zod, Yup, etc.)
-   */
-  schema?: unknown;
-
-  /**
    * Whether to validate requests
    */
   validateRequests?: boolean;

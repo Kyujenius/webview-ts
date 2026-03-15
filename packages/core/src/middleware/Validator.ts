@@ -15,7 +15,6 @@ export class ValidatorMiddleware implements Middleware {
 
   constructor(options: ValidatorMiddlewareOptions = {}) {
     this.options = {
-      schema: options.schema,
       validateRequests: options.validateRequests ?? true,
       validateResponses: options.validateResponses ?? true,
       onValidationError: options.onValidationError ?? 'throw',
