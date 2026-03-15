@@ -3,6 +3,4 @@
  */
 
 export * from './NativeAdapter';
-export * from './IOSAdapter';
-export * from './AndroidAdapter';
 export { FallbackAdapter } from './FallbackAdapter';

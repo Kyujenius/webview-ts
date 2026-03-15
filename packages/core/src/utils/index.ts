@@ -3,4 +3,4 @@
  */
 
 export * from './id-generator';
-export * from './platform-detector';
+export { platformDetector } from './platform-detector';

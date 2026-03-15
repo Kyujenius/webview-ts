@@ -3,5 +3,5 @@
  */
 
 export * from './MiddlewarePipeline';
-export * from './Logger';
-export * from './Validator';
+export { createLogger } from './Logger';
+export { createValidator } from './Validator';

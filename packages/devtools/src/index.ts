@@ -38,7 +38,3 @@ export type { RequestInspectorProps } from './visualizer/RequestInspector';
 // Floating panel (TanStack Query DevTools-style)
 export { TsBridgeDevtools } from './panel/TsBridgeDevtools';
 export type { TsBridgeDevtoolsProps } from './panel/TsBridgeDevtools';
-
-// Convenience function
-export { createDevTools } from './createDevTools';
-export type { DevToolsBundle, CreateDevToolsOptions } from './createDevTools';
