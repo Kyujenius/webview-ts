@@ -3,7 +3,13 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [
-    ["@ts-bridge/shared", "@ts-bridge/core", "@ts-bridge/plugins", "@ts-bridge/devtools", "@ts-bridge/react", "@ts-bridge/native"]
+    [
+      "@ts-bridge/shared",
+      "@ts-bridge/core",
+      "@ts-bridge/devtools",
+      "@ts-bridge/react",
+      "@ts-bridge/native"
+    ]
   ],
   "linked": [],
   "access": "public",
