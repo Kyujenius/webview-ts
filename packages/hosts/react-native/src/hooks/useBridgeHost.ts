@@ -1,12 +1,25 @@
+import type { ActionDefinitionShape } from '@ts-bridge/shared';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
 import { MessageHandler } from '../bridge/MessageHandler';
 
+// ---- Typed handler map ----
+
+/**
+ * Maps each action in the ActionMap to a handler with the correct payload/response types.
+ * Ensures all actions are implemented with the right signatures.
+ */
+export type TypedHandlers<TActions extends Record<string, ActionDefinitionShape>> = {
+  [K in keyof TActions & string]: ActionHandler<TActions[K]['payload'], TActions[K]['response']>;
+};
+
 // ---- Pure function (non-React) ----
 
-export interface SimpleBridgeHostOptions {
-  /** Action handlers — key is action name, value is the handler function */
-  handlers: Record<string, ActionHandler<any, any>>;
+export interface SimpleBridgeHostOptions<
+  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+> {
+  /** Action handlers — fully typed when TActions is provided */
+  handlers: TypedHandlers<TActions>;
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
   /** Optional debug mode */
@@ -27,10 +40,26 @@ export interface SimpleBridgeHostResult {
 
 /**
  * Creates a simplified bridge host setup. Pure function — usable outside React.
+ *
+ * @example
+ * ```typescript
+ * type MyActions = {
+ *   'camera.take': { payload: { quality: number }; response: { uri: string } };
+ * };
+ *
+ * const { webViewProps } = createSimpleBridgeHost<MyActions>({
+ *   handlers: {
+ *     'camera.take': async (payload) => {
+ *       //            ^? { quality: number }
+ *       return { uri: '/photo.jpg' }; // ✅ typed return
+ *     },
+ *   },
+ * });
+ * ```
  */
-export function createSimpleBridgeHost(
-  options: SimpleBridgeHostOptions,
-): SimpleBridgeHostResult {
+export function createSimpleBridgeHost<
+  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+>(options: SimpleBridgeHostOptions<TActions>): SimpleBridgeHostResult {
   const { handlers, config, debug } = options;
 
   const bridgeHost = new BridgeHost({ ...config, debug });
@@ -74,17 +103,26 @@ export interface UseBridgeHostReturn {
  *
  * @example
  * ```tsx
- * const { webViewProps, sendEvent } = useBridgeHost({
+ * type MyActions = {
+ *   'camera.take': { payload: { quality: number }; response: { uri: string } };
+ *   'storage.get': { payload: { key: string }; response: { value: string | null } };
+ * };
+ *
+ * const { webViewProps, sendEvent } = useBridgeHost<MyActions>({
  *   handlers: {
  *     'camera.take': async (payload) => takePhoto(payload),
- *     'storage.get': async (payload) => AsyncStorage.getItem(payload.key),
+ *     //                    ^? { quality: number }
+ *     'storage.get': async (payload) => ({ value: await AsyncStorage.getItem(payload.key) }),
+ *     //                    ^? { key: string }
  *   },
  * });
  *
  * return <WebView {...webViewProps} source={{ uri: webUrl }} />;
  * ```
  */
-export function useBridgeHost(options: SimpleBridgeHostOptions): UseBridgeHostReturn {
+export function useBridgeHost<
+  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+>(options: SimpleBridgeHostOptions<TActions>): UseBridgeHostReturn {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers are captured once on mount
   const result = useMemo(() => createSimpleBridgeHost(options), []);
 
@@ -96,7 +134,7 @@ export function useBridgeHost(options: SimpleBridgeHostOptions): UseBridgeHostRe
 
   const sendEvent = useCallback(
     <T>(event: string, payload: T) => result.sendEvent(event, payload),
-    [result],
+    [result]
   );
 
   return {

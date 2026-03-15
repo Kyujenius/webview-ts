@@ -24,7 +24,12 @@ export type {
 
 // Hooks
 export { createSimpleBridgeHost, useBridgeHost } from './hooks/useBridgeHost';
-export type { SimpleBridgeHostOptions, SimpleBridgeHostResult, UseBridgeHostReturn } from './hooks/useBridgeHost';
+export type {
+  SimpleBridgeHostOptions,
+  SimpleBridgeHostResult,
+  UseBridgeHostReturn,
+  TypedHandlers,
+} from './hooks/useBridgeHost';
 
 // Convenience factory
 import { BridgeHost, type BridgeHostConfig } from './bridge/BridgeHost';
