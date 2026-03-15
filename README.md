@@ -1,46 +1,123 @@
 # ts-bridge
 
-Type-safe WebView-Native bridge library for TypeScript
+Type-safe WebView <-> Native bridge for TypeScript
 
-## Overview
+---
 
-ts-bridge is a comprehensive library for building type-safe communication between web applications and native platforms (iOS, Android, React Native) in WebView environments. It provides compile-time type safety, visual debugging tools, and a plugin-based architecture for extensibility.
+## Features
 
-## Key Features
+- **Type Safety** -- End-to-end type inference from action definition to UI. Payloads, responses, and plugin methods are all checked at compile time.
+- **DevTools** -- Real-time message inspector for bridge traffic, inspired by TanStack Query DevTools.
+- **Zero Dependencies** -- Pure TypeScript core with no runtime dependencies.
 
-- **Type Safety**: Compile-time verification of all WebView-Native communication
-- **Visual Debugging**: Real-time visualization of message flow and performance metrics
-- **Platform Abstraction**: Unified API across iOS, Android, and React Native
-- **Plugin System**: Standard plugins for common features (camera, location, storage, biometric)
-- **Mock Providers**: Develop web apps independently without native environment
-- **Middleware Architecture**: Extensible logging, validation, and monitoring
+## Quick Start
+
+### 1. Install
+
+```bash
+pnpm add @ts-bridge/core @ts-bridge/react @ts-bridge/plugins @ts-bridge/native
+```
+
+### 2. Define Actions
+
+```typescript
+// shared/camera-plugin.ts
+import { definePlugin } from '@ts-bridge/plugins';
+
+export type CameraActions = {
+  'camera.takePhoto': {
+    payload: { quality?: number };
+    response: { uri: string; width: number; height: number };
+  };
+};
+
+export const camera = definePlugin<CameraActions>()({
+  name: 'camera',
+  methods: (call) => ({
+    takePhoto: (opts?: { quality?: number }) =>
+      call('camera.takePhoto', opts ?? {}),
+  }),
+});
+```
+
+### 3. Create the Bridge (Web)
+
+```typescript
+// web/bridge.ts
+import { createBridgeReact } from '@ts-bridge/react';
+import { camera } from '../shared/camera-plugin';
+
+export const { BridgeProvider, useBridge, usePlugin } = createBridgeReact({
+  plugins: [camera],
+});
+```
+
+### 4. Use in React Components
+
+```tsx
+// web/PhotoButton.tsx
+import { usePlugin } from './bridge';
+import { camera } from '../shared/camera-plugin';
+
+function PhotoButton() {
+  const { takePhoto } = usePlugin(camera);
+
+  const handlePress = async () => {
+    const { uri, width, height } = await takePhoto({ quality: 0.9 });
+    //      ^? string  ^? number  ^? number
+    console.log('Photo taken:', uri);
+  };
+
+  return <button onClick={handlePress}>Take Photo</button>;
+}
+```
+
+### 5. Set Up Host (React Native)
+
+```tsx
+// native/WebViewScreen.tsx
+import { WebView } from 'react-native-webview';
+import { useBridgeHost } from '@ts-bridge/native';
+import { camera } from '../shared/camera-plugin';
+
+function WebViewScreen() {
+  const { webViewProps } = useBridgeHost({
+    plugins: [
+      camera.host({
+        'camera.takePhoto': async ({ quality }) => {
+          const photo = await NativeCamera.take({ quality });
+          return { uri: photo.uri, width: photo.width, height: photo.height };
+        },
+      }),
+    ],
+  });
+
+  return <WebView {...webViewProps} source={{ uri: 'https://your-app.com' }} />;
+}
+```
+
+## Architecture
+
+```mermaid
+graph LR
+    Web["Web (React)"] -->|"bridge.call()"| Bridge["@ts-bridge/core"]
+    Bridge -->|"postMessage"| Native["React Native Host"]
+    Native -->|"response"| Bridge
+    Bridge -->|"typed data"| Web
+```
 
 ## Packages
 
-This monorepo contains the following packages:
+| Package | Description |
+|---------|-------------|
+| `@ts-bridge/core` | Web-side bridge engine |
+| `@ts-bridge/shared` | Shared types and contracts (zero deps) |
+| `@ts-bridge/react` | React hooks and provider |
+| `@ts-bridge/native` | React Native host |
+| `@ts-bridge/plugins` | Plugin presets (camera, location, etc.) |
+| `@ts-bridge/devtools` | Visual debugging panel |
 
-### Core Packages
-
-- `@ts-bridge/shared` - Shared types and schemas (Single Source of Truth)
-- `@ts-bridge/core` - Web-side bridge engine with middleware pipeline
-- `@ts-bridge/native` - React Native host implementation
-- `@ts-bridge/devtools` - Communication visualization and debugging tools
-- `@ts-bridge/plugins` - Standard plugins (camera, location, storage, biometric)
-
-### Applications
-
-- `apps/example-app` - Demo application showcasing all features
-- `apps/docs` - Documentation site (VitePress)
-- `apps/storybook` - Interactive component playground
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
-
-### Installation
+## Development
 
 ```bash
 # Install dependencies
@@ -52,57 +129,14 @@ pnpm build
 # Run tests
 pnpm test
 
-# Run example app
-pnpm --filter example-app dev
-```
-
-## Development
-
-```bash
-# Start development mode (watch all packages)
+# Start dev mode (watch)
 pnpm dev
-
-# Run tests in watch mode
-pnpm test:watch
-
-# Lint all packages
-pnpm lint
-
-# Format code
-pnpm format
-
-# Type check
-pnpm type-check
 ```
 
-## Project Structure
+## Links
 
-```
-ts-bridge/
-├── apps/
-│   ├── docs/              # Documentation site
-│   ├── storybook/         # Component playground
-│   └── example-app/       # Demo application
-├── packages/
-│   ├── core/              # Core bridge engine
-│   ├── native/            # React Native host
-│   ├── shared/            # Shared types & schemas
-│   ├── devtools/          # Debugging tools
-│   └── plugins/           # Plugin system
-└── ...configuration files
-```
-
-## Architecture
-
-ts-bridge follows three core design principles:
-
-1. **Strict Request-Response Mapping** - Every action has strongly-typed payload and response
-2. **Opaque Internal Logic** - Implementation details (callback IDs, postMessage) are hidden
-3. **Single Source of Truth** - Web and native share identical type definitions
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines and code of conduct.
+- [Custom Plugin Guide](./docs/guides/custom-plugin.md)
+- [Contributing](./CONTRIBUTING.md)
 
 ## License
 
