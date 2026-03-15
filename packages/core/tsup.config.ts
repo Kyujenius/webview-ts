@@ -8,5 +8,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ['@ts-bridge/shared'],
+  external: ['@webview-ts/shared'],
 });

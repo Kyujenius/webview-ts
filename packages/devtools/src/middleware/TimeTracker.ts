@@ -3,7 +3,7 @@
  * Timing is natural: start before next(), end after next().
  */
 
-import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
 
 export interface PerformanceEntry {
   messageId: string;

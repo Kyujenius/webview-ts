@@ -1,4 +1,4 @@
-import { definePlugin } from '@ts-bridge/shared';
+import { definePlugin } from '@webview-ts/shared';
 
 export type BiometricActions = {
   'biometric.checkAvailability': {

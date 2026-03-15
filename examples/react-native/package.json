@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@example/plugins": "workspace:*",
-    "@ts-bridge/native": "workspace:*",
-    "@ts-bridge/shared": "workspace:*",
+    "@webview-ts/native": "workspace:*",
+    "@webview-ts/shared": "workspace:*",
     "expo": "~55.0.6",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",

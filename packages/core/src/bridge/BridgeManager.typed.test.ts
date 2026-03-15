@@ -1,6 +1,6 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { createBridge } from '../index';
-import type { TypedBridge } from '@ts-bridge/shared';
+import type { TypedBridge } from '@webview-ts/shared';
 
 type TestActions = {
   'camera.take': { payload: { quality: number }; response: { uri: string } };

@@ -2,7 +2,7 @@
  * Platform detection utilities
  */
 
-import { Platform, type PlatformDetector } from '@ts-bridge/shared';
+import { Platform, type PlatformDetector } from '@webview-ts/shared';
 
 /**
  * Default platform detector implementation

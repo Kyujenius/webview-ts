@@ -63,14 +63,14 @@ To use this app inside a React Native WebView:
 
 1. Build the app: `pnpm build`
 2. Host the `dist` folder
-3. Configure your React Native app with `@ts-bridge/native`
+3. Configure your React Native app with `@webview-ts/native`
 4. Load the app URL in a WebView component
 
 Example React Native setup:
 
 ```tsx
 import { WebView } from 'react-native-webview';
-import { useBridgeHost } from '@ts-bridge/native';
+import { useBridgeHost } from '@webview-ts/native';
 import { camera } from '../shared/camera-plugin';
 
 function WebViewScreen() {

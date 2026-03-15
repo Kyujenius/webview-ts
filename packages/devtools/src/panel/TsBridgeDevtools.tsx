@@ -3,7 +3,7 @@
  * for inspecting bridge communication in real-time.
  *
  * Usage:
- *   import { TsBridgeDevtools } from '@ts-bridge/devtools';
+ *   import { TsBridgeDevtools } from '@webview-ts/devtools';
  *   const { bridge } = useBridge();
  *   <TsBridgeDevtools bridge={bridge} />
  */

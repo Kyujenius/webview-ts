@@ -7,8 +7,8 @@ import type {
   MiddlewareFn,
   MiddlewareContext,
   ValidatorMiddlewareOptions,
-} from '@ts-bridge/shared';
-import { isBridgeMessage, isBridgeResponse } from '@ts-bridge/shared';
+} from '@webview-ts/shared';
+import { isBridgeMessage, isBridgeResponse } from '@webview-ts/shared';
 
 function handleValidationError(
   message: string,

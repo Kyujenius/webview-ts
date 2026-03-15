@@ -20,13 +20,13 @@ function HomePage() {
         </p>
         <ul style={{ marginLeft: '2rem', marginTop: '0.5rem' }}>
           <li>
-            <strong>@ts-bridge/core</strong> - Bridge manager and communication
+            <strong>@webview-ts/core</strong> - Bridge manager and communication
           </li>
           <li>
-            <strong>@ts-bridge/shared</strong> - Types, contracts, and plugin definitions
+            <strong>@webview-ts/shared</strong> - Types, contracts, and plugin definitions
           </li>
           <li>
-            <strong>@ts-bridge/devtools</strong> - Communication visualization
+            <strong>@webview-ts/devtools</strong> - Communication visualization
           </li>
         </ul>
       </div>
@@ -62,7 +62,7 @@ function HomePage() {
         {!isAvailable && (
           <div className="result error" style={{ marginTop: '1rem' }}>
             <strong>Note:</strong> You are currently in web-only mode. To test native features, run
-            this app inside a React Native WebView with the <code>@ts-bridge/native</code> package
+            this app inside a React Native WebView with the <code>@webview-ts/native</code> package
             configured.
           </div>
         )}

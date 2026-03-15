@@ -1,4 +1,4 @@
-# @ts-bridge/shared
+# @webview-ts/shared
 
 Shared types and schemas for ts-bridge library.
 
@@ -16,11 +16,11 @@ This package provides the single source of truth for all type definitions used a
 ## Installation
 
 ```bash
-npm install @ts-bridge/shared
+npm install @webview-ts/shared
 # or
-pnpm add @ts-bridge/shared
+pnpm add @webview-ts/shared
 # or
-yarn add @ts-bridge/shared
+yarn add @webview-ts/shared
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ yarn add @ts-bridge/shared
 ### Message Types
 
 ```typescript
-import type { BridgeMessage, BridgeResponse, BridgeEvent } from '@ts-bridge/shared';
+import type { BridgeMessage, BridgeResponse, BridgeEvent } from '@webview-ts/shared';
 
 // Define a typed message
 const message: BridgeMessage<{ userId: string }> = {
@@ -50,7 +50,7 @@ const response: BridgeResponse<{ name: string; email: string }> = {
 ### Runtime Validation
 
 ```typescript
-import { bridgeMessageSchema, isBridgeMessage } from '@ts-bridge/shared';
+import { bridgeMessageSchema, isBridgeMessage } from '@webview-ts/shared';
 
 // Validate with Zod schema
 const result = bridgeMessageSchema.safeParse(unknownData);
@@ -69,7 +69,7 @@ if (isBridgeMessage(unknownData)) {
 ### Plugin Definition
 
 ```typescript
-import { definePlugin } from '@ts-bridge/shared';
+import { definePlugin } from '@webview-ts/shared';
 
 type MyActions = {
   'myPlugin.doSomething': {

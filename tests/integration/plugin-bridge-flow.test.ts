@@ -13,10 +13,10 @@
  * a real BridgeHost instance, testing actual handler dispatch.
  */
 import { describe, it, expect } from 'vitest';
-import { BridgeHost } from '@ts-bridge/native';
-import { createBridge } from '@ts-bridge/core';
-import { definePlugin } from '@ts-bridge/shared';
-import type { BridgeMessage } from '@ts-bridge/shared';
+import { BridgeHost } from '@webview-ts/native';
+import { createBridge } from '@webview-ts/core';
+import { definePlugin } from '@webview-ts/shared';
+import type { BridgeMessage } from '@webview-ts/shared';
 
 // ─── Define plugins inline ───
 

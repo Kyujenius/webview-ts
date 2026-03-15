@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/native",
+  "name": "@webview-ts/native",
   "version": "0.0.0",
   "description": "React Native host implementation for ts-bridge",
   "license": "MIT",
@@ -40,7 +40,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=17.0.0",

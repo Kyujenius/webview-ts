@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/devtools",
+  "name": "@webview-ts/devtools",
   "version": "0.0.0",
   "description": "Visual debugging tools for ts-bridge communication",
   "repository": {
@@ -32,7 +32,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=17.0.0"

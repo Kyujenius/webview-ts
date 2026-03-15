@@ -6,8 +6,8 @@
  * This adapter uses that channel to send messages to the host.
  */
 
-import type { BridgeMessage } from '@ts-bridge/shared';
-import { Platform } from '@ts-bridge/shared';
+import type { BridgeMessage } from '@webview-ts/shared';
+import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
 interface ReactNativeWebViewInterface {

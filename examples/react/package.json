@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@example/plugins": "workspace:*",
-    "@ts-bridge/core": "workspace:*",
-    "@ts-bridge/devtools": "workspace:*",
-    "@ts-bridge/react": "workspace:*",
-    "@ts-bridge/shared": "workspace:*",
+    "@webview-ts/core": "workspace:*",
+    "@webview-ts/devtools": "workspace:*",
+    "@webview-ts/react": "workspace:*",
+    "@webview-ts/shared": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0"

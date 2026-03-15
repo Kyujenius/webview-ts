@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BridgeHost } from './BridgeHost';
-import type { BridgeMessage } from '@ts-bridge/shared';
+import type { BridgeMessage } from '@webview-ts/shared';
 
 describe('BridgeHost', () => {
   let bridgeHost: BridgeHost;

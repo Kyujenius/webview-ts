@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/root",
+  "name": "@webview-ts/root",
   "private": true,
   "version": "0.0.0",
   "description": "Type-safe WebView-Native bridge library for TypeScript",

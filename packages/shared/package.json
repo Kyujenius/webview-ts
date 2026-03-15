@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/shared",
+  "name": "@webview-ts/shared",
   "version": "0.0.0",
   "description": "Shared types for ts-bridge — zero runtime dependencies",
   "license": "MIT",

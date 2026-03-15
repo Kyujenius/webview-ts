@@ -1,9 +1,9 @@
 ---
-'@ts-bridge/shared': patch
-'@ts-bridge/core': patch
-'@ts-bridge/devtools': patch
-'@ts-bridge/react': patch
-'@ts-bridge/native': patch
+'@webview-ts/shared': patch
+'@webview-ts/core': patch
+'@webview-ts/devtools': patch
+'@webview-ts/react': patch
+'@webview-ts/native': patch
 ---
 
 Initial release (0.0.1)

@@ -1,5 +1,5 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { TsBridgeDevtools } from '@ts-bridge/devtools';
+import { TsBridgeDevtools } from '@webview-ts/devtools';
 import { useBridge } from './bridge';
 import HomePage from './pages/HomePage';
 import CameraPage from './pages/CameraPage';

@@ -4,11 +4,11 @@
   "commit": false,
   "fixed": [
     [
-      "@ts-bridge/shared",
-      "@ts-bridge/core",
-      "@ts-bridge/devtools",
-      "@ts-bridge/react",
-      "@ts-bridge/native"
+      "@webview-ts/shared",
+      "@webview-ts/core",
+      "@webview-ts/devtools",
+      "@webview-ts/react",
+      "@webview-ts/native"
     ]
   ],
   "linked": [],

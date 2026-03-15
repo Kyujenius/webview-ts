@@ -1,4 +1,4 @@
-import { PermissionStatus } from '@ts-bridge/shared';
+import { PermissionStatus } from '@webview-ts/shared';
 import { Platform } from 'react-native';
 
 /**

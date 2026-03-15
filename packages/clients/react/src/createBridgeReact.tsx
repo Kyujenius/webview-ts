@@ -7,8 +7,8 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { createBridge } from '@ts-bridge/core';
-import type { BridgeManager } from '@ts-bridge/core';
+import { createBridge } from '@webview-ts/core';
+import type { BridgeManager } from '@webview-ts/core';
 import type {
   BridgeConfig,
   BridgeCallOptions,
@@ -16,8 +16,8 @@ import type {
   ActionNames,
   InferPayload,
   InferResponse,
-} from '@ts-bridge/shared';
-import type { PluginInstance, PluginCall, MergePluginActions } from '@ts-bridge/shared';
+} from '@webview-ts/shared';
+import type { PluginInstance, PluginCall, MergePluginActions } from '@webview-ts/shared';
 
 interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
   bridge: BridgeManager<TActions>;

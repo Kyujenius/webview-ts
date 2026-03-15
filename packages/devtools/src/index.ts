@@ -1,5 +1,5 @@
 /**
- * @ts-bridge/devtools
+ * @webview-ts/devtools
  * Communication visualization and debugging tools
  */
 

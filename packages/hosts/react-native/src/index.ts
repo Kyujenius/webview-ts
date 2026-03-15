@@ -1,5 +1,5 @@
 /**
- * @ts-bridge/native
+ * @webview-ts/native
  * React Native host implementation for ts-bridge
  */
 

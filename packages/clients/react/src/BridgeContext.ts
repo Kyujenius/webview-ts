@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
-import type { BridgeManager } from '@ts-bridge/core';
-import type { ActionDefinitionShape } from '@ts-bridge/shared';
+import type { BridgeManager } from '@webview-ts/core';
+import type { ActionDefinitionShape } from '@webview-ts/shared';
 
 export interface BridgeContextValue<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,

@@ -15,14 +15,14 @@ Type-safe WebView <-> Native bridge for TypeScript
 ### 1. Install
 
 ```bash
-pnpm add @ts-bridge/core @ts-bridge/react @ts-bridge/shared @ts-bridge/native
+pnpm add @webview-ts/core @webview-ts/react @webview-ts/shared @webview-ts/native
 ```
 
 ### 2. Define Actions
 
 ```typescript
 // shared/camera-plugin.ts
-import { definePlugin } from '@ts-bridge/shared';
+import { definePlugin } from '@webview-ts/shared';
 
 export type CameraActions = {
   'camera.takePhoto': {
@@ -43,7 +43,7 @@ export const camera = definePlugin<CameraActions>()({
 
 ```typescript
 // web/bridge.ts
-import { createBridgeReact } from '@ts-bridge/react';
+import { createBridgeReact } from '@webview-ts/react';
 import { camera } from '../shared/camera-plugin';
 
 export const { BridgeProvider, useBridge, usePlugin } = createBridgeReact({
@@ -76,7 +76,7 @@ function PhotoButton() {
 ```tsx
 // native/WebViewScreen.tsx
 import { WebView } from 'react-native-webview';
-import { useBridgeHost } from '@ts-bridge/native';
+import { useBridgeHost } from '@webview-ts/native';
 import { camera } from '../shared/camera-plugin';
 
 function WebViewScreen() {
@@ -99,7 +99,7 @@ function WebViewScreen() {
 
 ```mermaid
 graph LR
-    Web["Web (React)"] -->|"bridge.call()"| Bridge["@ts-bridge/core"]
+    Web["Web (React)"] -->|"bridge.call()"| Bridge["@webview-ts/core"]
     Bridge -->|"postMessage"| Native["React Native Host"]
     Native -->|"response"| Bridge
     Bridge -->|"typed data"| Web
@@ -109,11 +109,11 @@ graph LR
 
 | Package               | Description                            |
 | --------------------- | -------------------------------------- |
-| `@ts-bridge/core`     | Web-side bridge engine                 |
-| `@ts-bridge/shared`   | Shared types and contracts (zero deps) |
-| `@ts-bridge/react`    | React hooks and provider               |
-| `@ts-bridge/native`   | React Native host                      |
-| `@ts-bridge/devtools` | Visual debugging panel                 |
+| `@webview-ts/core`     | Web-side bridge engine                 |
+| `@webview-ts/shared`   | Shared types and contracts (zero deps) |
+| `@webview-ts/react`    | React hooks and provider               |
+| `@webview-ts/native`   | React Native host                      |
+| `@webview-ts/devtools` | Visual debugging panel                 |
 
 ## Development
 

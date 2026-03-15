@@ -5,7 +5,7 @@ import type {
   InferPayload,
   InferResponse,
   BridgeCallOptions,
-} from '@ts-bridge/shared';
+} from '@webview-ts/shared';
 import { useBridgeContext } from './BridgeContext';
 
 export interface UseBridgeReturn<

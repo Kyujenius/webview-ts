@@ -6,8 +6,8 @@ import type {
   BridgeHost as IBridgeHost,
   Middleware,
   MiddlewareContext,
-} from '@ts-bridge/shared';
-import { MiddlewarePipeline } from '@ts-bridge/shared';
+} from '@webview-ts/shared';
+import { MiddlewarePipeline } from '@webview-ts/shared';
 
 /**
  * Configuration for the BridgeHost

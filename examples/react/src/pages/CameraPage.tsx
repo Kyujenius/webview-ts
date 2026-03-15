@@ -94,7 +94,7 @@ function CameraPage() {
       <div className="card">
         <h2>Usage</h2>
         <pre>{`import { usePlugin } from './bridge';
-import { camera } from '@ts-bridge/shared';
+import { camera } from '@webview-ts/shared';
 
 const { takePhoto, pickImage, recordVideo } = usePlugin(camera);
 

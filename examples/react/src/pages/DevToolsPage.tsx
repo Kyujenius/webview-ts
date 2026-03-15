@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useBridge } from '../bridge';
-import type { Middleware, MiddlewareContext } from '@ts-bridge/core';
+import type { Middleware, MiddlewareContext } from '@webview-ts/core';
 
 interface LogEntry {
   timestamp: number;
@@ -239,7 +239,7 @@ function DevToolsPage() {
 
       <div className="card">
         <h2>API Reference</h2>
-        <pre>{`import { DevToolsMiddleware } from '@ts-bridge/devtools';
+        <pre>{`import { DevToolsMiddleware } from '@webview-ts/devtools';
 
 const bridge = new BridgeManager();
 const devTools = new DevToolsMiddleware();
@@ -253,7 +253,7 @@ bridge.use(async (message, next) => {
 });
 
 // Or use the built-in logger middleware
-import { LoggerMiddleware } from '@ts-bridge/devtools';
+import { LoggerMiddleware } from '@webview-ts/devtools';
 bridge.use(new LoggerMiddleware());`}</pre>
       </div>
     </div>

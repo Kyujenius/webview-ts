@@ -1,4 +1,4 @@
-# @ts-bridge/core
+# @webview-ts/core
 
 Core bridge engine for web-side WebView-Native communication.
 
@@ -18,11 +18,11 @@ This package provides the main bridge implementation for web applications runnin
 ## Installation
 
 ```bash
-npm install @ts-bridge/core @ts-bridge/shared
+npm install @webview-ts/core @webview-ts/shared
 # or
-pnpm add @ts-bridge/core @ts-bridge/shared
+pnpm add @webview-ts/core @webview-ts/shared
 # or
-yarn add @ts-bridge/core @ts-bridge/shared
+yarn add @webview-ts/core @webview-ts/shared
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ yarn add @ts-bridge/core @ts-bridge/shared
 ### Basic Usage
 
 ```typescript
-import { createBridge } from '@ts-bridge/core';
+import { createBridge } from '@webview-ts/core';
 
 // Create bridge instance
 const bridge = createBridge({
@@ -50,7 +50,7 @@ try {
 ### With Middleware
 
 ```typescript
-import { createBridge, LoggerMiddleware, ValidatorMiddleware } from '@ts-bridge/core';
+import { createBridge, LoggerMiddleware, ValidatorMiddleware } from '@webview-ts/core';
 
 const bridge = createBridge();
 
@@ -153,7 +153,7 @@ Built-in middleware:
 - **LoggerMiddleware**: Logs all bridge communication
 - **ValidatorMiddleware**: Validates messages against schemas
 
-Create custom middleware by implementing the `Middleware` interface from `@ts-bridge/shared`.
+Create custom middleware by implementing the `Middleware` interface from `@webview-ts/shared`.
 
 ## License
 

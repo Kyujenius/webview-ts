@@ -1,5 +1,5 @@
 /**
- * @ts-bridge/shared
+ * @webview-ts/shared
  *
  * Shared types and schemas for ts-bridge library.
  * This package provides the single source of truth for all type definitions

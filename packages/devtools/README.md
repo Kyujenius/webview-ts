@@ -1,4 +1,4 @@
-# @ts-bridge/devtools
+# @webview-ts/devtools
 
 Communication visualization and debugging tools for ts-bridge.
 
@@ -14,9 +14,9 @@ Communication visualization and debugging tools for ts-bridge.
 ## Installation
 
 ```bash
-npm install @ts-bridge/devtools
+npm install @webview-ts/devtools
 # or
-pnpm add @ts-bridge/devtools
+pnpm add @webview-ts/devtools
 ```
 
 ## Usage
@@ -24,8 +24,8 @@ pnpm add @ts-bridge/devtools
 ### Basic Setup
 
 ```typescript
-import { createBridge } from '@ts-bridge/core';
-import { createDevTools } from '@ts-bridge/devtools';
+import { createBridge } from '@webview-ts/core';
+import { createDevTools } from '@webview-ts/devtools';
 
 // Create DevTools bundle
 const devTools = createDevTools({
@@ -56,7 +56,7 @@ const bridge = createBridge({
 Records all bridge messages for visualization:
 
 ```typescript
-import { createDevToolsMiddleware } from '@ts-bridge/devtools';
+import { createDevToolsMiddleware } from '@webview-ts/devtools';
 
 const middleware = createDevToolsMiddleware({
   enabled: true,
@@ -91,7 +91,7 @@ const json = middleware.getStore().export();
 Tracks performance metrics:
 
 ```typescript
-import { createTimeTracker } from '@ts-bridge/devtools';
+import { createTimeTracker } from '@webview-ts/devtools';
 
 const timeTracker = createTimeTracker(1000);
 
@@ -113,7 +113,7 @@ const perfData = timeTracker.export();
 Configurable logging with multiple levels:
 
 ```typescript
-import { createStructuredLogger, LogLevel } from '@ts-bridge/devtools';
+import { createStructuredLogger, LogLevel } from '@webview-ts/devtools';
 
 const logger = createStructuredLogger({
   minLevel: LogLevel.INFO,
@@ -143,7 +143,7 @@ const errors = logger.getLogsByLevel(LogLevel.ERROR);
 Visual timeline of bridge messages:
 
 ```tsx
-import { MessageTimeline } from '@ts-bridge/devtools';
+import { MessageTimeline } from '@webview-ts/devtools';
 import { useState } from 'react';
 
 function DevToolsPanel() {
@@ -167,7 +167,7 @@ function DevToolsPanel() {
 Detailed message inspector:
 
 ```tsx
-import { RequestInspector } from '@ts-bridge/devtools';
+import { RequestInspector } from '@webview-ts/devtools';
 
 function InspectorPanel() {
   return (
@@ -182,12 +182,12 @@ function InspectorPanel() {
 ### Complete Example
 
 ```tsx
-import { createBridge } from '@ts-bridge/core';
+import { createBridge } from '@webview-ts/core';
 import {
   createDevTools,
   MessageTimeline,
   RequestInspector,
-} from '@ts-bridge/devtools';
+} from '@webview-ts/devtools';
 import { useState } from 'react';
 
 // Create DevTools

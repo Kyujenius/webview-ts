@@ -2,8 +2,8 @@
  * Android JavaScript interface adapter
  */
 
-import type { BridgeMessage } from '@ts-bridge/shared';
-import { Platform } from '@ts-bridge/shared';
+import type { BridgeMessage } from '@webview-ts/shared';
+import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
 /**

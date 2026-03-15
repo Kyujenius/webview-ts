@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DevToolsMiddleware } from './DevToolsMiddleware';
-import type { BridgeMessage, BridgeResponse, MiddlewareContext } from '@ts-bridge/shared';
+import type { BridgeMessage, BridgeResponse, MiddlewareContext } from '@webview-ts/shared';
 import { MessageDirection, MessageStatus } from '../types/index';
 
 /** Helper: run middleware.fn as onion — simulates next() resolving with a response */

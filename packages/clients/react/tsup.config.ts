@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   treeshake: true,
-  external: ['react', 'react-dom', '@ts-bridge/shared', '@ts-bridge/core'],
+  external: ['react', 'react-dom', '@webview-ts/shared', '@webview-ts/core'],
 });

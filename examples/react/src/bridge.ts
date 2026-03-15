@@ -1,4 +1,4 @@
-import { createBridgeReact } from '@ts-bridge/react';
+import { createBridgeReact } from '@webview-ts/react';
 import { camera, storage, location, biometric, haptics } from '@example/plugins';
 
 export { camera, storage, location, biometric, haptics };

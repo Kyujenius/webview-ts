@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/core",
+  "name": "@webview-ts/core",
   "version": "0.0.0",
   "description": "Web-side bridge engine with middleware pipeline",
   "license": "MIT",
@@ -40,7 +40,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

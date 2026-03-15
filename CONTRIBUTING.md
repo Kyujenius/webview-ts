@@ -20,11 +20,11 @@ pnpm build
 
 | Package               | Path                          | Description              |
 | --------------------- | ----------------------------- | ------------------------ |
-| `@ts-bridge/shared`   | `packages/shared`             | Shared types (zero deps) |
-| `@ts-bridge/core`     | `packages/core`               | Web-side bridge engine   |
-| `@ts-bridge/react`    | `packages/clients/react`      | React hooks and provider |
-| `@ts-bridge/native`   | `packages/hosts/react-native` | React Native host        |
-| `@ts-bridge/devtools` | `packages/devtools`           | Visual debugging panel   |
+| `@webview-ts/shared`   | `packages/shared`             | Shared types (zero deps) |
+| `@webview-ts/core`     | `packages/core`               | Web-side bridge engine   |
+| `@webview-ts/react`    | `packages/clients/react`      | React hooks and provider |
+| `@webview-ts/native`   | `packages/hosts/react-native` | React Native host        |
+| `@webview-ts/devtools` | `packages/devtools`           | Visual debugging panel   |
 
 ## Development
 

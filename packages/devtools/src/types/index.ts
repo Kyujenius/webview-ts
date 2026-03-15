@@ -2,7 +2,7 @@
  * DevTools types and interfaces
  */
 
-import type { BridgeMessage, BridgeResponse } from '@ts-bridge/shared';
+import type { BridgeMessage, BridgeResponse } from '@webview-ts/shared';
 
 /**
  * Message direction

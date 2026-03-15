@@ -3,7 +3,7 @@
  * Uses the onion model: records request before next(), response/error after.
  */
 
-import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
 import type { DevToolsConfig, RecordedMessage, DevToolsStore } from '../types/index';
 import { MessageDirection, MessageStatus } from '../types/index';
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';

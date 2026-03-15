@@ -104,7 +104,7 @@ function BiometricPage() {
       <div className="card">
         <h2>Usage</h2>
         <pre>{`import { usePlugin } from './bridge';
-import { biometric } from '@ts-bridge/shared';
+import { biometric } from '@webview-ts/shared';
 
 const { checkAvailability, authenticate } = usePlugin(biometric);
 

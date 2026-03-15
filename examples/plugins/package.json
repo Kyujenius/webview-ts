@@ -6,6 +6,6 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@ts-bridge/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*"
   }
 }

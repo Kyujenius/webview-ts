@@ -2,7 +2,7 @@
  * StructuredLogger - Structured logging for bridge messages (onion model)
  */
 
-import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
 
 export enum LogLevel {
   DEBUG = 'debug',

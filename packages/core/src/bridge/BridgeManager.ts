@@ -20,7 +20,7 @@ import type {
   ActionNames,
   InferPayload,
   InferResponse,
-} from '@ts-bridge/shared';
+} from '@webview-ts/shared';
 /**
  * Event handler type
  */
@@ -66,7 +66,7 @@ export class BridgeManager<
 
     if (!this.adapter.isAvailable() && this.config.fallback) {
       this.adapter = new FallbackAdapter(
-        this.config.fallback as true | import('@ts-bridge/shared').FallbackMap,
+        this.config.fallback as true | import('@webview-ts/shared').FallbackMap,
         (response) => this.handleResponse(response)
       );
     }

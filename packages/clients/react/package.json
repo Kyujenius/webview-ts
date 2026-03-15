@@ -1,5 +1,5 @@
 {
-  "name": "@ts-bridge/react",
+  "name": "@webview-ts/react",
   "version": "0.0.0",
   "type": "module",
   "description": "React hooks and provider for ts-bridge",
@@ -40,8 +40,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/core": "workspace:*",
-    "@ts-bridge/shared": "workspace:*"
+    "@webview-ts/core": "workspace:*",
+    "@webview-ts/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=17.0.0"

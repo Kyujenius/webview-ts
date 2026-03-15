@@ -41,7 +41,7 @@ importers:
 
   examples/plugins:
     dependencies:
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../packages/shared
 
@@ -50,16 +50,16 @@ importers:
       '@example/plugins':
         specifier: workspace:*
         version: link:../plugins
-      '@ts-bridge/core':
+      '@webview-ts/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@ts-bridge/devtools':
+      '@webview-ts/devtools':
         specifier: workspace:*
         version: link:../../packages/devtools
-      '@ts-bridge/react':
+      '@webview-ts/react':
         specifier: workspace:*
         version: link:../../packages/clients/react
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       react:
@@ -93,10 +93,10 @@ importers:
       '@example/plugins':
         specifier: workspace:*
         version: link:../plugins
-      '@ts-bridge/native':
+      '@webview-ts/native':
         specifier: workspace:*
         version: link:../../packages/hosts/react-native
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       expo:
@@ -124,10 +124,10 @@ importers:
 
   packages/clients/react:
     dependencies:
-      '@ts-bridge/core':
+      '@webview-ts/core':
         specifier: workspace:*
         version: link:../../core
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../shared
     devDependencies:
@@ -158,7 +158,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -183,7 +183,7 @@ importers:
 
   packages/devtools:
     dependencies:
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -217,7 +217,7 @@ importers:
 
   packages/hosts/react-native:
     dependencies:
-      '@ts-bridge/shared':
+      '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../shared
     devDependencies:

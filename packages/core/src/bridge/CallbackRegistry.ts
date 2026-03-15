@@ -2,7 +2,7 @@
  * Registry for managing callbacks and matching requests to responses
  */
 
-import type { BridgeResponse } from '@ts-bridge/shared';
+import type { BridgeResponse } from '@webview-ts/shared';
 
 /**
  * Callback entry with timeout handling

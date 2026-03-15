@@ -1,4 +1,4 @@
-# @ts-bridge/native
+# @webview-ts/native
 
 React Native host implementation for ts-bridge - handles WebView-to-Native communication.
 
@@ -15,11 +15,11 @@ This package provides the React Native side of the ts-bridge library. It receive
 ## Installation
 
 ```bash
-npm install @ts-bridge/native @ts-bridge/shared react-native-webview
+npm install @webview-ts/native @webview-ts/shared react-native-webview
 # or
-pnpm add @ts-bridge/native @ts-bridge/shared react-native-webview
+pnpm add @webview-ts/native @webview-ts/shared react-native-webview
 # or
-yarn add @ts-bridge/native @ts-bridge/shared react-native-webview
+yarn add @webview-ts/native @webview-ts/shared react-native-webview
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ yarn add @ts-bridge/native @ts-bridge/shared react-native-webview
 ### Basic Setup
 
 ```typescript
-import { createBridgeHost } from '@ts-bridge/native';
+import { createBridgeHost } from '@webview-ts/native';
 import { WebView } from 'react-native-webview';
 
 // Create bridge host bundle
@@ -143,7 +143,7 @@ const status = await permissionManager.requestPermission('camera');
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { createBridgeHost } from '@ts-bridge/native';
+import { createBridgeHost } from '@webview-ts/native';
 
 // Create bridge host (outside component to avoid recreating)
 const { bridgeHost, messageHandler } = createBridgeHost({

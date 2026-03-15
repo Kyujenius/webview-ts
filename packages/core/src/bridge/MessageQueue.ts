@@ -2,7 +2,7 @@
  * Queue for managing bridge message requests
  */
 
-import type { BridgeMessage } from '@ts-bridge/shared';
+import type { BridgeMessage } from '@webview-ts/shared';
 
 /**
  * Queue entry
