@@ -22,6 +22,10 @@ export type {
   PermissionHandler,
 } from './permissions/PermissionManager';
 
+// Hooks
+export { createSimpleBridgeHost, useBridgeHost } from './hooks/useBridgeHost';
+export type { SimpleBridgeHostOptions, SimpleBridgeHostResult, UseBridgeHostReturn } from './hooks/useBridgeHost';
+
 // Convenience factory
 import { BridgeHost, type BridgeHostConfig } from './bridge/BridgeHost';
 import { MessageHandler, type MessageHandlerConfig } from './bridge/MessageHandler';

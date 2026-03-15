@@ -29,11 +29,12 @@ describe('Fallback mode', () => {
   });
 
   it('should not use fallback when native IS available', async () => {
-    (window as any).webkit = { messageHandlers: { tsBridge: { postMessage: vi.fn() } } };
+    const win = globalThis as any;
+    win.webkit = { messageHandlers: { tsBridge: { postMessage: vi.fn() } } };
     const fallbackFn = vi.fn();
     const bridge = createBridge({ fallback: { 'test.action': fallbackFn }, timeout: 50 });
     try { await bridge.call('test.action', {}); } catch { /* timeout expected */ }
     expect(fallbackFn).not.toHaveBeenCalled();
-    delete (window as any).webkit;
+    delete win.webkit;
   });
 });

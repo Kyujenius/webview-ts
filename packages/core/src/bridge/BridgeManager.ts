@@ -1,7 +1,6 @@
 /**
  * Main bridge manager - orchestrates all bridge operations
  */
-
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
@@ -16,7 +15,7 @@ import type {
   BridgeResponse,
   BridgeEvent,
   BridgeError,
-  ErrorContext,
+
   MiddlewareContext,
   WebPlugin,
   ActionDefinitionShape,
@@ -67,7 +66,7 @@ export class BridgeManager<
     if (!this.adapter.isAvailable() && this.config.fallback) {
       this.adapter = new FallbackAdapter(
         this.config.fallback as true | import('@ts-bridge/shared').FallbackMap,
-        (response) => this.handleResponse(response),
+        (response) => this.handleResponse(response)
       );
     }
 
@@ -242,7 +241,7 @@ export class BridgeManager<
    */
   registerPlugin<T = unknown>(plugin: WebPlugin<T>): void {
     this.plugins.register(plugin);
-    plugin.initialize(this).catch((error) => {
+    plugin.initialize(this as unknown as import('@ts-bridge/shared').Bridge).catch((error) => {
       console.error(`[ts-bridge] Failed to initialize plugin '${plugin.metadata.name}':`, error);
     });
   }
