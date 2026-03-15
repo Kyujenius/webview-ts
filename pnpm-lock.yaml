@@ -44,9 +44,9 @@ importers:
       '@ts-bridge/native':
         specifier: workspace:*
         version: link:../../packages/hosts/react-native
-      '@ts-bridge/plugins':
+      '@ts-bridge/shared':
         specifier: workspace:*
-        version: link:../../packages/plugins
+        version: link:../../packages/shared
       expo:
         specifier: ~55.0.6
         version: 55.0.6(@babel/core@7.28.6)(@expo/dom-webview@55.0.3)(react-dom@18.3.1(react@19.2.0))(react-native-webview@13.16.0(react-native@0.83.2(@babel/core@7.28.6)(@react-native-community/cli@13.6.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.2(@babel/core@7.28.6)(@react-native-community/cli@13.6.9)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
@@ -78,9 +78,6 @@ importers:
       '@ts-bridge/devtools':
         specifier: workspace:*
         version: link:../../packages/devtools
-      '@ts-bridge/plugins':
-        specifier: workspace:*
-        version: link:../../packages/plugins
       '@ts-bridge/react':
         specifier: workspace:^
         version: link:../../packages/clients/react
@@ -118,9 +115,6 @@ importers:
       '@ts-bridge/core':
         specifier: workspace:*
         version: link:../../core
-      '@ts-bridge/plugins':
-        specifier: workspace:*
-        version: link:../../plugins
       '@ts-bridge/shared':
         specifier: workspace:*
         version: link:../../shared
@@ -211,9 +205,6 @@ importers:
 
   packages/hosts/react-native:
     dependencies:
-      '@ts-bridge/plugins':
-        specifier: workspace:*
-        version: link:../../plugins
       '@ts-bridge/shared':
         specifier: workspace:*
         version: link:../../shared
@@ -244,28 +235,6 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.0
-        version: 1.6.1(@types/node@20.19.30)(@vitest/ui@1.6.1)(happy-dom@14.12.3)(lightningcss@1.32.0)(terser@5.46.0)
-
-  packages/plugins:
-    dependencies:
-      '@ts-bridge/shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.0
-        version: 20.19.30
-      eslint:
-        specifier: ^8.56.0
-        version: 8.57.1
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.1(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: ^5.4.0
-        version: 5.9.3
-      vitest:
-        specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.30)(@vitest/ui@1.6.1)(happy-dom@14.12.3)(lightningcss@1.32.0)(terser@5.46.0)
 
   packages/shared:

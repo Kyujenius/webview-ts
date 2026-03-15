@@ -13,7 +13,7 @@ vi.mock('react-native', () => ({}));
 vi.mock('react-native-webview', () => ({}));
 
 import { createSimpleBridgeHost } from './useBridgeHost';
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 
 // Typed action contract
 type TestActions = {

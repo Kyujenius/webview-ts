@@ -1,5 +1,5 @@
 import type { ActionDefinitionShape, Middleware } from '@ts-bridge/shared';
-import type { HostPluginResult } from '@ts-bridge/plugins';
+import type { HostPluginResult } from '@ts-bridge/shared';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
 import { MessageHandler } from '../bridge/MessageHandler';

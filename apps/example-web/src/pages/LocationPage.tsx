@@ -110,7 +110,7 @@ function LocationPage() {
       <div className="card">
         <h2>Usage</h2>
         <pre>{`import { usePlugin } from './bridge';
-import { location } from '@ts-bridge/plugins';
+import { location } from '@ts-bridge/shared';
 
 const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
 

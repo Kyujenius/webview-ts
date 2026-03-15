@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { createBridgeReact } from './createBridgeReact';
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 
 // Define a typed action contract
 type TestActions = {

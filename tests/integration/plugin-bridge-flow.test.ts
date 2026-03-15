@@ -15,22 +15,59 @@
 import { describe, it, expect } from 'vitest';
 import { BridgeHost } from '@ts-bridge/native';
 import { createBridge } from '@ts-bridge/core';
-import {
-  definePlugin,
-  camera,
-  storage,
-  biometric,
-  type CameraActions,
-  type StorageActions,
-} from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 import type { BridgeMessage } from '@ts-bridge/shared';
+
+// ─── Define plugins inline ───
+
+type CameraActions = {
+  'camera.takePhoto': {
+    payload: { quality?: number };
+    response: { uri: string; width: number; height: number };
+  };
+  'camera.pickImage': {
+    payload: { multiple?: boolean };
+    response: { images: { uri: string }[] };
+  };
+  'camera.recordVideo': {
+    payload: { maxDuration?: number };
+    response: { uri: string; duration: number };
+  };
+};
+
+const camera = definePlugin<CameraActions>()({
+  name: 'camera',
+  methods: (call) => ({
+    takePhoto: (opts: { quality?: number }) => call('camera.takePhoto', opts),
+    pickImage: (opts: { multiple?: boolean }) => call('camera.pickImage', opts),
+    recordVideo: (opts: { maxDuration?: number }) => call('camera.recordVideo', opts),
+  }),
+});
+
+type StorageActions = {
+  'storage.getItem': { payload: { key: string }; response: { value: string | null } };
+  'storage.setItem': { payload: { key: string; value: string }; response: Record<string, never> };
+  'storage.removeItem': { payload: { key: string }; response: Record<string, never> };
+  'storage.clear': { payload: Record<string, never>; response: Record<string, never> };
+  'storage.getAllKeys': { payload: Record<string, never>; response: { keys: string[] } };
+};
+
+const storage = definePlugin<StorageActions>()({
+  name: 'storage',
+  methods: (call) => ({
+    getItem: (key: string) => call('storage.getItem', { key }),
+    setItem: (key: string, value: string) => call('storage.setItem', { key, value }),
+    removeItem: (key: string) => call('storage.removeItem', { key }),
+    clear: () => call('storage.clear', {} as Record<string, never>),
+    getAllKeys: () => call('storage.getAllKeys', {} as Record<string, never>),
+  }),
+});
 
 /**
  * Create a bridge pair: client BridgeManager + host BridgeHost
  * connected via fallback adapter that routes through the host.
  */
 function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
-  // 1. Set up the host side with real plugin handlers
   const bridgeHost = new BridgeHost();
   for (const plugin of hostPluginResults) {
     for (const [action, handler] of Object.entries(plugin.handlers)) {
@@ -38,9 +75,6 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
     }
   }
 
-  // 2. Create fallback handlers that route through BridgeHost
-  //    This simulates the real message flow:
-  //    adapter.send(message) → bridgeHost.handleMessage → response
   const fallback: Record<string, (payload: any) => Promise<any>> = {};
   for (const plugin of hostPluginResults) {
     for (const action of Object.keys(plugin.handlers)) {
@@ -60,16 +94,13 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
     }
   }
 
-  // 3. Create client bridge with fallback routing to host
   const bridge = createBridge({ timeout: 5000, fallback });
-
   return { bridge, bridgeHost };
 }
 
 // ─── Camera Plugin Integration ───
 
 describe('Camera plugin: full message flow', () => {
-  // Simulate host-side implementation (what an app developer writes)
   const cameraHostResult = camera.host({
     'camera.takePhoto': async (payload) => ({
       uri: `native://photo-q${payload.quality ?? 'default'}`,
@@ -116,7 +147,6 @@ describe('Camera plugin: full message flow', () => {
   });
 
   it('plugin methods convenience wrapper works end-to-end', async () => {
-    // Simulate what usePlugin(camera) does internally
     const methods = camera.methods(
       (action, payload) => bridge.call(action as any, payload as any) as any
     );
@@ -129,7 +159,6 @@ describe('Camera plugin: full message flow', () => {
 // ─── Storage Plugin Integration ───
 
 describe('Storage plugin: full message flow', () => {
-  // Simulate AsyncStorage-like host implementation
   const store = new Map<string, string>();
 
   const storageHostResult = storage.host({
@@ -177,15 +206,15 @@ describe('Storage plugin: full message flow', () => {
     store.clear();
     await bridge.call('storage.setItem', { key: 'a', value: '1' });
     await bridge.call('storage.setItem', { key: 'b', value: '2' });
-    const result = await bridge.call('storage.getAllKeys', {});
+    const result = await bridge.call('storage.getAllKeys', {} as Record<string, never>);
     expect(result.keys).toContain('a');
     expect(result.keys).toContain('b');
   });
 
   it('clear removes all keys', async () => {
     await bridge.call('storage.setItem', { key: 'x', value: 'y' });
-    await bridge.call('storage.clear', {});
-    const result = await bridge.call('storage.getAllKeys', {});
+    await bridge.call('storage.clear', {} as Record<string, never>);
+    const result = await bridge.call('storage.getAllKeys', {} as Record<string, never>);
     expect(result.keys).toHaveLength(0);
   });
 
@@ -277,7 +306,7 @@ describe('Custom plugin: definePlugin + full flow', () => {
 
 describe('Error handling: host handler throws', () => {
   type ErrorActions = {
-    'error.fail': { payload: {}; response: {} };
+    'error.fail': { payload: Record<string, never>; response: Record<string, never> };
   };
 
   const errorPlugin = definePlugin<ErrorActions>()({

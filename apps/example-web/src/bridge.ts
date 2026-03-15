@@ -1,5 +1,5 @@
 import { createBridgeReact } from '@ts-bridge/react';
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 
 // Define plugins inline — demonstrates how users create their own plugins
 const camera = definePlugin<{

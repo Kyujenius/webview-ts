@@ -17,7 +17,7 @@ import type {
   InferPayload,
   InferResponse,
 } from '@ts-bridge/shared';
-import type { PluginInstance, PluginCall, MergePluginActions } from '@ts-bridge/plugins';
+import type { PluginInstance, PluginCall, MergePluginActions } from '@ts-bridge/shared';
 
 interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
   bridge: BridgeManager<TActions>;
@@ -56,7 +56,7 @@ export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, a
  * ```
  */
 export function createBridgeReact<
-  TCustomActions extends Record<string, ActionDefinitionShape> = {},
+  TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
   const TPlugins extends PluginInstance<any, any, any>[] = [],
 >(options?: CreateBridgeReactOptions<TPlugins>) {
   type TAllActions = MergePluginActions<TPlugins> & TCustomActions;

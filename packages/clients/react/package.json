@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@ts-bridge/core": "workspace:*",
-    "@ts-bridge/plugins": "workspace:*",
     "@ts-bridge/shared": "workspace:*"
   },
   "peerDependencies": {

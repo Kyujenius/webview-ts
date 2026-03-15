@@ -177,7 +177,7 @@ function StoragePage() {
       <div className="card">
         <h2>Usage</h2>
         <pre>{`import { usePlugin } from './bridge';
-import { storage } from '@ts-bridge/plugins';
+import { storage } from '@ts-bridge/shared';
 
 const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
 

@@ -14,7 +14,6 @@
   "dependencies": {
     "@ts-bridge/core": "workspace:*",
     "@ts-bridge/devtools": "workspace:*",
-    "@ts-bridge/plugins": "workspace:*",
     "@ts-bridge/react": "workspace:^",
     "@ts-bridge/shared": "workspace:*",
     "react": "^18.2.0",
