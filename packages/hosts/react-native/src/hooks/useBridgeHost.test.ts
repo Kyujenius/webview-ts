@@ -13,13 +13,7 @@ vi.mock('react-native', () => ({}));
 vi.mock('react-native-webview', () => ({}));
 
 import { createSimpleBridgeHost } from './useBridgeHost';
-import { definePlugin } from '@webview-ts/shared';
-
-// Typed action contract
-type TestActions = {
-  'test.echo': { payload: { message: string }; response: { echoed: string } };
-  'action.one': { payload: { key: string }; response: { result: string } };
-};
+import { definePlugin, action } from '@webview-ts/shared';
 
 describe('createSimpleBridgeHost', () => {
   it('should create bridgeHost with webViewProps', () => {
@@ -79,15 +73,8 @@ describe('createSimpleBridgeHost', () => {
 
 // ---- Plugin tests ----
 
-type MockActions = {
-  'mock.echo': { payload: { msg: string }; response: { echoed: string } };
-};
-
-const mockPlugin = definePlugin<MockActions>()({
-  name: 'mock',
-  methods: (call) => ({
-    echo: (msg: string) => call('mock.echo', { msg }),
-  }),
+const mockPlugin = definePlugin('mock', {
+  echo: action<{ msg: string }, { echoed: string }>(),
 });
 
 describe('createSimpleBridgeHost with plugins', () => {
@@ -95,7 +82,7 @@ describe('createSimpleBridgeHost with plugins', () => {
     const result = createSimpleBridgeHost({
       plugins: [
         mockPlugin.host({
-          'mock.echo': async (payload) => ({ echoed: payload.msg }),
+          echo: async (payload) => ({ echoed: payload.msg }),
         }),
       ],
     });
@@ -116,7 +103,7 @@ describe('createSimpleBridgeHost with plugins', () => {
     const result = createSimpleBridgeHost({
       plugins: [
         mockPlugin.host({
-          'mock.echo': async (payload) => ({ echoed: payload.msg }),
+          echo: async (payload) => ({ echoed: payload.msg }),
         }),
       ],
       handlers: {
@@ -144,7 +131,7 @@ describe('createSimpleBridgeHost with plugins', () => {
   it('should throw on duplicate action names', () => {
     expect(() =>
       createSimpleBridgeHost({
-        plugins: [mockPlugin.host({ 'mock.echo': async (p) => ({ echoed: p.msg }) })],
+        plugins: [mockPlugin.host({ echo: async (p) => ({ echoed: p.msg }) })],
         handlers: {
           'mock.echo': async () => ({ echoed: 'duplicate' }),
         },

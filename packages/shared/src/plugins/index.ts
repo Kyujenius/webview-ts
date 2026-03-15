@@ -1,9 +1,13 @@
 export { definePlugin } from './define';
+export { action } from './types';
 export type {
+  ActionMarker,
+  ActionMarkerMap,
+  AutoMethods,
+  ExpandActions,
+  ShortHostHandlers,
   PluginCall,
-  PluginInput,
   PluginInstance,
-  HostHandlers,
   HostPluginResult,
   RequestContext,
   MergePluginActions,

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { createBridgeReact } from './createBridgeReact';
-import { definePlugin } from '@webview-ts/shared';
+import { definePlugin, action } from '@webview-ts/shared';
 
 // Define a typed action contract
 type TestActions = {
@@ -100,15 +100,8 @@ describe('createBridgeReact', () => {
 
 // ---- Plugin tests ----
 
-type MockActions = {
-  'mock.echo': { payload: { msg: string }; response: { echoed: string } };
-};
-
-const mockPlugin = definePlugin<MockActions>()({
-  name: 'mock',
-  methods: (call) => ({
-    echo: (msg: string) => call('mock.echo', { msg }),
-  }),
+const mockPlugin = definePlugin('mock', {
+  echo: action<{ msg: string }, { echoed: string }>(),
 });
 
 describe('createBridgeReact with plugins', () => {
@@ -139,7 +132,7 @@ describe('createBridgeReact with plugins', () => {
     const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
     let response: any;
     await act(async () => {
-      response = await result.current.echo('hello');
+      response = await result.current.echo({ msg: 'hello' });
     });
     expect(response).toEqual({ echoed: 'hello' });
   });

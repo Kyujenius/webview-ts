@@ -29,7 +29,7 @@ export interface TypedBridgeProviderProps {
   children: React.ReactNode;
 }
 
-export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, any, any>[]> {
+export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, any>[]> {
   plugins?: TPlugins;
   config?: BridgeConfig;
 }
@@ -57,7 +57,7 @@ export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, a
  */
 export function createBridgeReact<
   TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
-  const TPlugins extends PluginInstance<any, any, any>[] = [],
+  const TPlugins extends PluginInstance<any, any>[] = [],
 >(options?: CreateBridgeReactOptions<TPlugins>) {
   type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
 
@@ -176,7 +176,7 @@ export function createBridgeReact<
       (action: any, payload: any) => bridge.call(action, payload) as any,
       [bridge]
     );
-    return useMemo(() => plugin.methods(call), [call, plugin]);
+    return useMemo(() => plugin.methods(call), [call, plugin]) as ReturnType<TPlugin['methods']>;
   }
 
   return { BridgeProvider, useBridge, useAction, useEvent, usePlugin };
