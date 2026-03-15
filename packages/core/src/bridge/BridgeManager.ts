@@ -32,7 +32,14 @@ type EventHandler<T = unknown> = (payload: T) => void;
 export class BridgeManager<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 > {
-  private config: Required<BridgeConfig>;
+  private config: {
+    timeout: number;
+    debug: boolean;
+    maxConcurrentRequests: number;
+    enableDeduplication: boolean;
+    onError?: BridgeConfig['onError'];
+    retry?: BridgeConfig['retry'];
+  };
   private adapter: NativeAdapter;
   private callbacks: CallbackRegistry;
   private queue: MessageQueue;
@@ -46,6 +53,8 @@ export class BridgeManager<
       debug: config.debug ?? false,
       maxConcurrentRequests: config.maxConcurrentRequests ?? 100,
       enableDeduplication: config.enableDeduplication ?? true,
+      onError: config.onError,
+      retry: config.retry,
     };
 
     this.adapter = createNativeAdapter();
