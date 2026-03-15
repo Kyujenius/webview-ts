@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { camera } from '@ts-bridge/plugins';
-import { usePlugin, useBridge } from '../bridge';
+import { camera, usePlugin, useBridge } from '../bridge';
 
 function CameraPage() {
   const { takePhoto, pickImage } = usePlugin(camera);
   const { isAvailable } = useBridge();
-  
+
   const [result, setResult] = useState<{ uri: string; width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +45,10 @@ function CameraPage() {
     <div>
       <h1>Camera Plugin</h1>
 
-      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+      <div
+        className="result"
+        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
+      >
         <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Mock Data)'}
       </div>
 
@@ -72,7 +74,9 @@ function CameraPage() {
         <div className="card">
           <h2>Result</h2>
           <div className="result success">
-            <p><strong>Image captured successfully!</strong></p>
+            <p>
+              <strong>Image captured successfully!</strong>
+            </p>
             <pre>{JSON.stringify(result, null, 2)}</pre>
             {result.uri && (
               <div style={{ marginTop: '1rem' }}>

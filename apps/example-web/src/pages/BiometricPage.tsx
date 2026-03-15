@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { biometric } from '@ts-bridge/plugins';
-import { usePlugin, useBridge } from '../bridge';
+import { biometric, usePlugin, useBridge } from '../bridge';
 
 function BiometricPage() {
   const { checkAvailability, authenticate } = usePlugin(biometric);

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { storage } from '@ts-bridge/plugins';
-import { usePlugin, useBridge } from '../bridge';
+import { storage, usePlugin, useBridge } from '../bridge';
 
 function StoragePage() {
   const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);

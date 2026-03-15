@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { location } from '@ts-bridge/plugins';
-import { usePlugin, useBridge } from '../bridge';
+import { location, usePlugin, useBridge } from '../bridge';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
