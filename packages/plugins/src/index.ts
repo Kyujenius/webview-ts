@@ -1,14 +1,24 @@
-/**
- * @ts-bridge/plugins - Standard plugins for ts-bridge
- */
+// Core
+export { definePlugin } from './define';
+export type {
+  ActionDefinitionShape,
+  PluginInstance,
+  PluginInput,
+  PluginCall,
+  HostHandlers,
+  HostPluginResult,
+  RequestContext,
+  MergePluginActions,
+} from './types';
 
-// Export plugin types and base classes
-export * from './types/plugin';
-export * from './utils/BaseWebPlugin';
-export * from './utils/BaseNativePlugin';
-
-// Export all plugins
-export * from './camera/index';
-export * from './location/index';
-export * from './storage/index';
-export * from './biometric/index';
+// Official presets
+export { camera } from './presets/camera';
+export type { CameraActions } from './presets/camera';
+export { storage } from './presets/storage';
+export type { StorageActions } from './presets/storage';
+export { location } from './presets/location';
+export type { LocationActions } from './presets/location';
+export { biometric } from './presets/biometric';
+export type { BiometricActions } from './presets/biometric';
+export { haptics } from './presets/haptics';
+export type { HapticsActions } from './presets/haptics';

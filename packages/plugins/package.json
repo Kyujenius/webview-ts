@@ -12,30 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./camera": {
-      "source": "./src/camera/index.ts",
-      "types": "./dist/camera/index.d.ts",
-      "import": "./dist/camera/index.js",
-      "require": "./dist/camera/index.cjs"
-    },
-    "./location": {
-      "source": "./src/location/index.ts",
-      "types": "./dist/location/index.d.ts",
-      "import": "./dist/location/index.js",
-      "require": "./dist/location/index.cjs"
-    },
-    "./storage": {
-      "source": "./src/storage/index.ts",
-      "types": "./dist/storage/index.d.ts",
-      "import": "./dist/storage/index.js",
-      "require": "./dist/storage/index.cjs"
-    },
-    "./biometric": {
-      "source": "./src/biometric/index.ts",
-      "types": "./dist/biometric/index.d.ts",
-      "import": "./dist/biometric/index.js",
-      "require": "./dist/biometric/index.cjs"
     }
   },
   "files": [
@@ -50,18 +26,7 @@
     "lint": "eslint src",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@ts-bridge/shared": "workspace:*",
-    "@ts-bridge/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "react-native": ">=0.72.0"
-  },
-  "peerDependenciesMeta": {
-    "react-native": {
-      "optional": true
-    }
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.11.0",
     "eslint": "^8.56.0",
