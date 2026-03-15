@@ -54,7 +54,20 @@ export interface BridgeConfig {
    * Global retry configuration
    */
   retry?: RetryConfig;
+
+  /**
+   * Fallback mode for browser development without native bridge.
+   * - `true`: log warnings and reject calls
+   * - `FallbackMap`: use provided handlers as mock responses
+   */
+  fallback?: boolean | FallbackMap;
 }
+
+export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
+  payload: TPayload,
+) => Promise<TResponse> | TResponse;
+
+export type FallbackMap = Record<string, FallbackHandler>;
 
 /**
  * Bridge call options
