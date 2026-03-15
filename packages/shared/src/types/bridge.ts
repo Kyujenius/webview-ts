@@ -64,7 +64,7 @@ export interface BridgeConfig {
 }
 
 export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
-  payload: TPayload,
+  payload: TPayload
 ) => Promise<TResponse> | TResponse;
 
 export type FallbackMap = Record<string, FallbackHandler>;

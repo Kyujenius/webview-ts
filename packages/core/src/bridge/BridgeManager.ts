@@ -41,6 +41,7 @@ export class BridgeManager<
     enableDeduplication: boolean;
     onError?: BridgeConfig['onError'];
     retry?: BridgeConfig['retry'];
+    fallback?: BridgeConfig['fallback'];
   };
   private adapter: NativeAdapter;
   private callbacks: CallbackRegistry;
@@ -57,6 +58,7 @@ export class BridgeManager<
       enableDeduplication: config.enableDeduplication ?? true,
       onError: config.onError,
       retry: config.retry,
+      fallback: config.fallback,
     };
 
     this.adapter = createNativeAdapter();
