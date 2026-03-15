@@ -2,6 +2,7 @@ import { describe, it, expect, expectTypeOf } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { createBridgeReact } from './createBridgeReact';
+import { definePlugin } from '@ts-bridge/plugins';
 import type { ActionDefinitionShape, InferPayload, InferResponse } from '@ts-bridge/shared';
 
 // Define a typed action contract
@@ -87,5 +88,56 @@ describe('createBridgeReact', () => {
       // Verify the call function exists and is callable
       expect(typeof result.current.call).toBe('function');
     });
+  });
+});
+
+// ---- Plugin tests ----
+
+type MockActions = {
+  'mock.echo': { payload: { msg: string }; response: { echoed: string } };
+};
+
+const mockPlugin = definePlugin<MockActions>({
+  name: 'mock',
+  methods: (call) => ({
+    echo: (msg: string) => call('mock.echo', { msg }),
+  }),
+});
+
+describe('createBridgeReact with plugins', () => {
+  const {
+    BridgeProvider: PluginProvider,
+    usePlugin,
+    useAction: usePluginAction,
+  } = createBridgeReact({
+    plugins: [mockPlugin],
+    config: {
+      timeout: 5000,
+      fallback: {
+        'mock.echo': async (payload: any) => ({ echoed: payload.msg }),
+      },
+    },
+  });
+
+  const pluginWrapper = ({ children }: { children: React.ReactNode }) => (
+    <PluginProvider>{children}</PluginProvider>
+  );
+
+  it('usePlugin should return typed methods', () => {
+    const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
+    expect(typeof result.current.echo).toBe('function');
+  });
+
+  it('usePlugin methods should call through bridge', async () => {
+    const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
+    let response: any;
+    await act(async () => { response = await result.current.echo('hello'); });
+    expect(response).toEqual({ echoed: 'hello' });
+  });
+
+  it('useAction should work with plugin actions', async () => {
+    const { result } = renderHook(() => usePluginAction('mock.echo'), { wrapper: pluginWrapper });
+    await act(async () => { await result.current.execute({ msg: 'test' }); });
+    expect(result.current.data).toEqual({ echoed: 'test' });
   });
 });

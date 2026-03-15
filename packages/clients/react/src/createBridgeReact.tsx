@@ -17,6 +17,7 @@ import type {
   InferPayload,
   InferResponse,
 } from '@ts-bridge/shared';
+import type { PluginInstance, PluginCall, MergePluginActions } from '@ts-bridge/plugins';
 
 interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
   bridge: BridgeManager<TActions>;
@@ -26,6 +27,11 @@ interface BridgeContextValue<TActions extends Record<string, ActionDefinitionSha
 export interface TypedBridgeProviderProps {
   config?: BridgeConfig;
   children: React.ReactNode;
+}
+
+export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, any, any>[]> {
+  plugins?: TPlugins;
+  config?: BridgeConfig;
 }
 
 /**
@@ -50,11 +56,14 @@ export interface TypedBridgeProviderProps {
  * ```
  */
 export function createBridgeReact<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
->() {
-  const Context = createContext<BridgeContextValue<TActions> | null>(null);
+  TCustomActions extends Record<string, ActionDefinitionShape> = {},
+  const TPlugins extends PluginInstance<any, any, any>[] = [],
+>(options?: CreateBridgeReactOptions<TPlugins>) {
+  type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
 
-  function useTypedContext(): BridgeContextValue<TActions> {
+  const Context = createContext<BridgeContextValue<TAllActions> | null>(null);
+
+  function useTypedContext(): BridgeContextValue<TAllActions> {
     const ctx = useContext(Context);
     if (!ctx)
       throw new Error('useBridge/useAction/useEvent must be used within a <BridgeProvider>');
@@ -63,9 +72,9 @@ export function createBridgeReact<
 
   // ---- BridgeProvider ----
 
-  function BridgeProvider({ config, children }: TypedBridgeProviderProps) {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const bridge = useMemo(() => createBridge<TActions>(config), []);
+  function BridgeProvider({ config: propConfig, children }: TypedBridgeProviderProps) {
+    const mergedConfig = propConfig ?? options?.config;
+    const bridge = useMemo(() => createBridge<TAllActions>(mergedConfig), []);
     const [isAvailable, setIsAvailable] = useState(() => bridge.isAvailable());
     useEffect(() => {
       setIsAvailable(bridge.isAvailable());
@@ -82,9 +91,9 @@ export function createBridgeReact<
   function useBridge() {
     const { bridge, isAvailable } = useTypedContext();
     const call = useCallback(
-      <TAction extends ActionNames<TActions>>(
+      <TAction extends ActionNames<TAllActions>>(
         action: TAction,
-        payload: InferPayload<TActions, TAction>,
+        payload: InferPayload<TAllActions, TAction>,
         options?: BridgeCallOptions
       ) => bridge.call(action, payload, options),
       [bridge]
@@ -103,11 +112,11 @@ export function createBridgeReact<
 
   // ---- useAction ----
 
-  function useAction<TAction extends ActionNames<TActions>>(
+  function useAction<TAction extends ActionNames<TAllActions>>(
     action: TAction,
     defaultOptions?: BridgeCallOptions
   ) {
-    type TResponse = InferResponse<TActions, TAction>;
+    type TResponse = InferResponse<TAllActions, TAction>;
     const { bridge } = useTypedContext();
     const [data, setData] = useState<TResponse | null>(null);
     const [error, setError] = useState<Error | null>(null);
@@ -115,7 +124,7 @@ export function createBridgeReact<
 
     const execute = useCallback(
       async (
-        payload: InferPayload<TActions, TAction>,
+        payload: InferPayload<TAllActions, TAction>,
         options?: BridgeCallOptions
       ): Promise<TResponse> => {
         setIsLoading(true);
@@ -157,5 +166,18 @@ export function createBridgeReact<
     }, [bridge, event]);
   }
 
-  return { BridgeProvider, useBridge, useAction, useEvent };
+  // ---- usePlugin ----
+
+  function usePlugin<TPlugin extends TPlugins[number]>(
+    plugin: TPlugin
+  ): ReturnType<TPlugin['methods']> {
+    const { bridge } = useTypedContext();
+    const call: PluginCall<TPlugin['_actionMap']> = useCallback(
+      (action: any, payload: any) => bridge.call(action, payload) as any,
+      [bridge],
+    );
+    return useMemo(() => plugin.methods(call), [call, plugin]);
+  }
+
+  return { BridgeProvider, useBridge, useAction, useEvent, usePlugin };
 }

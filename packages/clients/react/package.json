@@ -8,8 +8,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-      "require": { "types": "./dist/index.d.cts", "default": "./dist/index.cjs" }
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "scripts": {
@@ -22,10 +28,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/shared": "workspace:*",
-    "@ts-bridge/core": "workspace:*"
+    "@ts-bridge/core": "workspace:*",
+    "@ts-bridge/plugins": "workspace:^",
+    "@ts-bridge/shared": "workspace:*"
   },
-  "peerDependencies": { "react": ">=18.0.0" },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
   "devDependencies": {
     "@testing-library/react": "^14.0.0",
     "@types/react": "^18.2.0",
@@ -36,6 +45,8 @@
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "MIT"
 }
