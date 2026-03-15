@@ -6,7 +6,6 @@ import CameraPage from './pages/CameraPage';
 import LocationPage from './pages/LocationPage';
 import StoragePage from './pages/StoragePage';
 import BiometricPage from './pages/BiometricPage';
-import DevToolsPage from './pages/DevToolsPage';
 
 function App() {
   const location = useLocation();
@@ -45,11 +44,6 @@ function App() {
               Biometric
             </Link>
           </li>
-          <li>
-            <Link to="/devtools" className={isActive('/devtools')}>
-              DevTools
-            </Link>
-          </li>
         </ul>
       </nav>
 
@@ -60,7 +54,6 @@ function App() {
           <Route path="/location" element={<LocationPage />} />
           <Route path="/storage" element={<StoragePage />} />
           <Route path="/biometric" element={<BiometricPage />} />
-          <Route path="/devtools" element={<DevToolsPage />} />
         </Routes>
       </div>
 

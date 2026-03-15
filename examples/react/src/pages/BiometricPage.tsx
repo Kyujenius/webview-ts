@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { biometric, usePlugin, useBridge } from '../bridge';
+import { usePlugin, useBridge } from '../bridge';
+import {
+  biometric,
+  type CheckAvailabilityResponse,
+  type AuthenticateResponse,
+} from '@example/plugins';
 
 function BiometricPage() {
   const { checkAvailability, authenticate } = usePlugin(biometric);
   const { isAvailable } = useBridge();
-  const [availability, setAvailability] = useState<{
-    available: boolean;
-    biometricTypes: string[];
-  } | null>(null);
-  const [authResult, setAuthResult] = useState<{
-    success: boolean;
-    error?: string;
-  } | null>(null);
+  const [availability, setAvailability] = useState<CheckAvailabilityResponse | null>(null);
+  const [authResult, setAuthResult] = useState<AuthenticateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +32,7 @@ function BiometricPage() {
     setError(null);
     setAuthResult(null);
     try {
-      const result = await authenticate('Authenticate to continue');
+      const result = await authenticate({ reason: 'Authenticate to continue' });
       setAuthResult(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -92,9 +91,9 @@ function BiometricPage() {
             <p>
               <strong>Success:</strong> {authResult.success ? 'Yes' : 'No'}
             </p>
-            {authResult.error && (
+            {!authResult.success && (
               <p>
-                <strong>Error:</strong> {authResult.error}
+                <strong>Status:</strong> Authentication denied
               </p>
             )}
           </div>
@@ -103,13 +102,13 @@ function BiometricPage() {
 
       <div className="card">
         <h2>Usage</h2>
-        <pre>{`import { usePlugin } from './bridge';
-import { biometric } from '@webview-ts/shared';
+        <pre>{`import { usePlugin } from '../bridge';
+import { biometric } from '@example/plugins';
 
 const { checkAvailability, authenticate } = usePlugin(biometric);
 
 const { available, biometricTypes } = await checkAvailability();
-const { success } = await authenticate('Verify your identity');`}</pre>
+const { success } = await authenticate({ reason: 'Verify your identity' });`}</pre>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { storage, usePlugin, useBridge } from '../bridge';
+import { usePlugin, useBridge } from '../bridge';
+import { storage } from '@example/plugins';
 
 function StoragePage() {
   const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
@@ -15,7 +16,7 @@ function StoragePage() {
     setLoading(true);
     setError(null);
     try {
-      await setItem(key, value);
+      await setItem({ key, value });
       setResult(`Successfully set "${key}" = "${value}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set item');
@@ -29,7 +30,7 @@ function StoragePage() {
     setError(null);
     setResult(null);
     try {
-      const item = await getItem(key);
+      const item = await getItem({ key });
       setResult(item.value !== null ? `Value: "${item.value}"` : 'Key not found');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get item');
@@ -42,7 +43,7 @@ function StoragePage() {
     setLoading(true);
     setError(null);
     try {
-      await removeItem(key);
+      await removeItem({ key });
       setResult(`Successfully removed "${key}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove item');
@@ -176,13 +177,13 @@ function StoragePage() {
 
       <div className="card">
         <h2>Usage</h2>
-        <pre>{`import { usePlugin } from './bridge';
-import { storage } from '@webview-ts/shared';
+        <pre>{`import { usePlugin } from '../bridge';
+import { storage } from '@example/plugins';
 
 const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
 
-await setItem('key', 'value');
-const { value } = await getItem('key');`}</pre>
+await setItem({ key: 'name', value: 'Alice' });
+const { value } = await getItem({ key: 'name' });`}</pre>
       </div>
     </div>
   );

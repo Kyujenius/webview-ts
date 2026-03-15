@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { camera, usePlugin, useBridge } from '../bridge';
+import { usePlugin, useBridge } from '../bridge';
+import { camera, type TakePhotoResponse } from '@example/plugins';
 
 function CameraPage() {
   const { takePhoto, pickImage } = usePlugin(camera);
   const { isAvailable } = useBridge();
 
-  const [result, setResult] = useState<{ uri: string; width: number; height: number } | null>(null);
+  const [result, setResult] = useState<TakePhotoResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -93,13 +94,13 @@ function CameraPage() {
 
       <div className="card">
         <h2>Usage</h2>
-        <pre>{`import { usePlugin } from './bridge';
-import { camera } from '@webview-ts/shared';
+        <pre>{`import { usePlugin } from '../bridge';
+import { camera } from '@example/plugins';
+import type { TakePhotoResponse } from '@example/plugins';
 
 const { takePhoto, pickImage, recordVideo } = usePlugin(camera);
 
-const photo = await takePhoto({ quality: 0.8 });
-// photo: { uri: string; width: number; height: number }`}</pre>
+const photo: TakePhotoResponse = await takePhoto({ quality: 0.8 });`}</pre>
       </div>
     </div>
   );

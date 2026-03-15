@@ -1,14 +1,33 @@
-export { camera } from './camera';
-export type { CameraActions } from './camera';
+export { camera, CameraActions, cameraFallback } from './camera';
+export { storage, StorageActions, storageFallback } from './storage';
+export { location, LocationActions, locationFallback } from './location';
+export { biometric, BiometricActions, biometricFallback } from './biometric';
+export { haptics, HapticsActions, hapticsFallback } from './haptics';
 
-export { storage } from './storage';
-export type { StorageActions } from './storage';
+// Plugin types
+export type {
+  TakePhotoPayload,
+  TakePhotoResponse,
+  PickImagePayload,
+  PickImageResponse,
+  RecordVideoPayload,
+  RecordVideoResponse,
+} from './camera';
 
-export { location } from './location';
-export type { LocationActions } from './location';
+export type {
+  SetItemPayload,
+  GetItemPayload,
+  GetItemResponse,
+  RemoveItemPayload,
+  GetAllKeysResponse,
+} from './storage';
 
-export { biometric } from './biometric';
-export type { BiometricActions } from './biometric';
+export type { Position, WatchPositionResponse, ClearWatchPayload } from './location';
 
-export { haptics } from './haptics';
-export type { HapticsActions } from './haptics';
+export type {
+  CheckAvailabilityResponse,
+  AuthenticatePayload,
+  AuthenticateResponse,
+} from './biometric';
+
+export type { ImpactPayload, NotificationPayload } from './haptics';

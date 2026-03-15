@@ -1,24 +1,29 @@
 import { useState } from 'react';
-import { location, usePlugin, useBridge } from '../bridge';
+import { usePlugin, useBridge, useEvent } from '../bridge';
+import { location, type Position } from '@example/plugins';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
   const { isAvailable } = useBridge();
-  const [position, setPosition] = useState<{
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  } | null>(null);
+  const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [livePosition, setLivePosition] = useState<Position | null>(null);
+  const [eventCount, setEventCount] = useState(0);
+
+  // Native → Web push event: 위치가 바뀔 때마다 호스트가 보내주는 이벤트 수신
+  useEvent<Position>('location.updated', (pos) => {
+    setLivePosition(pos);
+    setEventCount((c) => c + 1);
+  });
 
   const handleGetCurrentPosition = async () => {
     setLoading(true);
     setError(null);
     setPosition(null);
     try {
-      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const pos = await getCurrentPosition();
       setPosition(pos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get location');
@@ -31,7 +36,7 @@ function LocationPage() {
     if (watchId !== null) return;
     setError(null);
     try {
-      const res = await watchPosition({ enableHighAccuracy: true, interval: 10000 });
+      const res = await watchPosition();
       setWatchId(res.watchId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to watch position');
@@ -41,7 +46,7 @@ function LocationPage() {
   const handleClearWatch = async () => {
     if (watchId === null) return;
     try {
-      await clearWatch(watchId);
+      await clearWatch({ watchId });
       setWatchId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear watch');
@@ -108,14 +113,35 @@ function LocationPage() {
       )}
 
       <div className="card">
+        <h2>Live Position (useEvent)</h2>
+        <p style={{ color: '#666', marginBottom: '0.5rem' }}>
+          Listens for <code>location.updated</code> events pushed from Native host.
+        </p>
+        {livePosition ? (
+          <div className="result success">
+            <p>
+              <strong>Live:</strong> {livePosition.latitude.toFixed(6)},{' '}
+              {livePosition.longitude.toFixed(6)}
+            </p>
+            <p>
+              <strong>Updates received:</strong> {eventCount}
+            </p>
+          </div>
+        ) : (
+          <div className="result">No events received yet.</div>
+        )}
+      </div>
+
+      <div className="card">
         <h2>Usage</h2>
-        <pre>{`import { usePlugin } from './bridge';
-import { location } from '@webview-ts/shared';
+        <pre>{`// Request-Response: 한 번 요청, 한 번 응답
+const { getCurrentPosition } = usePlugin(location);
+const pos = await getCurrentPosition();
 
-const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
-
-const pos = await getCurrentPosition({ enableHighAccuracy: true });
-// pos: { latitude: number; longitude: number; accuracy: number }`}</pre>
+// Event: 네이티브가 push할 때마다 수신
+useEvent<Position>('location.updated', (pos) => {
+  setPosition(pos);
+});`}</pre>
       </div>
     </div>
   );
