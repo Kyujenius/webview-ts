@@ -1,67 +1,45 @@
 /**
- * Zod schemas for runtime validation of bridge messages
+ * Pure TypeScript type guards for runtime validation of bridge messages.
+ * Zero dependencies — no Zod, no schema library.
  */
 
-import { z } from 'zod';
+import type { BridgeMessage, BridgeResponse, BridgeEvent } from '../types/message';
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 /**
- * Schema for bridge error
+ * Type guard for BridgeMessage
  */
-export const bridgeErrorSchema = z.object({
-  code: z.string(),
-  message: z.string(),
-  details: z.record(z.unknown()).optional(),
-});
+export function isBridgeMessage(value: unknown): value is BridgeMessage {
+  return (
+    isObject(value) &&
+    typeof value.id === 'string' &&
+    typeof value.action === 'string' &&
+    typeof value.timestamp === 'number'
+  );
+}
 
 /**
- * Schema for bridge message
+ * Type guard for BridgeResponse
  */
-export const bridgeMessageSchema = z.object({
-  id: z.string(),
-  action: z.string(),
-  payload: z.unknown().optional(),
-  timestamp: z.number(),
-});
+export function isBridgeResponse(value: unknown): value is BridgeResponse {
+  return (
+    isObject(value) &&
+    typeof value.id === 'string' &&
+    typeof value.success === 'boolean' &&
+    typeof value.timestamp === 'number'
+  );
+}
 
 /**
- * Schema for bridge response
+ * Type guard for BridgeEvent
  */
-export const bridgeResponseSchema = z.object({
-  id: z.string(),
-  success: z.boolean(),
-  data: z.unknown().optional(),
-  error: bridgeErrorSchema.optional(),
-  timestamp: z.number(),
-});
-
-/**
- * Schema for bridge event
- */
-export const bridgeEventSchema = z.object({
-  event: z.string(),
-  payload: z.unknown(),
-  timestamp: z.number(),
-});
-
-/**
- * Schema for typed bridge message
- */
-export const typedBridgeMessageSchema = z.object({
-  type: z.enum(['request', 'response', 'event']),
-  data: z.union([bridgeMessageSchema, bridgeResponseSchema, bridgeEventSchema]),
-});
-
-/**
- * Type guards using Zod
- */
-export const isBridgeMessage = (value: unknown): boolean => {
-  return bridgeMessageSchema.safeParse(value).success;
-};
-
-export const isBridgeResponse = (value: unknown): boolean => {
-  return bridgeResponseSchema.safeParse(value).success;
-};
-
-export const isBridgeEvent = (value: unknown): boolean => {
-  return bridgeEventSchema.safeParse(value).success;
-};
+export function isBridgeEvent(value: unknown): value is BridgeEvent {
+  return (
+    isObject(value) &&
+    typeof value.event === 'string' &&
+    typeof value.timestamp === 'number'
+  );
+}

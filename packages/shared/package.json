@@ -26,9 +26,6 @@
     "lint": "eslint src",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "zod": "^3.23.8"
-  },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "tsup": "^8.1.0",
