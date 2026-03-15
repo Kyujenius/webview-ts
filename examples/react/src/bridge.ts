@@ -12,7 +12,7 @@ import {
   hapticsFallback,
 } from '@example/plugins';
 
-export const { useBridge, useAction, useEvent, usePlugin } = createBridgeReact({
+export const { BridgeProvider, useBridge, useAction, useEvent, usePlugin } = createBridgeReact({
   plugins: [camera, storage, location, biometric, haptics],
   config: {
     timeout: 5000,
