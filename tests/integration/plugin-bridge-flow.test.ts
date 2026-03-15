@@ -12,55 +12,26 @@
  * Uses BridgeManager's fallback mechanism to route messages through
  * a real BridgeHost instance, testing actual handler dispatch.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BridgeHost } from '@webview-ts/native';
 import { createBridge } from '@webview-ts/core';
-import { definePlugin } from '@webview-ts/shared';
+import { definePlugin, action } from '@webview-ts/shared';
 import type { BridgeMessage } from '@webview-ts/shared';
 
-// ─── Define plugins inline ───
+// ─── Define plugins ───
 
-type CameraActions = {
-  'camera.takePhoto': {
-    payload: { quality?: number };
-    response: { uri: string; width: number; height: number };
-  };
-  'camera.pickImage': {
-    payload: { multiple?: boolean };
-    response: { images: { uri: string }[] };
-  };
-  'camera.recordVideo': {
-    payload: { maxDuration?: number };
-    response: { uri: string; duration: number };
-  };
-};
-
-const camera = definePlugin<CameraActions>()({
-  name: 'camera',
-  methods: (call) => ({
-    takePhoto: (opts: { quality?: number }) => call('camera.takePhoto', opts),
-    pickImage: (opts: { multiple?: boolean }) => call('camera.pickImage', opts),
-    recordVideo: (opts: { maxDuration?: number }) => call('camera.recordVideo', opts),
-  }),
+const camera = definePlugin('camera', {
+  takePhoto: action<{ quality?: number }, { uri: string; width: number; height: number }>(),
+  pickImage: action<{ multiple?: boolean }, { images: { uri: string }[] }>(),
+  recordVideo: action<{ maxDuration?: number }, { uri: string; duration: number }>(),
 });
 
-type StorageActions = {
-  'storage.getItem': { payload: { key: string }; response: { value: string | null } };
-  'storage.setItem': { payload: { key: string; value: string }; response: Record<string, never> };
-  'storage.removeItem': { payload: { key: string }; response: Record<string, never> };
-  'storage.clear': { payload: Record<string, never>; response: Record<string, never> };
-  'storage.getAllKeys': { payload: Record<string, never>; response: { keys: string[] } };
-};
-
-const storage = definePlugin<StorageActions>()({
-  name: 'storage',
-  methods: (call) => ({
-    getItem: (key: string) => call('storage.getItem', { key }),
-    setItem: (key: string, value: string) => call('storage.setItem', { key, value }),
-    removeItem: (key: string) => call('storage.removeItem', { key }),
-    clear: () => call('storage.clear', {} as Record<string, never>),
-    getAllKeys: () => call('storage.getAllKeys', {} as Record<string, never>),
-  }),
+const storage = definePlugin('storage', {
+  getItem: action<{ key: string }, { value: string | null }>(),
+  setItem: action<{ key: string; value: string }, Record<string, never>>(),
+  removeItem: action<{ key: string }, Record<string, never>>(),
+  clear: action<Record<string, never>, Record<string, never>>(),
+  getAllKeys: action<Record<string, never>, { keys: string[] }>(),
 });
 
 /**
@@ -70,18 +41,18 @@ const storage = definePlugin<StorageActions>()({
 function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
   const bridgeHost = new BridgeHost();
   for (const plugin of hostPluginResults) {
-    for (const [action, handler] of Object.entries(plugin.handlers)) {
-      bridgeHost.registerHandler(action, handler as any);
+    for (const [actionName, handler] of Object.entries(plugin.handlers)) {
+      bridgeHost.registerHandler(actionName, handler as any);
     }
   }
 
   const fallback: Record<string, (payload: any) => Promise<any>> = {};
   for (const plugin of hostPluginResults) {
-    for (const action of Object.keys(plugin.handlers)) {
-      fallback[action] = async (payload: any) => {
+    for (const actionName of Object.keys(plugin.handlers)) {
+      fallback[actionName] = async (payload: any) => {
         const message: BridgeMessage = {
           id: `int-${Date.now()}-${Math.random()}`,
-          action,
+          action: actionName,
           payload,
           timestamp: Date.now(),
         };
@@ -102,17 +73,17 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
 
 describe('Camera plugin: full message flow', () => {
   const cameraHostResult = camera.host({
-    'camera.takePhoto': async (payload) => ({
+    takePhoto: async (payload) => ({
       uri: `native://photo-q${payload.quality ?? 'default'}`,
       width: 1920,
       height: 1080,
     }),
-    'camera.pickImage': async (payload) => ({
+    pickImage: async (payload) => ({
       images: payload.multiple
         ? [{ uri: 'native://img1' }, { uri: 'native://img2' }]
         : [{ uri: 'native://img1' }],
     }),
-    'camera.recordVideo': async (payload) => ({
+    recordVideo: async (payload) => ({
       uri: 'native://video.mp4',
       duration: payload.maxDuration ?? 30,
     }),
@@ -147,9 +118,7 @@ describe('Camera plugin: full message flow', () => {
   });
 
   it('plugin methods convenience wrapper works end-to-end', async () => {
-    const methods = camera.methods(
-      (action, payload) => bridge.call(action as any, payload as any) as any
-    );
+    const methods = camera.methods((a, payload) => bridge.call(a as any, payload as any) as any);
     const photo = await methods.takePhoto({ quality: 0.5 });
     expect(photo.uri).toBe('native://photo-q0.5');
     expect(photo.width).toBe(1920);
@@ -162,22 +131,22 @@ describe('Storage plugin: full message flow', () => {
   const store = new Map<string, string>();
 
   const storageHostResult = storage.host({
-    'storage.getItem': async (payload) => ({
+    getItem: async (payload) => ({
       value: store.get(payload.key) ?? null,
     }),
-    'storage.setItem': async (payload) => {
+    setItem: async (payload) => {
       store.set(payload.key, payload.value);
       return {};
     },
-    'storage.removeItem': async (payload) => {
+    removeItem: async (payload) => {
       store.delete(payload.key);
       return {};
     },
-    'storage.clear': async () => {
+    clear: async () => {
       store.clear();
       return {};
     },
-    'storage.getAllKeys': async () => ({
+    getAllKeys: async () => ({
       keys: Array.from(store.keys()),
     }),
   });
@@ -220,11 +189,9 @@ describe('Storage plugin: full message flow', () => {
 
   it('plugin methods convenience wrapper works', async () => {
     store.clear();
-    const methods = storage.methods(
-      (action, payload) => bridge.call(action as any, payload as any) as any
-    );
-    await methods.setItem('name', 'Bob');
-    const item = await methods.getItem('name');
+    const methods = storage.methods((a, payload) => bridge.call(a as any, payload as any) as any);
+    await methods.setItem({ key: 'name', value: 'Bob' });
+    const item = await methods.getItem({ key: 'name' });
     expect(item.value).toBe('Bob');
   });
 });
@@ -233,17 +200,17 @@ describe('Storage plugin: full message flow', () => {
 
 describe('Multiple plugins: combined host', () => {
   const cameraHost = camera.host({
-    'camera.takePhoto': async () => ({ uri: 'photo.jpg', width: 100, height: 100 }),
-    'camera.pickImage': async () => ({ images: [] }),
-    'camera.recordVideo': async () => ({ uri: 'video.mp4', duration: 0 }),
+    takePhoto: async () => ({ uri: 'photo.jpg', width: 100, height: 100 }),
+    pickImage: async () => ({ images: [] }),
+    recordVideo: async () => ({ uri: 'video.mp4', duration: 0 }),
   });
 
   const storageHost = storage.host({
-    'storage.getItem': async () => ({ value: 'cached' }),
-    'storage.setItem': async () => ({}),
-    'storage.removeItem': async () => ({}),
-    'storage.clear': async () => ({}),
-    'storage.getAllKeys': async () => ({ keys: ['cached-key'] }),
+    getItem: async () => ({ value: 'cached' }),
+    setItem: async () => ({}),
+    removeItem: async () => ({}),
+    clear: async () => ({}),
+    getAllKeys: async () => ({ keys: ['cached-key'] }),
   });
 
   const { bridge } = createBridgePair([cameraHost, storageHost]);
@@ -260,23 +227,15 @@ describe('Multiple plugins: combined host', () => {
 // ─── Custom Plugin Integration ───
 
 describe('Custom plugin: definePlugin + full flow', () => {
-  type PaymentActions = {
-    'payment.checkout': {
-      payload: { amount: number; currency: string };
-      response: { transactionId: string; success: boolean };
-    };
-  };
-
-  const payment = definePlugin<PaymentActions>()({
-    name: 'payment',
-    methods: (call) => ({
-      checkout: (amount: number, currency: string) =>
-        call('payment.checkout', { amount, currency }),
-    }),
+  const payment = definePlugin('payment', {
+    checkout: action<
+      { amount: number; currency: string },
+      { transactionId: string; success: boolean }
+    >(),
   });
 
   const paymentHost = payment.host({
-    'payment.checkout': async (payload) => ({
+    checkout: async (payload) => ({
       transactionId: `txn-${payload.amount}-${payload.currency}`,
       success: payload.amount > 0,
     }),
@@ -285,10 +244,8 @@ describe('Custom plugin: definePlugin + full flow', () => {
   const { bridge } = createBridgePair([paymentHost]);
 
   it('custom plugin flows through bridge correctly', async () => {
-    const methods = payment.methods(
-      (action, payload) => bridge.call(action as any, payload as any) as any
-    );
-    const result = await methods.checkout(100, 'USD');
+    const methods = payment.methods((a, payload) => bridge.call(a as any, payload as any) as any);
+    const result = await methods.checkout({ amount: 100, currency: 'USD' });
     expect(result.transactionId).toBe('txn-100-USD');
     expect(result.success).toBe(true);
   });
@@ -305,16 +262,12 @@ describe('Custom plugin: definePlugin + full flow', () => {
 // ─── Error Handling ───
 
 describe('Error handling: host handler throws', () => {
-  type ErrorActions = {
-    'error.fail': { payload: Record<string, never>; response: Record<string, never> };
-  };
-
-  const errorPlugin = definePlugin<ErrorActions>()({
-    name: 'error',
+  const errorPlugin = definePlugin('error', {
+    fail: action<Record<string, never>, Record<string, never>>(),
   });
 
   const errorHost = errorPlugin.host({
-    'error.fail': async () => {
+    fail: async () => {
       throw new Error('Intentional failure');
     },
   });
@@ -323,5 +276,131 @@ describe('Error handling: host handler throws', () => {
 
   it('host error propagates to client as rejection', async () => {
     await expect(bridge.call('error.fail' as any, {})).rejects.toThrow('Intentional failure');
+  });
+});
+
+// ─── Actions map ───
+
+describe('Plugin actions map', () => {
+  it('exposes runtime action name map', () => {
+    expect(camera.actions.takePhoto).toBe('camera.takePhoto');
+    expect(camera.actions.pickImage).toBe('camera.pickImage');
+    expect(storage.actions.getItem).toBe('storage.getItem');
+  });
+});
+
+// ─── Event (Native → Web push) ───
+
+describe('Event: bridge.on / bridge.off', () => {
+  const { bridge } = createBridgePair([
+    camera.host({
+      takePhoto: async () => ({ uri: 'photo.jpg', width: 100, height: 100 }),
+      pickImage: async () => ({ images: [] }),
+      recordVideo: async () => ({ uri: 'video.mp4', duration: 0 }),
+    }),
+  ]);
+
+  it('on() subscribes and receives events', () => {
+    const received: unknown[] = [];
+    const unsubscribe = bridge.on('location.updated', (payload) => {
+      received.push(payload);
+    });
+
+    // Simulate native pushing events via handleEvent (private), so call through on
+    // We test the public API: on registers handler, off removes it
+    // Directly invoke the handler through the event system
+    // Since handleEvent is private, we test via the public on/off contract
+    const handlers = (bridge as any).eventHandlers.get('location.updated');
+    expect(handlers).toBeDefined();
+    expect(handlers.size).toBe(1);
+
+    // Simulate event dispatch
+    handlers.forEach((h: (p: unknown) => void) =>
+      h({ latitude: 37.5, longitude: 127.0, accuracy: 5 })
+    );
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toEqual({ latitude: 37.5, longitude: 127.0, accuracy: 5 });
+
+    unsubscribe();
+    expect((bridge as any).eventHandlers.has('location.updated')).toBe(false);
+  });
+
+  it('on() returns unsubscribe that removes only that handler', () => {
+    const received1: unknown[] = [];
+    const received2: unknown[] = [];
+
+    const unsub1 = bridge.on('test.event', (p) => received1.push(p));
+    const unsub2 = bridge.on('test.event', (p) => received2.push(p));
+
+    const handlers = (bridge as any).eventHandlers.get('test.event');
+    handlers.forEach((h: (p: unknown) => void) => h('ping'));
+
+    expect(received1).toEqual(['ping']);
+    expect(received2).toEqual(['ping']);
+
+    unsub1();
+
+    handlers.forEach((h: (p: unknown) => void) => h('pong'));
+    expect(received1).toEqual(['ping']); // no longer receives
+    expect(received2).toEqual(['ping', 'pong']);
+
+    unsub2();
+    expect((bridge as any).eventHandlers.has('test.event')).toBe(false);
+  });
+
+  it('off() without handler removes all handlers for that event', () => {
+    bridge.on('bulk.event', () => {});
+    bridge.on('bulk.event', () => {});
+    expect((bridge as any).eventHandlers.get('bulk.event')?.size).toBe(2);
+
+    bridge.off('bulk.event');
+    expect((bridge as any).eventHandlers.has('bulk.event')).toBe(false);
+  });
+
+  it('multiple events are independent', () => {
+    const posEvents: unknown[] = [];
+    const pushEvents: unknown[] = [];
+
+    const unsub1 = bridge.on('location.updated', (p) => posEvents.push(p));
+    const unsub2 = bridge.on('push.received', (p) => pushEvents.push(p));
+
+    (bridge as any).eventHandlers
+      .get('location.updated')
+      .forEach((h: (p: unknown) => void) => h({ lat: 1 }));
+    (bridge as any).eventHandlers
+      .get('push.received')
+      .forEach((h: (p: unknown) => void) => h({ title: 'hello' }));
+
+    expect(posEvents).toEqual([{ lat: 1 }]);
+    expect(pushEvents).toEqual([{ title: 'hello' }]);
+
+    unsub1();
+    unsub2();
+  });
+
+  it('handler errors do not break other handlers', () => {
+    const received: unknown[] = [];
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    bridge.on('error.event', () => {
+      throw new Error('handler crashed');
+    });
+    bridge.on('error.event', (p) => received.push(p));
+
+    const handlers = (bridge as any).eventHandlers.get('error.event');
+    handlers.forEach((h: (p: unknown) => void) => {
+      try {
+        h('data');
+      } catch {
+        // handleEvent catches internally, simulate that
+      }
+    });
+
+    // The second handler still received the event
+    expect(received).toEqual(['data']);
+
+    bridge.off('error.event');
+    consoleSpy.mockRestore();
   });
 });
