@@ -2,7 +2,13 @@
   "name": "@ts-bridge/react",
   "version": "0.1.0",
   "type": "module",
-  "description": "React hooks and providers for ts-bridge",
+  "description": "React hooks and provider for ts-bridge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/ts-bridge",
+    "directory": "packages/clients/react"
+  },
+  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

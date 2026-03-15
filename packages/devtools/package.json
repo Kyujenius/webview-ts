@@ -1,7 +1,12 @@
 {
   "name": "@ts-bridge/devtools",
   "version": "0.1.0",
-  "description": "Communication visualization and debugging tools for ts-bridge",
+  "description": "Visual debugging tools for ts-bridge communication",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/ts-bridge",
+    "directory": "packages/devtools"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -44,15 +49,6 @@
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   },
-  "keywords": [
-    "bridge",
-    "webview",
-    "react-native",
-    "typescript",
-    "devtools",
-    "debugging",
-    "visualization"
-  ],
-  "author": "",
+  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
   "license": "MIT"
 }

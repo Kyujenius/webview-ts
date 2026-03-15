@@ -1,7 +1,14 @@
 {
   "name": "@ts-bridge/core",
   "version": "0.1.0",
-  "description": "Core bridge engine for web-side WebView-Native communication",
+  "description": "Web-side bridge engine with middleware pipeline",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/ts-bridge",
+    "directory": "packages/core"
+  },
+  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

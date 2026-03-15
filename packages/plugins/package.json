@@ -1,7 +1,14 @@
 {
   "name": "@ts-bridge/plugins",
   "version": "0.1.0",
-  "description": "Standard plugins for ts-bridge",
+  "description": "Plugin presets for ts-bridge (camera, location, storage, biometric)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/ts-bridge",
+    "directory": "packages/plugins"
+  },
+  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

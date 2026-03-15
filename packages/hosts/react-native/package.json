@@ -2,6 +2,13 @@
   "name": "@ts-bridge/native",
   "version": "0.1.0",
   "description": "React Native host implementation for ts-bridge",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/ts-bridge",
+    "directory": "packages/hosts/react-native"
+  },
+  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
