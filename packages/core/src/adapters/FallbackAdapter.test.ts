@@ -5,7 +5,11 @@ describe('Fallback mode', () => {
   it('should use fallback handlers when native is unavailable', async () => {
     const bridge = createBridge({
       fallback: {
-        'camera.take': async (payload: any) => ({ uri: '/mock/photo.jpg', width: 100, height: 100 }),
+        'camera.take': async (_payload: any) => ({
+          uri: '/mock/photo.jpg',
+          width: 100,
+          height: 100,
+        }),
       },
     });
     const result = await bridge.call('camera.take', { quality: 0.8 });
@@ -23,7 +27,7 @@ describe('Fallback mode', () => {
     await expect(bridge.call('any.action', {})).rejects.toThrow();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('[ts-bridge fallback]'),
-      expect.anything(),
+      expect.anything()
     );
     consoleSpy.mockRestore();
   });
@@ -33,7 +37,11 @@ describe('Fallback mode', () => {
     win.webkit = { messageHandlers: { tsBridge: { postMessage: vi.fn() } } };
     const fallbackFn = vi.fn();
     const bridge = createBridge({ fallback: { 'test.action': fallbackFn }, timeout: 50 });
-    try { await bridge.call('test.action', {}); } catch { /* timeout expected */ }
+    try {
+      await bridge.call('test.action', {});
+    } catch {
+      /* timeout expected */
+    }
     expect(fallbackFn).not.toHaveBeenCalled();
     delete win.webkit;
   });

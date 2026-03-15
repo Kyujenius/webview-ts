@@ -1,4 +1,4 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { definePlugin } from './define';
 
 type TestActions = {
@@ -44,7 +44,10 @@ describe('definePlugin', () => {
       'test.greet': async (payload) => ({ greeting: `Hello ${payload.name}` }),
     });
 
-    const echoResult = await result.handlers['test.echo']({ message: 'hi' }, { messageId: '1', timestamp: 0 });
+    const echoResult = await result.handlers['test.echo'](
+      { message: 'hi' },
+      { messageId: '1', timestamp: 0 }
+    );
     expect(echoResult).toEqual({ echoed: 'hi' });
   });
 

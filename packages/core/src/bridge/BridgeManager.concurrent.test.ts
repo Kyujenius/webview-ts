@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { BridgeManager } from './BridgeManager';
 
 describe('BridgeManager - Concurrent Requests', () => {
@@ -20,9 +20,7 @@ describe('BridgeManager - Concurrent Requests', () => {
       },
     });
 
-    const results = await Promise.all(
-      Array.from({ length: 10 }, () => bridge.call('counter.get'))
-    );
+    const results = await Promise.all(Array.from({ length: 10 }, () => bridge.call('counter.get')));
 
     expect(results).toHaveLength(10);
     results.forEach((r) => expect(r).toHaveProperty('count'));
@@ -57,8 +55,7 @@ describe('BridgeManager - Concurrent Requests', () => {
       maxConcurrentRequests: 2,
       enableDeduplication: false,
       fallback: {
-        'slow.action': () =>
-          new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 500)),
+        'slow.action': () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 500)),
       },
     });
 
@@ -69,8 +66,6 @@ describe('BridgeManager - Concurrent Requests', () => {
     const results = await Promise.all(promises);
     const errors = results.filter((r) => r instanceof Error);
     expect(errors.length).toBeGreaterThan(0);
-    expect(
-      errors.some((e) => e.message.includes('Message queue full'))
-    ).toBe(true);
+    expect(errors.some((e) => e.message.includes('Message queue full'))).toBe(true);
   });
 });

@@ -8,7 +8,7 @@ export type PluginCall<TActions extends Record<string, ActionDefinitionShape>> =
   K extends keyof TActions & string,
 >(
   action: K,
-  payload: TActions[K]['payload'],
+  payload: TActions[K]['payload']
 ) => Promise<TActions[K]['response']>;
 
 /** Plugin definition input */
@@ -37,7 +37,7 @@ export interface PluginInstance<
 export type HostHandlers<TActions extends Record<string, ActionDefinitionShape>> = {
   [K in keyof TActions & string]: (
     payload: TActions[K]['payload'],
-    context: RequestContext,
+    context: RequestContext
   ) => Promise<TActions[K]['response']> | TActions[K]['response'];
 };
 
@@ -54,10 +54,12 @@ export interface HostPluginResult {
 }
 
 /** Merge ActionMaps from multiple plugins into an intersection */
-export type MergePluginActions<T extends PluginInstance<any, any, any>[]> =
-  T extends [infer First extends PluginInstance<any, any, any>, ...infer Rest extends PluginInstance<any, any, any>[]]
-    ? First['_actionMap'] & MergePluginActions<Rest>
-    : {};
+export type MergePluginActions<T extends PluginInstance<any, any, any>[]> = T extends [
+  infer First extends PluginInstance<any, any, any>,
+  ...infer Rest extends PluginInstance<any, any, any>[],
+]
+  ? First['_actionMap'] & MergePluginActions<Rest>
+  : Record<string, never>;
 
 /** Extract plugin from a plugins array by reference */
 export type PluginFromArray<

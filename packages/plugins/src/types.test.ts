@@ -1,12 +1,5 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import type {
-  PluginInstance,
-  PluginCall,
-  HostHandlers,
-  HostPluginResult,
-  MergePluginActions,
-  ActionDefinitionShape,
-} from './types';
+import type { PluginInstance, PluginCall, HostHandlers, MergePluginActions } from './types';
 
 type TestActions = {
   'test.echo': { payload: { message: string }; response: { echoed: string } };
