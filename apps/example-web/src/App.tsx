@@ -1,4 +1,6 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { TsBridgeDevtools } from '@ts-bridge/devtools';
+import { useBridge } from './bridge';
 import HomePage from './pages/HomePage';
 import CameraPage from './pages/CameraPage';
 import LocationPage from './pages/LocationPage';
@@ -8,6 +10,7 @@ import DevToolsPage from './pages/DevToolsPage';
 
 function App() {
   const location = useLocation();
+  const { bridge } = useBridge();
 
   const isActive = (path: string) => {
     return location.pathname === path ? 'active' : '';
@@ -60,6 +63,8 @@ function App() {
           <Route path="/devtools" element={<DevToolsPage />} />
         </Routes>
       </div>
+
+      <TsBridgeDevtools bridge={bridge} />
     </>
   );
 }
