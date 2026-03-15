@@ -1,7 +1,7 @@
 {
   "name": "@ts-bridge/plugins",
   "version": "0.1.0",
-  "description": "Plugin presets for ts-bridge (camera, location, storage, biometric)",
+  "description": "Plugin system for ts-bridge — definePlugin builder with full type inference",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -33,7 +33,9 @@
     "lint": "eslint src",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ts-bridge/shared": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "eslint": "^8.56.0",

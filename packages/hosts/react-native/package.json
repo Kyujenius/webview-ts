@@ -34,13 +34,13 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/plugins": "workspace:^",
+    "@ts-bridge/plugins": "workspace:*",
     "@ts-bridge/shared": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
+    "react": ">=17.0.0",
     "react-native": ">=0.70.0",
-    "react-native-webview": ">=13.0.0"
+    "react-native-webview": ">=11.0.0"
   },
   "peerDependenciesMeta": {
     "react": {

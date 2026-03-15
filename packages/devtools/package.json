@@ -32,11 +32,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ts-bridge/core": "workspace:*",
     "@ts-bridge/shared": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18.0.0"
+    "react": ">=17.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
