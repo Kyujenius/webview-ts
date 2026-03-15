@@ -2,7 +2,20 @@
  * Core bridge types and interfaces
  */
 
-import type { BridgeMessage, BridgeResponse } from './message';
+import type { BridgeMessage, BridgeResponse, BridgeError } from './message';
+
+export interface RetryConfig {
+  maxAttempts: number;
+  delay: number;
+  exponentialBackoff?: boolean;
+}
+
+export interface ErrorContext {
+  action: string;
+  payload?: unknown;
+  attempt: number;
+  timestamp: number;
+}
 
 /**
  * Bridge configuration options
@@ -31,6 +44,16 @@ export interface BridgeConfig {
    * @default true
    */
   enableDeduplication?: boolean;
+
+  /**
+   * Global error handler
+   */
+  onError?: (error: BridgeError, context: ErrorContext) => void;
+
+  /**
+   * Global retry configuration
+   */
+  retry?: RetryConfig;
 }
 
 /**
@@ -45,22 +68,7 @@ export interface BridgeCallOptions {
   /**
    * Retry configuration
    */
-  retry?: {
-    /**
-     * Number of retry attempts
-     */
-    maxAttempts: number;
-
-    /**
-     * Delay between retries in milliseconds
-     */
-    delay: number;
-
-    /**
-     * Whether to use exponential backoff
-     */
-    exponentialBackoff?: boolean;
-  };
+  retry?: RetryConfig;
 }
 
 /**
