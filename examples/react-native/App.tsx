@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useBridgeHost } from '@ts-bridge/native';
-import { camera, storage, location, biometric, haptics } from '@ts-bridge/shared';
+import { camera, storage, location, biometric, haptics } from '@example/plugins';
 
 // In-memory storage (simulating AsyncStorage)
 const memoryStore = new Map<string, string>();

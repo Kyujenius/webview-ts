@@ -1,8 +1,8 @@
 {
-  "name": "@ts-bridge/example-app",
-  "version": "0.1.0",
+  "name": "@example/react",
+  "version": "0.0.0",
   "private": true,
-  "description": "Example application demonstrating ts-bridge usage",
+  "description": "React example app demonstrating ts-bridge usage",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,9 +12,10 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@example/plugins": "workspace:*",
     "@ts-bridge/core": "workspace:*",
     "@ts-bridge/devtools": "workspace:*",
-    "@ts-bridge/react": "workspace:^",
+    "@ts-bridge/react": "workspace:*",
     "@ts-bridge/shared": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
