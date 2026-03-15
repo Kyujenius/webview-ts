@@ -5,6 +5,7 @@
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
+import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { PluginRegistry } from '../plugins/PluginRegistry';
 import { generateMessageId } from '../utils/id-generator';
@@ -62,6 +63,14 @@ export class BridgeManager<
     };
 
     this.adapter = createNativeAdapter();
+
+    if (!this.adapter.isAvailable() && this.config.fallback) {
+      this.adapter = new FallbackAdapter(
+        this.config.fallback as true | import('@ts-bridge/shared').FallbackMap,
+        (response) => this.handleResponse(response),
+      );
+    }
+
     this.callbacks = new CallbackRegistry();
     this.queue = new MessageQueue({
       enableDeduplication: this.config.enableDeduplication,
