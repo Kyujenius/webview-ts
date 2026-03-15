@@ -1,0 +1,54 @@
+{
+  "name": "@ts-bridge/devtools",
+  "version": "0.1.0",
+  "description": "Communication visualization and debugging tools for ts-bridge",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@ts-bridge/shared": "workspace:*",
+    "@ts-bridge/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  },
+  "keywords": [
+    "bridge",
+    "webview",
+    "react-native",
+    "typescript",
+    "devtools",
+    "debugging",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT"
+}

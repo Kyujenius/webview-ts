@@ -1,0 +1,166 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { BridgeHost } from './BridgeHost';
+import type { BridgeMessage } from '@ts-bridge/shared';
+
+describe('BridgeHost', () => {
+  let bridgeHost: BridgeHost;
+  let messageCallback: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    bridgeHost = new BridgeHost({
+      debug: false,
+      timeout: 5000,
+    });
+
+    messageCallback = vi.fn();
+    bridgeHost.setMessageCallback(messageCallback);
+  });
+
+  describe('initialization', () => {
+    it('should create bridge host with default config', () => {
+      const defaultHost = new BridgeHost();
+      const config = defaultHost.getConfig();
+
+      expect(config.debug).toBe(false);
+      expect(config.timeout).toBe(30000);
+      expect(typeof config.onError).toBe('function');
+    });
+
+    it('should create bridge host with custom config', () => {
+      const customHost = new BridgeHost({
+        debug: true,
+        timeout: 10000,
+      });
+
+      const config = customHost.getConfig();
+      expect(config.debug).toBe(true);
+      expect(config.timeout).toBe(10000);
+    });
+  });
+
+  describe('action registration', () => {
+    it('should register action handler', () => {
+      const handler = vi.fn();
+      expect(() => {
+        bridgeHost.registerAction('testAction', handler);
+      }).not.toThrow();
+    });
+
+    it('should throw when registering duplicate action', () => {
+      const handler = vi.fn();
+      bridgeHost.registerAction('testAction', handler);
+
+      expect(() => {
+        bridgeHost.registerAction('testAction', handler);
+      }).toThrow("Action 'testAction' is already registered");
+    });
+
+    it('should unregister action handler', () => {
+      const handler = vi.fn();
+      bridgeHost.registerAction('testAction', handler);
+      bridgeHost.unregisterAction('testAction');
+
+      // Should be able to register again after unregistering
+      expect(() => {
+        bridgeHost.registerAction('testAction', handler);
+      }).not.toThrow();
+    });
+  });
+
+  describe('message handling', () => {
+    it('should handle valid message and send response', async () => {
+      const handler = vi.fn().mockResolvedValue({ result: 'success' });
+      bridgeHost.registerAction('testAction', handler);
+
+      const message: BridgeMessage = {
+        id: 'msg-1',
+        action: 'testAction',
+        payload: { test: 'data' },
+        timestamp: Date.now(),
+      };
+
+      await bridgeHost.handleMessageString(JSON.stringify(message));
+
+      expect(handler).toHaveBeenCalledWith(
+        { test: 'data' },
+        expect.objectContaining({
+          messageId: 'msg-1',
+          metadata: {},
+        })
+      );
+
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"success":true')
+      );
+    });
+
+    it('should send error response for unregistered action', async () => {
+      const message: BridgeMessage = {
+        id: 'msg-1',
+        action: 'unknownAction',
+        timestamp: Date.now(),
+      };
+
+      await bridgeHost.handleMessageString(JSON.stringify(message));
+
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"success":false')
+      );
+    });
+
+    it('should send error response when handler throws', async () => {
+      const handler = vi.fn().mockRejectedValue(new Error('Handler error'));
+      bridgeHost.registerAction('testAction', handler);
+
+      const message: BridgeMessage = {
+        id: 'msg-1',
+        action: 'testAction',
+        timestamp: Date.now(),
+      };
+
+      await bridgeHost.handleMessageString(JSON.stringify(message));
+
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"success":false')
+      );
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('Handler error')
+      );
+    });
+  });
+
+  describe('event emission', () => {
+    it('should emit events to WebView', () => {
+      bridgeHost.emit('testEvent', { data: 'test' });
+
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"event":"testEvent"')
+      );
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"data":"test"')
+      );
+    });
+
+    it('should emit events without payload', () => {
+      bridgeHost.emit('testEvent');
+
+      expect(messageCallback).toHaveBeenCalledWith(
+        expect.stringContaining('"event":"testEvent"')
+      );
+    });
+  });
+
+  describe('destroy', () => {
+    it('should clean up resources', () => {
+      const handler = vi.fn();
+      bridgeHost.registerAction('testAction', handler);
+
+      bridgeHost.destroy();
+
+      // After destroy, should be able to register same action again
+      expect(() => {
+        bridgeHost.registerAction('testAction', handler);
+      }).not.toThrow();
+    });
+  });
+});
