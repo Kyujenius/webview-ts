@@ -7,11 +7,11 @@
 export { BridgeHost } from './bridge/BridgeHost';
 export type { BridgeHostConfig, ActionHandler, RequestContext } from './bridge/BridgeHost';
 
-export { MessageHandler, createMessageHandler } from './bridge/MessageHandler';
+export { createMessageHandler } from './bridge/MessageHandler';
 export type { MessageHandlerConfig, WebViewMessageEvent } from './bridge/MessageHandler';
 
 // Permissions
-export { PermissionManager, createPermissionManager } from './permissions/PermissionManager';
+export { createPermissionManager } from './permissions/PermissionManager';
 export type {
   PermissionManagerConfig,
   PermissionResult,

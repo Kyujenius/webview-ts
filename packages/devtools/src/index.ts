@@ -20,12 +20,11 @@ export {
 
 // Middleware
 export { DevToolsMiddleware, createDevToolsMiddleware } from './middleware/DevToolsMiddleware';
-export { TimeTracker, createTimeTracker } from './middleware/TimeTracker';
+export { createTimeTracker } from './middleware/TimeTracker';
 export type { PerformanceEntry } from './middleware/TimeTracker';
 
 // Logger
-export { DevToolsStoreImpl } from './logger/DevToolsStore';
-export { StructuredLogger, createStructuredLogger, LogLevel } from './logger/StructuredLogger';
+export { createStructuredLogger, LogLevel } from './logger/StructuredLogger';
 export type { LogEntry, LoggerConfig } from './logger/StructuredLogger';
 
 // Visualizer components
