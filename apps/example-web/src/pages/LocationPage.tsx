@@ -1,13 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { location } from '@ts-bridge/plugins';
-import { useBridge } from '../hooks/useBridge';
+import { usePlugin, useBridge } from '../bridge';
 
 function LocationPage() {
-  const { bridge, isAvailable } = useBridge();
-  const api = useMemo(
-    () => location.methods((action, payload) => bridge.send(action, payload)),
-    [bridge],
-  );
+  const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
+  const { isAvailable } = useBridge();
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
@@ -21,12 +18,8 @@ function LocationPage() {
     setLoading(true);
     setError(null);
     setPosition(null);
-
     try {
-      const pos = await api.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-      });
+      const pos = await getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
       setPosition(pos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get location');
@@ -36,18 +29,10 @@ function LocationPage() {
   };
 
   const handleWatchPosition = async () => {
-    if (watchId !== null) {
-      alert('Already watching position');
-      return;
-    }
-
+    if (watchId !== null) return;
     setError(null);
-
     try {
-      const res = await api.watchPosition({
-        enableHighAccuracy: true,
-        interval: 10000,
-      });
+      const res = await watchPosition({ enableHighAccuracy: true, interval: 10000 });
       setWatchId(res.watchId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to watch position');
@@ -55,13 +40,9 @@ function LocationPage() {
   };
 
   const handleClearWatch = async () => {
-    if (watchId === null) {
-      alert('Not watching position');
-      return;
-    }
-
+    if (watchId === null) return;
     try {
-      await api.clearWatch(watchId);
+      await clearWatch(watchId);
       setWatchId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear watch');
@@ -72,35 +53,20 @@ function LocationPage() {
     <div>
       <h1>Location Plugin</h1>
 
-      {!isAvailable && (
-        <div className="result error">
-          <strong>Native bridge not available.</strong> Location features require a React Native
-          environment.
-        </div>
-      )}
+      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Seoul, KR)'}
+      </div>
 
       <div className="card">
         <h2>Location Actions</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            className="button"
-            onClick={handleGetCurrentPosition}
-            disabled={loading || !isAvailable}
-          >
+          <button className="button" onClick={handleGetCurrentPosition} disabled={loading}>
             {loading ? 'Loading...' : 'Get Current Position'}
           </button>
-          <button
-            className="button button-secondary"
-            onClick={handleWatchPosition}
-            disabled={watchId !== null || !isAvailable}
-          >
+          <button className="button button-secondary" onClick={handleWatchPosition} disabled={watchId !== null}>
             {watchId !== null ? 'Watching...' : 'Watch Position'}
           </button>
-          <button
-            className="button button-secondary"
-            onClick={handleClearWatch}
-            disabled={watchId === null || !isAvailable}
-          >
+          <button className="button button-secondary" onClick={handleClearWatch} disabled={watchId === null}>
             Clear Watch
           </button>
         </div>
@@ -116,13 +82,8 @@ function LocationPage() {
         <div className="card">
           <h2>Current Position</h2>
           <div className="result success">
-            <p>
-              <strong>Location:</strong> {position.latitude.toFixed(6)},{' '}
-              {position.longitude.toFixed(6)}
-            </p>
-            <p>
-              <strong>Accuracy:</strong> ±{position.accuracy.toFixed(2)}m
-            </p>
+            <p><strong>Location:</strong> {position.latitude.toFixed(6)}, {position.longitude.toFixed(6)}</p>
+            <p><strong>Accuracy:</strong> ±{position.accuracy.toFixed(2)}m</p>
             <details style={{ marginTop: '1rem' }}>
               <summary>Full Data</summary>
               <pre>{JSON.stringify(position, null, 2)}</pre>
@@ -132,25 +93,14 @@ function LocationPage() {
       )}
 
       <div className="card">
-        <h2>API Reference</h2>
-        <pre>{`import { location } from '@ts-bridge/plugins';
+        <h2>Usage</h2>
+        <pre>{`import { usePlugin } from './bridge';
+import { location } from '@ts-bridge/plugins';
 
-const api = location.methods((action, payload) => bridge.send(action, payload));
+const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
 
-// Get current position
-const pos = await api.getCurrentPosition({
-  enableHighAccuracy: true,
-  timeout: 10000,
-});
-
-// Watch position changes
-const { watchId } = await api.watchPosition({
-  enableHighAccuracy: true,
-  interval: 10000,
-});
-
-// Clear position watch
-await api.clearWatch(watchId);`}</pre>
+const pos = await getCurrentPosition({ enableHighAccuracy: true });
+// pos: { latitude: number; longitude: number; accuracy: number }`}</pre>
       </div>
     </div>
   );

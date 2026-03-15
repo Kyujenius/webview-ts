@@ -1,13 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { biometric } from '@ts-bridge/plugins';
-import { useBridge } from '../hooks/useBridge';
+import { usePlugin, useBridge } from '../bridge';
 
 function BiometricPage() {
-  const { bridge, isAvailable } = useBridge();
-  const api = useMemo(
-    () => biometric.methods((action, payload) => bridge.send(action, payload)),
-    [bridge],
-  );
+  const { checkAvailability, authenticate } = usePlugin(biometric);
+  const { isAvailable } = useBridge();
   const [availability, setAvailability] = useState<{
     available: boolean;
     biometricTypes: string[];
@@ -22,9 +19,8 @@ function BiometricPage() {
   const handleCheckAvailability = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const result = await api.checkAvailability();
+      const result = await checkAvailability();
       setAvailability(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to check availability');
@@ -37,9 +33,8 @@ function BiometricPage() {
     setLoading(true);
     setError(null);
     setAuthResult(null);
-
     try {
-      const result = await api.authenticate('Authenticate to continue');
+      const result = await authenticate('Authenticate to continue');
       setAuthResult(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -52,31 +47,20 @@ function BiometricPage() {
     <div>
       <h1>Biometric Plugin</h1>
 
-      {!isAvailable && (
-        <div className="result error">
-          <strong>Native bridge not available.</strong> Biometric features require a React Native
-          environment.
-        </div>
-      )}
+      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Mock)'}
+      </div>
 
       <div className="card">
         <h2>Check Availability</h2>
-        <button
-          className="button"
-          onClick={handleCheckAvailability}
-          disabled={loading || !isAvailable}
-        >
+        <button className="button" onClick={handleCheckAvailability} disabled={loading}>
           {loading ? 'Checking...' : 'Check Biometric Availability'}
         </button>
         {availability && (
           <div className="result" style={{ marginTop: '1rem' }}>
-            <p>
-              <strong>Available:</strong> {availability.available ? 'Yes' : 'No'}
-            </p>
+            <p><strong>Available:</strong> {availability.available ? 'Yes' : 'No'}</p>
             {availability.biometricTypes.length > 0 && (
-              <p>
-                <strong>Types:</strong> {availability.biometricTypes.join(', ')}
-              </p>
+              <p><strong>Types:</strong> {availability.biometricTypes.join(', ')}</p>
             )}
           </div>
         )}
@@ -84,11 +68,7 @@ function BiometricPage() {
 
       <div className="card">
         <h2>Authentication</h2>
-        <button
-          className="button"
-          onClick={handleAuthenticate}
-          disabled={loading || !isAvailable}
-        >
+        <button className="button" onClick={handleAuthenticate} disabled={loading}>
           {loading ? 'Authenticating...' : 'Authenticate'}
         </button>
       </div>
@@ -103,35 +83,21 @@ function BiometricPage() {
         <div className="card">
           <h2>Authentication Result</h2>
           <div className={`result ${authResult.success ? 'success' : 'error'}`}>
-            <p>
-              <strong>Success:</strong> {authResult.success ? 'Yes' : 'No'}
-            </p>
-            {authResult.error && (
-              <p>
-                <strong>Error:</strong> {authResult.error}
-              </p>
-            )}
-            <details style={{ marginTop: '1rem' }}>
-              <summary>Full Data</summary>
-              <pre>{JSON.stringify(authResult, null, 2)}</pre>
-            </details>
+            <p><strong>Success:</strong> {authResult.success ? 'Yes' : 'No'}</p>
+            {authResult.error && <p><strong>Error:</strong> {authResult.error}</p>}
           </div>
         </div>
       )}
 
       <div className="card">
-        <h2>API Reference</h2>
-        <pre>{`import { biometric } from '@ts-bridge/plugins';
+        <h2>Usage</h2>
+        <pre>{`import { usePlugin } from './bridge';
+import { biometric } from '@ts-bridge/plugins';
 
-const api = biometric.methods((action, payload) => bridge.send(action, payload));
+const { checkAvailability, authenticate } = usePlugin(biometric);
 
-// Check if biometric authentication is available
-const availability = await api.checkAvailability();
-console.log('Available:', availability.available);
-console.log('Types:', availability.biometricTypes);
-
-// Authenticate
-const result = await api.authenticate('Please verify your identity');`}</pre>
+const { available, biometricTypes } = await checkAvailability();
+const { success } = await authenticate('Verify your identity');`}</pre>
       </div>
     </div>
   );

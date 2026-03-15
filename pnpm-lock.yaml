@@ -44,6 +44,9 @@ importers:
       '@ts-bridge/plugins':
         specifier: workspace:*
         version: link:../../packages/plugins
+      '@ts-bridge/react':
+        specifier: workspace:^
+        version: link:../../packages/clients/react
       '@ts-bridge/shared':
         specifier: workspace:*
         version: link:../../packages/shared

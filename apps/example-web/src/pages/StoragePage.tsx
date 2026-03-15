@@ -1,13 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { storage } from '@ts-bridge/plugins';
-import { useBridge } from '../hooks/useBridge';
+import { usePlugin, useBridge } from '../bridge';
 
 function StoragePage() {
-  const { bridge, isAvailable } = useBridge();
-  const api = useMemo(
-    () => storage.methods((action, payload) => bridge.send(action, payload)),
-    [bridge],
-  );
+  const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
+  const { isAvailable } = useBridge();
   const [key, setKey] = useState('test-key');
   const [value, setValue] = useState('test-value');
   const [result, setResult] = useState<string | null>(null);
@@ -18,9 +15,8 @@ function StoragePage() {
   const handleSetItem = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      await api.setItem(key, value);
+      await setItem(key, value);
       setResult(`Successfully set "${key}" = "${value}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set item');
@@ -33,9 +29,8 @@ function StoragePage() {
     setLoading(true);
     setError(null);
     setResult(null);
-
     try {
-      const item = await api.getItem(key);
+      const item = await getItem(key);
       setResult(item.value !== null ? `Value: "${item.value}"` : 'Key not found');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get item');
@@ -47,9 +42,8 @@ function StoragePage() {
   const handleRemoveItem = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      await api.removeItem(key);
+      await removeItem(key);
       setResult(`Successfully removed "${key}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove item');
@@ -61,9 +55,8 @@ function StoragePage() {
   const handleGetAllKeys = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const res = await api.getAllKeys();
+      const res = await getAllKeys();
       setAllKeys(res.keys);
       setResult(`Found ${res.keys.length} keys`);
     } catch (err) {
@@ -74,15 +67,11 @@ function StoragePage() {
   };
 
   const handleClear = async () => {
-    if (!confirm('Are you sure you want to clear all storage?')) {
-      return;
-    }
-
+    if (!confirm('Are you sure you want to clear all storage?')) return;
     setLoading(true);
     setError(null);
-
     try {
-      await api.clear();
+      await clear();
       setResult('Storage cleared successfully');
       setAllKeys([]);
     } catch (err) {
@@ -96,12 +85,9 @@ function StoragePage() {
     <div>
       <h1>Storage Plugin</h1>
 
-      {!isAvailable && (
-        <div className="result error">
-          <strong>Native bridge not available.</strong> Using in-memory storage
-          fallback.
-        </div>
-      )}
+      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (In-Memory)'}
+      </div>
 
       <div className="card">
         <h2>Key-Value Storage</h2>
@@ -112,12 +98,7 @@ function StoragePage() {
               type="text"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              style={{
-                marginLeft: '0.5rem',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              style={{ marginLeft: '0.5rem', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
             />
           </label>
           <label style={{ display: 'block', marginTop: '0.5rem' }}>
@@ -126,49 +107,22 @@ function StoragePage() {
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              style={{
-                marginLeft: '0.5rem',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              style={{ marginLeft: '0.5rem', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
             />
           </label>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleSetItem} disabled={loading}>
-            Set Item
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={handleGetItem}
-            disabled={loading}
-          >
-            Get Item
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={handleRemoveItem}
-            disabled={loading}
-          >
-            Remove Item
-          </button>
+          <button className="button" onClick={handleSetItem} disabled={loading}>Set Item</button>
+          <button className="button button-secondary" onClick={handleGetItem} disabled={loading}>Get Item</button>
+          <button className="button button-secondary" onClick={handleRemoveItem} disabled={loading}>Remove Item</button>
         </div>
       </div>
 
       <div className="card">
         <h2>Bulk Operations</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleGetAllKeys} disabled={loading}>
-            Get All Keys
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={handleClear}
-            disabled={loading}
-          >
-            Clear Storage
-          </button>
+          <button className="button" onClick={handleGetAllKeys} disabled={loading}>Get All Keys</button>
+          <button className="button button-secondary" onClick={handleClear} disabled={loading}>Clear Storage</button>
         </div>
       </div>
 
@@ -199,19 +153,14 @@ function StoragePage() {
       )}
 
       <div className="card">
-        <h2>API Reference</h2>
-        <pre>{`import { storage } from '@ts-bridge/plugins';
+        <h2>Usage</h2>
+        <pre>{`import { usePlugin } from './bridge';
+import { storage } from '@ts-bridge/plugins';
 
-const api = storage.methods((action, payload) => bridge.send(action, payload));
+const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
 
-// Basic operations
-await api.setItem('key', 'value');
-const { value } = await api.getItem('key');
-await api.removeItem('key');
-await api.clear();
-
-// Bulk operations
-const { keys } = await api.getAllKeys();`}</pre>
+await setItem('key', 'value');
+const { value } = await getItem('key');`}</pre>
       </div>
     </div>
   );

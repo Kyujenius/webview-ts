@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useBridge } from '../hooks/useBridge';
+import { useBridge } from '../bridge';
 import type { Middleware, MiddlewareContext } from '@ts-bridge/core';
 
 interface LogEntry {

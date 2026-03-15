@@ -1,4 +1,4 @@
-import { useBridge } from '../hooks/useBridge';
+import { useBridge } from '../bridge';
 
 function HomePage() {
   const { isAvailable } = useBridge();

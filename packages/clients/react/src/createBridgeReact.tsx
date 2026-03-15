@@ -107,7 +107,7 @@ export function createBridgeReact<
       (event: string, handler?: (payload: unknown) => void) => bridge.off(event, handler),
       [bridge]
     );
-    return { call, on, off, isAvailable };
+    return { call, on, off, isAvailable, bridge };
   }
 
   // ---- useAction ----
