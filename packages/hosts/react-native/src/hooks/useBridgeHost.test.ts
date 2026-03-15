@@ -13,6 +13,7 @@ vi.mock('react-native', () => ({}));
 vi.mock('react-native-webview', () => ({}));
 
 import { createSimpleBridgeHost } from './useBridgeHost';
+import { definePlugin } from '@ts-bridge/plugins';
 
 // Typed action contract
 type TestActions = {
@@ -73,5 +74,75 @@ describe('createSimpleBridgeHost', () => {
       },
     });
     expect(result.bridgeHost).toBeDefined();
+  });
+});
+
+// ---- Plugin tests ----
+
+type MockActions = {
+  'mock.echo': { payload: { msg: string }; response: { echoed: string } };
+};
+
+const mockPlugin = definePlugin<MockActions>({
+  name: 'mock',
+  methods: (call) => ({
+    echo: (msg: string) => call('mock.echo', { msg }),
+  }),
+});
+
+describe('createSimpleBridgeHost with plugins', () => {
+  it('should register plugin handlers', async () => {
+    const result = createSimpleBridgeHost({
+      plugins: [
+        mockPlugin.host({
+          'mock.echo': async (payload) => ({ echoed: payload.msg }),
+        }),
+      ],
+    });
+
+    const message = {
+      id: 'test-1',
+      action: 'mock.echo',
+      payload: { msg: 'hello' },
+      timestamp: Date.now(),
+    };
+
+    const response = await result.bridgeHost.handleMessage(message);
+    expect(response.success).toBe(true);
+    expect(response.data).toEqual({ echoed: 'hello' });
+  });
+
+  it('should support plugins alongside handlers', async () => {
+    const result = createSimpleBridgeHost({
+      plugins: [
+        mockPlugin.host({
+          'mock.echo': async (payload) => ({ echoed: payload.msg }),
+        }),
+      ],
+      handlers: {
+        'custom.action': async () => ({ custom: true }),
+      },
+    });
+
+    const pluginResponse = await result.bridgeHost.handleMessage({
+      id: '1', action: 'mock.echo', payload: { msg: 'hi' }, timestamp: 0,
+    });
+    expect(pluginResponse.data).toEqual({ echoed: 'hi' });
+
+    const customResponse = await result.bridgeHost.handleMessage({
+      id: '2', action: 'custom.action', payload: {}, timestamp: 0,
+    });
+    expect(customResponse.data).toEqual({ custom: true });
+  });
+
+  it('should throw on duplicate action names', () => {
+    expect(() => createSimpleBridgeHost({
+      plugins: [
+        mockPlugin.host({ 'mock.echo': async (p) => ({ echoed: p.msg }) }),
+      ],
+      handlers: {
+        'mock.echo': async () => ({ echoed: 'duplicate' }),
+      },
+    })).toThrow(/duplicate/i);
   });
 });

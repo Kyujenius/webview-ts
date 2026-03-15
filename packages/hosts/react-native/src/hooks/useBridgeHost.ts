@@ -1,4 +1,5 @@
 import type { ActionDefinitionShape } from '@ts-bridge/shared';
+import type { HostPluginResult } from '@ts-bridge/plugins';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
 import { MessageHandler } from '../bridge/MessageHandler';
@@ -19,7 +20,9 @@ export interface SimpleBridgeHostOptions<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 > {
   /** Action handlers — fully typed when TActions is provided */
-  handlers: TypedHandlers<TActions>;
+  handlers?: TypedHandlers<TActions>;
+  /** Plugins that provide additional handlers */
+  plugins?: HostPluginResult[];
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
   /** Optional debug mode */
@@ -60,13 +63,34 @@ export interface SimpleBridgeHostResult {
 export function createSimpleBridgeHost<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(options: SimpleBridgeHostOptions<TActions>): SimpleBridgeHostResult {
-  const { handlers, config, debug } = options;
+  const { handlers, plugins, config, debug } = options;
 
   const bridgeHost = new BridgeHost({ ...config, debug });
   const messageHandler = new MessageHandler(bridgeHost, { debug });
 
-  for (const [action, handler] of Object.entries(handlers)) {
-    bridgeHost.registerHandler(action, handler as any);
+  const registeredActions = new Set<string>();
+
+  // Register direct handlers
+  if (handlers) {
+    for (const [action, handler] of Object.entries(handlers)) {
+      bridgeHost.registerHandler(action, handler as any);
+      registeredActions.add(action);
+    }
+  }
+
+  // Register plugin handlers
+  if (plugins) {
+    for (const plugin of plugins) {
+      for (const [action, handler] of Object.entries(plugin.handlers)) {
+        if (registeredActions.has(action)) {
+          throw new Error(
+            `Duplicate action name '${action}' from plugin '${plugin.pluginName}'`
+          );
+        }
+        bridgeHost.registerHandler(action, handler as any);
+        registeredActions.add(action);
+      }
+    }
   }
 
   const webViewProps = {

@@ -27,6 +27,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@ts-bridge/plugins": "workspace:^",
     "@ts-bridge/shared": "workspace:*"
   },
   "peerDependencies": {
