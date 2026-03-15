@@ -64,15 +64,9 @@ export class CallbackRegistry {
     // Remove callback
     this.callbacks.delete(response.id);
 
-    // Resolve or reject based on response
-    if (response.success) {
-      entry.resolve(response.data);
-    } else {
-      const error = new Error(response.error?.message || 'Bridge call failed');
-      (error as any).code = response.error?.code;
-      (error as any).details = response.error?.details;
-      entry.reject(error);
-    }
+    // Always resolve with the full BridgeResponse.
+    // The caller (BridgeManager) is responsible for unwrapping data vs throwing on error.
+    entry.resolve(response);
 
     return true;
   }

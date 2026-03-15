@@ -3,13 +3,36 @@ import { DevToolsMiddleware } from './DevToolsMiddleware';
 import type { BridgeMessage, BridgeResponse, MiddlewareContext } from '@ts-bridge/shared';
 import { MessageDirection, MessageStatus } from '../types/index';
 
+/** Helper: run middleware.fn as onion — simulates next() resolving with a response */
+async function runMiddleware(
+  mw: DevToolsMiddleware,
+  ctx: MiddlewareContext,
+  options?: { error?: Error },
+) {
+  const fn = mw.fn;
+  await fn(ctx, async () => {
+    if (options?.error) throw options.error;
+    // Simulate core completing — response should already be on ctx if expected
+  });
+}
+
+function makeCtx(
+  message: BridgeMessage,
+  response?: BridgeResponse,
+): MiddlewareContext {
+  return {
+    request: message,
+    response,
+    startTime: Date.now(),
+    metadata: new Map(),
+  };
+}
+
 describe('DevToolsMiddleware', () => {
   let middleware: DevToolsMiddleware;
 
   beforeEach(() => {
-    middleware = new DevToolsMiddleware({
-      enabled: true,
-    });
+    middleware = new DevToolsMiddleware({ enabled: true });
   });
 
   describe('message recording', () => {
@@ -28,36 +51,24 @@ describe('DevToolsMiddleware', () => {
         timestamp: Date.now(),
       };
 
-      const context: MiddlewareContext = {
-        request: message,
-        startTime: Date.now(),
-        metadata: {},
-      };
+      const ctx = makeCtx(message);
 
-      // Call onRequest
-      await middleware.onRequest(context);
-
-      // Add response to context
-      context.response = response;
-
-      // Call onResponse
-      await middleware.onResponse(context);
+      // Simulate: middleware wraps core, core sets response
+      await middleware.fn(ctx, async () => {
+        ctx.response = response;
+      });
 
       const messages = middleware.getStore().getMessages();
       expect(messages).toHaveLength(2);
 
-      // Check request record
-      const requestRecord = messages[0];
-      expect(requestRecord.direction).toBe(MessageDirection.REQUEST);
-      expect(requestRecord.status).toBe(MessageStatus.PENDING);
-      expect(requestRecord.message).toEqual(message);
+      expect(messages[0].direction).toBe(MessageDirection.REQUEST);
+      expect(messages[0].status).toBe(MessageStatus.PENDING);
+      expect(messages[0].message).toEqual(message);
 
-      // Check response record
-      const responseRecord = messages[1];
-      expect(responseRecord.direction).toBe(MessageDirection.RESPONSE);
-      expect(responseRecord.status).toBe(MessageStatus.SUCCESS);
-      expect(responseRecord.message).toEqual(response);
-      expect(responseRecord.duration).toBeGreaterThanOrEqual(0);
+      expect(messages[1].direction).toBe(MessageDirection.RESPONSE);
+      expect(messages[1].status).toBe(MessageStatus.SUCCESS);
+      expect(messages[1].message).toEqual(response);
+      expect(messages[1].duration).toBeGreaterThanOrEqual(0);
     });
 
     it('should record error response', async () => {
@@ -70,28 +81,19 @@ describe('DevToolsMiddleware', () => {
       const errorResponse: BridgeResponse = {
         id: 'msg-1',
         success: false,
-        error: {
-          code: 'TEST_ERROR',
-          message: 'Test error',
-        },
+        error: { code: 'TEST_ERROR', message: 'Test error' },
         timestamp: Date.now(),
       };
 
-      const context: MiddlewareContext = {
-        request: message,
-        response: errorResponse,
-        startTime: Date.now(),
-        metadata: {},
-      };
+      const ctx = makeCtx(message);
 
-      await middleware.onRequest(context);
-      await middleware.onResponse(context);
+      await middleware.fn(ctx, async () => {
+        ctx.response = errorResponse;
+      });
 
       const messages = middleware.getStore().getMessages();
-      const responseRecord = messages[1];
-
-      expect(responseRecord.status).toBe(MessageStatus.ERROR);
-      expect(responseRecord.message).toEqual(errorResponse);
+      expect(messages[1].status).toBe(MessageStatus.ERROR);
+      expect(messages[1].message).toEqual(errorResponse);
     });
 
     it('should record exception', async () => {
@@ -101,22 +103,16 @@ describe('DevToolsMiddleware', () => {
         timestamp: Date.now(),
       };
 
+      const ctx = makeCtx(message);
       const error = new Error('Test exception');
 
-      const context: MiddlewareContext = {
-        request: message,
-        startTime: Date.now(),
-        metadata: {},
-      };
-
-      await middleware.onRequest(context);
-      await middleware.onError(context, error);
+      await expect(
+        middleware.fn(ctx, async () => { throw error; }),
+      ).rejects.toThrow('Test exception');
 
       const messages = middleware.getStore().getMessages();
-      const errorRecord = messages[1];
-
-      expect(errorRecord.status).toBe(MessageStatus.ERROR);
-      expect(errorRecord.stackTrace).toBeDefined();
+      expect(messages[1].status).toBe(MessageStatus.ERROR);
+      expect(messages[1].stackTrace).toBeDefined();
     });
   });
 
@@ -125,48 +121,30 @@ describe('DevToolsMiddleware', () => {
       const customMiddleware = new DevToolsMiddleware({
         enabled: true,
         filter: (msg) => {
-          if ('action' in msg) {
-            return msg.action !== 'filteredAction';
-          }
+          if ('action' in msg) return msg.action !== 'filteredAction';
           return true;
         },
       });
 
-      const filteredMessage: BridgeMessage = {
+      const filteredCtx = makeCtx({
         id: 'msg-1',
         action: 'filteredAction',
         timestamp: Date.now(),
-      };
+      });
 
-      const allowedMessage: BridgeMessage = {
-        id: 'msg-2',
-        action: 'allowedAction',
-        timestamp: Date.now(),
-      };
+      const allowedCtx = makeCtx(
+        { id: 'msg-2', action: 'allowedAction', timestamp: Date.now() },
+        { id: 'msg-2', success: true, timestamp: Date.now() },
+      );
 
-      const context1: MiddlewareContext = {
-        request: filteredMessage,
-        startTime: Date.now(),
-        metadata: {},
-      };
+      // Filtered — should pass through without recording
+      await customMiddleware.fn(filteredCtx, async () => {});
 
-      const context2: MiddlewareContext = {
-        request: allowedMessage,
-        response: {
-          id: 'msg-2',
-          success: true,
-          timestamp: Date.now(),
-        },
-        startTime: Date.now(),
-        metadata: {},
-      };
-
-      await customMiddleware.onRequest(context1);
-      await customMiddleware.onRequest(context2);
-      await customMiddleware.onResponse(context2);
+      // Allowed — should record
+      await customMiddleware.fn(allowedCtx, async () => {});
 
       const messages = customMiddleware.getStore().getMessages();
-      expect(messages).toHaveLength(2); // Only allowedAction recorded
+      expect(messages).toHaveLength(2); // request + response for allowedAction
       expect((messages[0].message as BridgeMessage).action).toBe('allowedAction');
     });
   });
@@ -175,50 +153,23 @@ describe('DevToolsMiddleware', () => {
     it('should not record when disabled', async () => {
       middleware.setEnabled(false);
 
-      const message: BridgeMessage = {
-        id: 'msg-1',
-        action: 'testAction',
-        timestamp: Date.now(),
-      };
+      const ctx = makeCtx(
+        { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() },
+      );
 
-      const context: MiddlewareContext = {
-        request: message,
-        response: {
-          id: 'msg-1',
-          success: true,
-          timestamp: Date.now(),
-        },
-        startTime: Date.now(),
-        metadata: {},
-      };
+      await runMiddleware(middleware, ctx);
 
-      await middleware.onRequest(context);
-      await middleware.onResponse(context);
-
-      const messages = middleware.getStore().getMessages();
-      expect(messages).toHaveLength(0);
+      expect(middleware.getStore().getMessages()).toHaveLength(0);
     });
 
     it('should clear messages', async () => {
-      const message: BridgeMessage = {
-        id: 'msg-1',
-        action: 'testAction',
-        timestamp: Date.now(),
-      };
+      const ctx = makeCtx(
+        { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() },
+      );
 
-      const context: MiddlewareContext = {
-        request: message,
-        response: {
-          id: 'msg-1',
-          success: true,
-          timestamp: Date.now(),
-        },
-        startTime: Date.now(),
-        metadata: {},
-      };
-
-      await middleware.onRequest(context);
-      await middleware.onResponse(context);
+      await runMiddleware(middleware, ctx);
       expect(middleware.getStore().getMessages()).toHaveLength(2);
 
       middleware.clear();
@@ -234,27 +185,14 @@ describe('DevToolsMiddleware', () => {
         onMessage: onMessageMock,
       });
 
-      const message: BridgeMessage = {
-        id: 'msg-1',
-        action: 'testAction',
-        timestamp: Date.now(),
-      };
+      const ctx = makeCtx(
+        { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() },
+      );
 
-      const context: MiddlewareContext = {
-        request: message,
-        response: {
-          id: 'msg-1',
-          success: true,
-          timestamp: Date.now(),
-        },
-        startTime: Date.now(),
-        metadata: {},
-      };
+      await runMiddleware(callbackMiddleware, ctx);
 
-      await callbackMiddleware.onRequest(context);
-      await callbackMiddleware.onResponse(context);
-
-      expect(onMessageMock).toHaveBeenCalledTimes(2); // Once for request, once for response
+      expect(onMessageMock).toHaveBeenCalledTimes(2);
     });
   });
 });

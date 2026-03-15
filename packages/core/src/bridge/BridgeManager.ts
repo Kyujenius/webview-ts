@@ -15,7 +15,7 @@ import type {
   BridgeResponse,
   BridgeEvent,
   BridgeError,
-
+  Middleware,
   MiddlewareContext,
   WebPlugin,
   ActionDefinitionShape,
@@ -49,6 +49,8 @@ export class BridgeManager<
   private middleware: MiddlewarePipeline;
   private plugins: PluginRegistry;
   private eventHandlers = new Map<string, Set<EventHandler>>();
+  /** Stores context per message id so the response phase can access it */
+  private pendingContexts = new Map<string, MiddlewareContext>();
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
@@ -123,19 +125,23 @@ export class BridgeManager<
   }
 
   /**
-   * Execute a single call attempt
+   * Execute a single call attempt using the onion middleware pipeline.
+   *
+   * The middleware wraps the core send/receive:
+   *   middleware[0] → middleware[1] → ... → [send + wait] → ... → middleware[1] → middleware[0]
+   *
+   * A single MiddlewareContext is shared across the entire lifecycle,
+   * so request-phase metadata is available in the response phase.
    */
   private async executeCall<TAction extends ActionNames<TActions>>(
     action: TAction,
     payload?: InferPayload<TActions, TAction>,
     options?: BridgeCallOptions
   ): Promise<InferResponse<TActions, TAction>> {
-    // Check if bridge is available
     if (!this.isAvailable()) {
       throw new Error('Native bridge not available');
     }
 
-    // Create message
     const message: BridgeMessage = {
       id: generateMessageId(),
       action,
@@ -143,40 +149,45 @@ export class BridgeManager<
       timestamp: Date.now(),
     };
 
-    // Create middleware context
-    const context: MiddlewareContext = {
+    const ctx: MiddlewareContext = {
       request: message,
       startTime: Date.now(),
-      metadata: {},
+      metadata: new Map(),
     };
 
+    // Store context so handleResponse can attach the response to it
+    this.pendingContexts.set(message.id, ctx);
+
     try {
-      // Execute request middleware
-      await this.middleware.executeRequest(context);
+      await this.middleware.execute(ctx, async () => {
+        // === Core: send message and wait for response ===
+        this.queue.enqueue(ctx.request);
 
-      // Add to queue
-      this.queue.enqueue(message);
+        const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
+          const timeout = options?.timeout ?? this.config.timeout;
+          this.callbacks.register(ctx.request.id, resolve as (value: unknown) => void, reject, timeout);
+        });
 
-      // Create promise for response
-      const responsePromise = new Promise<InferResponse<TActions, TAction>>((resolve, reject) => {
-        const timeout = options?.timeout ?? this.config.timeout;
-        this.callbacks.register(message.id, resolve as (value: unknown) => void, reject, timeout);
+        this.adapter.send(ctx.request);
+
+        // CallbackRegistry now resolves with full BridgeResponse
+        const response = await responsePromise;
+
+        // Error handling: reject failed responses
+        if (!response.success) {
+          const error = new Error(response.error?.message || 'Bridge call failed');
+          (error as any).code = response.error?.code;
+          (error as any).details = response.error?.details;
+          throw error;
+        }
+
+        ctx.response = response;
+        this.queue.complete(ctx.request.id);
       });
 
-      // Send message
-      this.adapter.send(message);
-
-      // Wait for response
-      const response = await responsePromise;
-
-      // Mark as complete
-      this.queue.complete(message.id);
-
-      return response;
-    } catch (error) {
-      // Execute error middleware
-      await this.middleware.executeError(context, error as Error);
-      throw error;
+      return ctx.response?.data as InferResponse<TActions, TAction>;
+    } finally {
+      this.pendingContexts.delete(message.id);
     }
   }
 
@@ -232,7 +243,7 @@ export class BridgeManager<
   /**
    * Use middleware
    */
-  use(middleware: import('@ts-bridge/shared').Middleware): void {
+  use(middleware: Middleware): void {
     this.middleware.use(middleware);
   }
 
@@ -278,32 +289,20 @@ export class BridgeManager<
   }
 
   /**
-   * Handle response from native
+   * Handle response from native.
+   *
+   * In the onion model, this simply resolves the pending callback.
+   * The middleware's post-next() code runs automatically because
+   * the response resolves the promise inside the core function.
    */
   private async handleResponse(response: BridgeResponse): Promise<void> {
-    // Create context for response middleware
     const callback = this.callbacks.has(response.id);
     if (!callback) {
       console.warn(`[ts-bridge] Received response for unknown message: ${response.id}`);
       return;
     }
 
-    const context: MiddlewareContext = {
-      request: { id: response.id, action: '', timestamp: 0 } as BridgeMessage,
-      response,
-      startTime: 0,
-      metadata: {},
-    };
-
-    try {
-      // Execute response middleware
-      await this.middleware.executeResponse(context);
-
-      // Handle callback
-      this.callbacks.handleResponse(response);
-    } catch (error) {
-      console.error('[ts-bridge] Error handling response:', error);
-    }
+    this.callbacks.handleResponse(response);
   }
 
   /**
@@ -331,5 +330,6 @@ export class BridgeManager<
     this.middleware.clear();
     this.plugins.clear();
     this.eventHandlers.clear();
+    this.pendingContexts.clear();
   }
 }

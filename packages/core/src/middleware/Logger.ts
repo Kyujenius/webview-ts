@@ -1,115 +1,99 @@
 /**
- * Logger middleware for debugging bridge communication
+ * Logger middleware — logs request, response, and errors in a single onion layer.
  */
 
-import type { Middleware, MiddlewareContext, LoggerMiddlewareOptions } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn, LoggerMiddlewareOptions } from '@ts-bridge/shared';
 
-/**
- * Logger middleware
- */
-export class LoggerMiddleware implements Middleware {
-  name = 'logger';
+type LoggerFn = (level: string, message: string, data?: unknown) => void;
 
-  private options: Required<LoggerMiddlewareOptions>;
+const defaultLogger: LoggerFn = (level, message, data) => {
+  const prefix = '[ts-bridge]';
+  const logData = data ? [message, data] : [message];
 
-  constructor(options: LoggerMiddlewareOptions = {}) {
-    this.options = {
-      level: options.level ?? 'info',
-      includePayload: options.includePayload ?? true,
-      includeResponse: options.includeResponse ?? true,
-      logger: options.logger ?? this.defaultLogger,
-    };
+  switch (level) {
+    case 'error':
+      console.error(prefix, ...logData);
+      break;
+    case 'warn':
+      console.warn(prefix, ...logData);
+      break;
+    case 'debug':
+      console.debug(prefix, ...logData);
+      break;
+    default:
+      console.log(prefix, ...logData);
   }
+};
 
-  /**
-   * Log request
-   */
-  async onRequest(context: MiddlewareContext): Promise<void> {
-    const { request } = context;
+export function createLogger(options: LoggerMiddlewareOptions = {}): Middleware {
+  const level = options.level ?? 'info';
+  const includePayload = options.includePayload ?? true;
+  const includeResponse = options.includeResponse ?? true;
+  const logger = options.logger ?? defaultLogger;
+
+  const fn: MiddlewareFn = async (ctx, next) => {
+    const { request } = ctx;
     const data: Record<string, unknown> = {
       id: request.id,
       action: request.action,
     };
 
-    if (this.options.includePayload) {
+    if (includePayload) {
       data.payload = request.payload;
     }
 
-    this.options.logger(
-      this.options.level,
-      `[Bridge Request] ${request.action}`,
-      data
-    );
+    logger(level, `[Bridge Request] ${request.action}`, data);
+
+    try {
+      await next();
+
+      // After next() — response phase
+      if (ctx.response) {
+        const duration = Date.now() - ctx.startTime;
+        const resData: Record<string, unknown> = {
+          id: ctx.response.id,
+          action: request.action,
+          success: ctx.response.success,
+          duration: `${duration}ms`,
+        };
+
+        if (includeResponse && ctx.response.data) {
+          resData.data = ctx.response.data;
+        }
+
+        if (!ctx.response.success && ctx.response.error) {
+          resData.error = ctx.response.error;
+        }
+
+        const resLevel = ctx.response.success ? level : 'error';
+        logger(resLevel, `[Bridge Response] ${request.action} (${duration}ms)`, resData);
+      }
+    } catch (error) {
+      logger('error', `[Bridge Error] ${request.action}`, {
+        id: request.id,
+        action: request.action,
+        error: {
+          message: (error as Error).message,
+          stack: (error as Error).stack,
+        },
+      });
+      throw error;
+    }
+  };
+
+  return { name: 'logger', fn };
+}
+
+/**
+ * @deprecated Use createLogger() instead
+ */
+export class LoggerMiddleware {
+  private middleware: Middleware;
+
+  constructor(options: LoggerMiddlewareOptions = {}) {
+    this.middleware = createLogger(options);
   }
 
-  /**
-   * Log response
-   */
-  async onResponse(context: MiddlewareContext): Promise<void> {
-    if (!context.response) {
-      return;
-    }
-
-    const { request, response, startTime } = context;
-    const duration = Date.now() - startTime;
-
-    const data: Record<string, unknown> = {
-      id: response.id,
-      action: request.action,
-      success: response.success,
-      duration: `${duration}ms`,
-    };
-
-    if (this.options.includeResponse && response.data) {
-      data.data = response.data;
-    }
-
-    if (!response.success && response.error) {
-      data.error = response.error;
-    }
-
-    const level = response.success ? this.options.level : 'error';
-    this.options.logger(
-      level,
-      `[Bridge Response] ${request.action} (${duration}ms)`,
-      data
-    );
-  }
-
-  /**
-   * Log error
-   */
-  async onError(context: MiddlewareContext, error: Error): Promise<void> {
-    const { request } = context;
-    this.options.logger('error', `[Bridge Error] ${request.action}`, {
-      id: request.id,
-      action: request.action,
-      error: {
-        message: error.message,
-        stack: error.stack,
-      },
-    });
-  }
-
-  /**
-   * Default logger implementation
-   */
-  private defaultLogger(level: string, message: string, data?: unknown): void {
-    const prefix = `[ts-bridge]`;
-    const logData = data ? [message, data] : [message];
-
-    switch (level) {
-      case 'error':
-        console.error(prefix, ...logData);
-        break;
-      case 'warn':
-        console.warn(prefix, ...logData);
-        break;
-      case 'debug':
-        console.debug(prefix, ...logData);
-        break;
-      default:
-        console.log(prefix, ...logData);
-    }
-  }
+  get name() { return this.middleware.name; }
+  get fn() { return this.middleware.fn; }
 }

@@ -1,8 +1,9 @@
 /**
- * DevToolsMiddleware - Intercepts and records all bridge messages
+ * DevToolsMiddleware — Records all bridge messages for debugging/visualization.
+ * Uses the onion model: records request before next(), response/error after.
  */
 
-import type { Middleware, MiddlewareContext } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
 import type {
   DevToolsConfig,
   RecordedMessage,
@@ -14,13 +15,9 @@ import {
 } from '../types/index';
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 
-/**
- * DevTools middleware for intercepting bridge messages
- */
-export class DevToolsMiddleware implements Middleware {
+export class DevToolsMiddleware {
   private config: Required<DevToolsConfig>;
   private store: DevToolsStore;
-  private requestTimestamps: Map<string, number>;
 
   constructor(config: DevToolsConfig = {}, store?: DevToolsStore) {
     this.config = {
@@ -33,168 +30,123 @@ export class DevToolsMiddleware implements Middleware {
     };
 
     this.store = store ?? new DevToolsStoreImpl(this.config.maxRecords);
-    this.requestTimestamps = new Map();
   }
 
-  /**
-   * Get the devtools store
-   */
-  getStore(): DevToolsStore {
-    return this.store;
+  /** Get the named middleware object for bridge.use() */
+  toMiddleware(): Middleware {
+    return { name: 'devtools', fn: this.createFn() };
   }
 
-  /**
-   * Middleware name
-   */
+  /** Shorthand — name property for backward compat */
   get name(): string {
     return 'devtools';
   }
 
-  /**
-   * Process outgoing request
-   */
-  async onRequest(context: MiddlewareContext): Promise<void> {
-    if (!this.config.enabled) {
-      return;
-    }
-
-    const message = context.request;
-
-    // Apply filter
-    if (!this.config.filter(message)) {
-      return;
-    }
-
-    // Record request
-    const requestRecord: RecordedMessage = {
-      recordId: this.generateRecordId(),
-      direction: MessageDirection.REQUEST,
-      status: MessageStatus.PENDING,
-      message,
-      timestamp: Date.now(),
-    };
-
-    this.store.addMessage(requestRecord);
-    this.config.onMessage(requestRecord);
-
-    // Track request timestamp for duration calculation
-    if (this.config.trackPerformance) {
-      this.requestTimestamps.set(message.id, Date.now());
-    }
+  /** Shorthand — fn property for backward compat */
+  get fn(): MiddlewareFn {
+    return this.createFn();
   }
 
-  /**
-   * Process incoming response
-   */
-  async onResponse(context: MiddlewareContext): Promise<void> {
-    if (!this.config.enabled || !context.response) {
-      return;
-    }
-
-    const response = context.response;
-    const message = context.request;
-
-    // Apply filter
-    if (!this.config.filter(response)) {
-      return;
-    }
-
-    // Calculate duration
-    const duration = this.config.trackPerformance
-      ? Date.now() - (this.requestTimestamps.get(message.id) ?? Date.now())
-      : undefined;
-
-    // Clean up timestamp
-    this.requestTimestamps.delete(message.id);
-
-    // Record response
-    const responseRecord: RecordedMessage = {
-      recordId: this.generateRecordId(),
-      direction: MessageDirection.RESPONSE,
-      status: response.success ? MessageStatus.SUCCESS : MessageStatus.ERROR,
-      message: response,
-      timestamp: Date.now(),
-      duration,
-    };
-
-    this.store.addMessage(responseRecord);
-    this.config.onMessage(responseRecord);
+  getStore(): DevToolsStore {
+    return this.store;
   }
 
-  /**
-   * Process error
-   */
-  async onError(context: MiddlewareContext, error: Error): Promise<void> {
-    if (!this.config.enabled) {
-      return;
-    }
-
-    const message = context.request;
-
-    // Calculate duration
-    const duration = this.config.trackPerformance
-      ? Date.now() - (this.requestTimestamps.get(message.id) ?? Date.now())
-      : undefined;
-
-    // Clean up timestamp
-    this.requestTimestamps.delete(message.id);
-
-    // Record error
-    const errorRecord: RecordedMessage = {
-      recordId: this.generateRecordId(),
-      direction: MessageDirection.RESPONSE,
-      status: MessageStatus.ERROR,
-      message: {
-        id: message.id,
-        success: false,
-        error: {
-          code: 'MIDDLEWARE_ERROR',
-          message: error.message,
-        },
-        timestamp: Date.now(),
-      },
-      timestamp: Date.now(),
-      duration,
-      stackTrace: this.config.captureStackTraces ? error.stack : undefined,
-    };
-
-    this.store.addMessage(errorRecord);
-    this.config.onMessage(errorRecord);
-  }
-
-  /**
-   * Clear all recorded messages
-   */
   clear(): void {
     this.store.clear();
-    this.requestTimestamps.clear();
   }
 
-  /**
-   * Enable/disable recording
-   */
   setEnabled(enabled: boolean): void {
     this.config.enabled = enabled;
   }
 
-  /**
-   * Check if recording is enabled
-   */
   isEnabled(): boolean {
     return this.config.enabled;
   }
 
-  /**
-   * Generate unique record ID
-   */
+  private createFn(): MiddlewareFn {
+    return async (ctx, next) => {
+      if (!this.config.enabled) {
+        return next();
+      }
+
+      const message = ctx.request;
+
+      if (!this.config.filter(message)) {
+        return next();
+      }
+
+      // Record request
+      const requestRecord: RecordedMessage = {
+        recordId: this.generateRecordId(),
+        direction: MessageDirection.REQUEST,
+        status: MessageStatus.PENDING,
+        message,
+        timestamp: Date.now(),
+      };
+
+      this.store.addMessage(requestRecord);
+      this.config.onMessage(requestRecord);
+
+      const startTime = Date.now();
+
+      try {
+        await next();
+
+        // Record response
+        if (ctx.response) {
+          const duration = this.config.trackPerformance
+            ? Date.now() - startTime
+            : undefined;
+
+          const responseRecord: RecordedMessage = {
+            recordId: this.generateRecordId(),
+            direction: MessageDirection.RESPONSE,
+            status: ctx.response.success ? MessageStatus.SUCCESS : MessageStatus.ERROR,
+            message: ctx.response,
+            timestamp: Date.now(),
+            duration,
+          };
+
+          this.store.addMessage(responseRecord);
+          this.config.onMessage(responseRecord);
+        }
+      } catch (error) {
+        // Record error
+        const duration = this.config.trackPerformance
+          ? Date.now() - startTime
+          : undefined;
+
+        const errorRecord: RecordedMessage = {
+          recordId: this.generateRecordId(),
+          direction: MessageDirection.RESPONSE,
+          status: MessageStatus.ERROR,
+          message: {
+            id: message.id,
+            success: false,
+            error: {
+              code: 'MIDDLEWARE_ERROR',
+              message: (error as Error).message,
+            },
+            timestamp: Date.now(),
+          },
+          timestamp: Date.now(),
+          duration,
+          stackTrace: this.config.captureStackTraces ? (error as Error).stack : undefined,
+        };
+
+        this.store.addMessage(errorRecord);
+        this.config.onMessage(errorRecord);
+
+        throw error;
+      }
+    };
+  }
+
   private generateRecordId(): string {
     return `record-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 }
 
-/**
- * Create DevTools middleware
- */
 export function createDevToolsMiddleware(
   config?: DevToolsConfig,
   store?: DevToolsStore

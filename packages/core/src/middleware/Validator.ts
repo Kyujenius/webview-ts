@@ -1,88 +1,73 @@
 /**
- * Validator middleware for schema validation
+ * Validator middleware — validates request before send, response after receive.
  */
 
-import type { Middleware, MiddlewareContext, ValidatorMiddlewareOptions } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn, MiddlewareContext, ValidatorMiddlewareOptions } from '@ts-bridge/shared';
 import { isBridgeMessage, isBridgeResponse } from '@ts-bridge/shared';
 
-/**
- * Validator middleware
- */
-export class ValidatorMiddleware implements Middleware {
-  name = 'validator';
+function handleValidationError(
+  message: string,
+  onError: 'throw' | 'warn' | 'ignore',
+  ctx: MiddlewareContext,
+): void {
+  const error = new Error(`[Validation Error] ${message}`);
 
-  private options: Required<ValidatorMiddlewareOptions>;
+  switch (onError) {
+    case 'throw':
+      throw error;
+    case 'warn':
+      console.warn(error.message, ctx);
+      break;
+    case 'ignore':
+      break;
+  }
+}
+
+export function createValidator(options: ValidatorMiddlewareOptions = {}): Middleware {
+  const validateRequests = options.validateRequests ?? true;
+  const validateResponses = options.validateResponses ?? true;
+  const onValidationError = options.onValidationError ?? 'throw';
+
+  const fn: MiddlewareFn = async (ctx, next) => {
+    // Request phase — validate before sending
+    if (validateRequests) {
+      if (!isBridgeMessage(ctx.request)) {
+        handleValidationError('Invalid bridge message format', onValidationError, ctx);
+      }
+      if (!ctx.request.id || !ctx.request.action) {
+        handleValidationError('Message missing required fields (id, action)', onValidationError, ctx);
+      }
+    }
+
+    await next();
+
+    // Response phase — validate after receiving
+    if (validateResponses && ctx.response) {
+      if (!isBridgeResponse(ctx.response)) {
+        handleValidationError('Invalid bridge response format', onValidationError, ctx);
+      }
+      if (!ctx.response.id || typeof ctx.response.success !== 'boolean') {
+        handleValidationError('Response missing required fields (id, success)', onValidationError, ctx);
+      }
+      if (!ctx.response.success && !ctx.response.error) {
+        handleValidationError('Failed response must include error information', onValidationError, ctx);
+      }
+    }
+  };
+
+  return { name: 'validator', fn };
+}
+
+/**
+ * @deprecated Use createValidator() instead
+ */
+export class ValidatorMiddleware {
+  private middleware: Middleware;
 
   constructor(options: ValidatorMiddlewareOptions = {}) {
-    this.options = {
-      validateRequests: options.validateRequests ?? true,
-      validateResponses: options.validateResponses ?? true,
-      onValidationError: options.onValidationError ?? 'throw',
-    };
+    this.middleware = createValidator(options);
   }
 
-  /**
-   * Validate request
-   */
-  async onRequest(context: MiddlewareContext): Promise<void> {
-    if (!this.options.validateRequests) {
-      return;
-    }
-
-    const { request } = context;
-
-    // Basic validation using type guards
-    if (!isBridgeMessage(request)) {
-      this.handleValidationError('Invalid bridge message format', context);
-    }
-
-    // Required fields
-    if (!request.id || !request.action) {
-      this.handleValidationError('Message missing required fields (id, action)', context);
-    }
-  }
-
-  /**
-   * Validate response
-   */
-  async onResponse(context: MiddlewareContext): Promise<void> {
-    if (!this.options.validateResponses || !context.response) {
-      return;
-    }
-
-    const { response } = context;
-
-    // Basic validation using type guards
-    if (!isBridgeResponse(response)) {
-      this.handleValidationError('Invalid bridge response format', context);
-    }
-
-    // Required fields
-    if (!response.id || typeof response.success !== 'boolean') {
-      this.handleValidationError('Response missing required fields (id, success)', context);
-    }
-
-    // Error validation
-    if (!response.success && !response.error) {
-      this.handleValidationError('Failed response must include error information', context);
-    }
-  }
-
-  /**
-   * Handle validation error based on options
-   */
-  private handleValidationError(message: string, context: MiddlewareContext): void {
-    const error = new Error(`[Validation Error] ${message}`);
-
-    switch (this.options.onValidationError) {
-      case 'throw':
-        throw error;
-      case 'warn':
-        console.warn(error.message, context);
-        break;
-      case 'ignore':
-        // Do nothing
-        break;
-    }
-  }
+  get name() { return this.middleware.name; }
+  get fn() { return this.middleware.fn; }
 }

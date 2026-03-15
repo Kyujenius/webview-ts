@@ -1,102 +1,67 @@
 /**
- * Middleware pipeline for request/response processing
+ * Koa-style onion middleware pipeline.
+ *
+ * Each middleware wraps the next, forming concentric layers:
+ *   trace → circuitBreaker → encrypt → [core send/receive] → encrypt → circuitBreaker → trace
+ *
+ * A single MiddlewareContext flows through the entire lifecycle,
+ * so metadata set in the request phase is available in the response phase.
  */
 
 import type { Middleware, MiddlewareContext } from '@ts-bridge/shared';
 
-/**
- * Middleware pipeline executor
- */
 export class MiddlewarePipeline {
-  private middleware: Middleware[] = [];
+  private middlewares: Middleware[] = [];
 
-  /**
-   * Add middleware to pipeline
-   */
+  /** Add a named middleware */
   use(middleware: Middleware): void {
-    this.middleware.push(middleware);
+    this.middlewares.push(middleware);
   }
 
-  /**
-   * Remove middleware from pipeline
-   */
-  remove(middlewareName: string): boolean {
-    const index = this.middleware.findIndex((m) => m.name === middlewareName);
+  /** Remove middleware by name */
+  remove(name: string): boolean {
+    const index = this.middlewares.findIndex((m) => m.name === name);
     if (index !== -1) {
-      this.middleware.splice(index, 1);
+      this.middlewares.splice(index, 1);
       return true;
     }
     return false;
   }
 
   /**
-   * Execute request middleware
+   * Execute the full middleware pipeline around a core function.
+   *
+   * @param ctx    - The shared context for this call's entire lifecycle
+   * @param core   - The innermost function (send message, wait for response, set ctx.response)
    */
-  async executeRequest(context: MiddlewareContext): Promise<void> {
-    for (const middleware of this.middleware) {
-      if (middleware.onRequest) {
-        try {
-          await middleware.onRequest(context);
-        } catch (error) {
-          console.error(`[ts-bridge] Middleware error (${middleware.name}):`, error);
-          if (middleware.onError) {
-            await middleware.onError(context, error as Error);
-          }
-          throw error;
-        }
+  async execute(ctx: MiddlewareContext, core: () => Promise<void>): Promise<void> {
+    const fns = this.middlewares.map((m) => m.fn);
+
+    let index = -1;
+
+    const dispatch = (i: number): Promise<void> => {
+      if (i <= index) {
+        return Promise.reject(new Error('next() called multiple times'));
       }
-    }
+      index = i;
+
+      if (i === fns.length) {
+        return core();
+      }
+
+      return fns[i](ctx, () => dispatch(i + 1));
+    };
+
+    await dispatch(0);
   }
 
-  /**
-   * Execute response middleware
-   */
-  async executeResponse(context: MiddlewareContext): Promise<void> {
-    // Execute in reverse order for response
-    for (let i = this.middleware.length - 1; i >= 0; i--) {
-      const middleware = this.middleware[i];
-      if (middleware.onResponse) {
-        try {
-          await middleware.onResponse(context);
-        } catch (error) {
-          console.error(`[ts-bridge] Middleware error (${middleware.name}):`, error);
-          if (middleware.onError) {
-            await middleware.onError(context, error as Error);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Execute error middleware
-   */
-  async executeError(context: MiddlewareContext, error: Error): Promise<void> {
-    for (const middleware of this.middleware) {
-      if (middleware.onError) {
-        try {
-          await middleware.onError(context, error);
-        } catch (middlewareError) {
-          console.error(
-            `[ts-bridge] Middleware error handler failed (${middleware.name}):`,
-            middlewareError
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * Get all middleware
-   */
+  /** Get all registered middleware */
   getAll(): Middleware[] {
-    return [...this.middleware];
+    return [...this.middlewares];
   }
 
-  /**
-   * Clear all middleware
-   */
+  /** Clear all middleware */
   clear(): void {
-    this.middleware = [];
+    this.middlewares = [];
   }
 }

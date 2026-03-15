@@ -1,12 +1,9 @@
 /**
- * StructuredLogger - Structured logging for bridge messages
+ * StructuredLogger - Structured logging for bridge messages (onion model)
  */
 
-import type { Middleware, MiddlewareContext } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
 
-/**
- * Log level
- */
 export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
@@ -14,9 +11,6 @@ export enum LogLevel {
   ERROR = 'error',
 }
 
-/**
- * Log entry
- */
 export interface LogEntry {
   level: LogLevel;
   timestamp: number;
@@ -28,38 +22,18 @@ export interface LogEntry {
   };
 }
 
-/**
- * Logger configuration
- */
 export interface LoggerConfig {
-  /**
-   * Minimum log level to record
-   * @default LogLevel.INFO
-   */
+  /** Minimum log level to record @default LogLevel.INFO */
   minLevel?: LogLevel;
-
-  /**
-   * Log to console
-   * @default false
-   */
+  /** Log to console @default false */
   console?: boolean;
-
-  /**
-   * Custom log handler
-   */
+  /** Custom log handler */
   onLog?: (entry: LogEntry) => void;
-
-  /**
-   * Include request/response payloads
-   * @default true
-   */
+  /** Include request/response payloads @default true */
   includePayloads?: boolean;
 }
 
-/**
- * Structured logger middleware
- */
-export class StructuredLogger implements Middleware {
+export class StructuredLogger {
   private config: Required<LoggerConfig>;
   private logs: LogEntry[];
 
@@ -73,115 +47,85 @@ export class StructuredLogger implements Middleware {
     this.logs = [];
   }
 
-  /**
-   * Middleware name
-   */
   get name(): string {
     return 'structured-logger';
   }
 
-  /**
-   * Log request
-   */
-  async onRequest(context: MiddlewareContext): Promise<void> {
-    const message = context.request;
-
-    this.log(LogLevel.DEBUG, `Request: ${message.action}`, {
-      id: message.id,
-      action: message.action,
-      payload: this.config.includePayloads ? message.payload : '[hidden]',
-    });
+  get fn(): MiddlewareFn {
+    return this.createFn();
   }
 
-  /**
-   * Log response
-   */
-  async onResponse(context: MiddlewareContext): Promise<void> {
-    const message = context.request;
-    const response = context.response;
-
-    if (!response) {
-      return;
-    }
-
-    if (response.success) {
-      this.log(LogLevel.DEBUG, `Response: ${message.action} (success)`, {
-        id: response.id,
-        data: this.config.includePayloads ? response.data : '[hidden]',
-      });
-    } else {
-      this.log(LogLevel.ERROR, `Response: ${message.action} (error)`, {
-        id: response.id,
-        error: response.error,
-      });
-    }
+  toMiddleware(): Middleware {
+    return { name: this.name, fn: this.createFn() };
   }
 
-  /**
-   * Log error
-   */
-  async onError(context: MiddlewareContext, error: Error): Promise<void> {
-    const message = context.request;
+  private createFn(): MiddlewareFn {
+    return async (ctx, next) => {
+      const message = ctx.request;
 
-    this.log(
-      LogLevel.ERROR,
-      `Request failed: ${message.action}`,
-      {
+      // Request phase
+      this.log(LogLevel.DEBUG, `Request: ${message.action}`, {
         id: message.id,
         action: message.action,
-      },
-      error
-    );
+        payload: this.config.includePayloads ? message.payload : '[hidden]',
+      });
+
+      try {
+        await next();
+
+        // Response phase
+        if (ctx.response) {
+          if (ctx.response.success) {
+            this.log(LogLevel.DEBUG, `Response: ${message.action} (success)`, {
+              id: ctx.response.id,
+              data: this.config.includePayloads ? ctx.response.data : '[hidden]',
+            });
+          } else {
+            this.log(LogLevel.ERROR, `Response: ${message.action} (error)`, {
+              id: ctx.response.id,
+              error: ctx.response.error,
+            });
+          }
+        }
+      } catch (error) {
+        this.log(
+          LogLevel.ERROR,
+          `Request failed: ${message.action}`,
+          { id: message.id, action: message.action },
+          error as Error,
+        );
+        throw error;
+      }
+    };
   }
 
-  /**
-   * Log a message
-   */
   log(level: LogLevel, message: string, data?: unknown, error?: Error): void {
-    // Check level
-    if (!this.shouldLog(level)) {
-      return;
-    }
+    if (!this.shouldLog(level)) return;
 
-    // Create entry
     const entry: LogEntry = {
       level,
       timestamp: Date.now(),
       message,
       data,
       error: error
-        ? {
-            message: error.message,
-            stack: error.stack,
-          }
+        ? { message: error.message, stack: error.stack }
         : undefined,
     };
 
-    // Store entry
     this.logs.push(entry);
 
-    // Console output
     if (this.config.console) {
       this.logToConsole(entry);
     }
 
-    // Custom handler
     this.config.onLog(entry);
   }
 
-  /**
-   * Check if level should be logged
-   */
   private shouldLog(level: LogLevel): boolean {
     const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
-    const minIndex = levels.indexOf(this.config.minLevel);
-    const levelIndex = levels.indexOf(level);
-    return levelIndex >= minIndex;
+    return levels.indexOf(level) >= levels.indexOf(this.config.minLevel);
   }
 
-  /**
-   * Log to console
-   */
   private logToConsole(entry: LogEntry): void {
     const prefix = `[${new Date(entry.timestamp).toISOString()}] [${entry.level.toUpperCase()}]`;
 
@@ -201,46 +145,27 @@ export class StructuredLogger implements Middleware {
     }
   }
 
-  /**
-   * Get all logs
-   */
   getLogs(): LogEntry[] {
     return [...this.logs];
   }
 
-  /**
-   * Get logs by level
-   */
   getLogsByLevel(level: LogLevel): LogEntry[] {
-    return this.logs.filter((entry) => entry.level === level);
+    return this.logs.filter((e) => e.level === level);
   }
 
-  /**
-   * Clear all logs
-   */
   clear(): void {
     this.logs = [];
   }
 
-  /**
-   * Export logs as JSON
-   */
   export(): string {
     return JSON.stringify(
-      {
-        version: '1.0',
-        timestamp: Date.now(),
-        logs: this.logs,
-      },
+      { version: '1.0', timestamp: Date.now(), logs: this.logs },
       null,
-      2
+      2,
     );
   }
 }
 
-/**
- * Create structured logger
- */
 export function createStructuredLogger(config?: LoggerConfig): StructuredLogger {
   return new StructuredLogger(config);
 }

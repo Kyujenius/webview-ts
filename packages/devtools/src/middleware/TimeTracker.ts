@@ -1,207 +1,115 @@
 /**
- * TimeTracker - Tracks performance metrics for bridge calls
+ * TimeTracker — Performance tracking middleware using the onion model.
+ * Timing is natural: start before next(), end after next().
  */
 
-import type { Middleware, MiddlewareContext } from '@ts-bridge/shared';
+import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
 
-/**
- * Performance entry for a single request
- */
 export interface PerformanceEntry {
-  /**
-   * Message ID
-   */
   messageId: string;
-
-  /**
-   * Action name
-   */
   action: string;
-
-  /**
-   * Start timestamp
-   */
   startTime: number;
-
-  /**
-   * End timestamp
-   */
   endTime?: number;
-
-  /**
-   * Duration in milliseconds
-   */
   duration?: number;
-
-  /**
-   * Whether the request succeeded
-   */
   success?: boolean;
-
-  /**
-   * Error message if failed
-   */
   error?: string;
 }
 
-/**
- * Time tracker middleware
- */
-export class TimeTracker implements Middleware {
-  private entries: Map<string, PerformanceEntry>;
-  private completedEntries: PerformanceEntry[];
+export class TimeTracker {
+  private entries: Map<string, PerformanceEntry> = new Map();
+  private completedEntries: PerformanceEntry[] = [];
   private maxEntries: number;
 
   constructor(maxEntries: number = 1000) {
-    this.entries = new Map();
-    this.completedEntries = [];
     this.maxEntries = maxEntries;
   }
 
-  /**
-   * Middleware name
-   */
   get name(): string {
     return 'time-tracker';
   }
 
-  /**
-   * Track request timing
-   */
-  async onRequest(context: MiddlewareContext): Promise<void> {
-    const message = context.request;
+  get fn(): MiddlewareFn {
+    return this.createFn();
+  }
 
-    // Start tracking
-    const entry: PerformanceEntry = {
-      messageId: message.id,
-      action: message.action,
-      startTime: performance.now(),
+  toMiddleware(): Middleware {
+    return { name: this.name, fn: this.createFn() };
+  }
+
+  private createFn(): MiddlewareFn {
+    return async (ctx, next) => {
+      const entry: PerformanceEntry = {
+        messageId: ctx.request.id,
+        action: ctx.request.action,
+        startTime: performance.now(),
+      };
+
+      this.entries.set(ctx.request.id, entry);
+
+      try {
+        await next();
+
+        entry.endTime = performance.now();
+        entry.duration = entry.endTime - entry.startTime;
+        entry.success = ctx.response?.success ?? true;
+
+        if (ctx.response && !ctx.response.success && ctx.response.error) {
+          entry.error = ctx.response.error.message;
+        }
+      } catch (error) {
+        entry.endTime = performance.now();
+        entry.duration = entry.endTime - entry.startTime;
+        entry.success = false;
+        entry.error = (error as Error).message;
+        throw error;
+      } finally {
+        this.completeEntry(entry);
+      }
     };
-
-    this.entries.set(message.id, entry);
   }
 
-  /**
-   * Complete tracking on response
-   */
-  async onResponse(context: MiddlewareContext): Promise<void> {
-    const entry = this.entries.get(context.request.id);
-
-    if (!entry || !context.response) {
-      return;
-    }
-
-    // Complete tracking
-    entry.endTime = performance.now();
-    entry.duration = entry.endTime - entry.startTime;
-    entry.success = context.response.success;
-
-    if (!context.response.success && context.response.error) {
-      entry.error = context.response.error.message;
-    }
-
-    this.completeEntry(entry);
-  }
-
-  /**
-   * Complete tracking on error
-   */
-  async onError(context: MiddlewareContext, error: Error): Promise<void> {
-    const entry = this.entries.get(context.request.id);
-
-    if (!entry) {
-      return;
-    }
-
-    // Complete tracking with error
-    entry.endTime = performance.now();
-    entry.duration = entry.endTime - entry.startTime;
-    entry.success = false;
-    entry.error = error.message;
-
-    this.completeEntry(entry);
-  }
-
-  /**
-   * Complete an entry and move to completed list
-   */
   private completeEntry(entry: PerformanceEntry): void {
     this.entries.delete(entry.messageId);
     this.completedEntries.push(entry);
 
-    // Trim if exceeded max
     if (this.completedEntries.length > this.maxEntries) {
       this.completedEntries.shift();
     }
   }
 
-  /**
-   * Get all completed entries
-   */
   getEntries(): PerformanceEntry[] {
     return [...this.completedEntries];
   }
 
-  /**
-   * Get entries by action
-   */
   getEntriesByAction(action: string): PerformanceEntry[] {
-    return this.completedEntries.filter((entry) => entry.action === action);
+    return this.completedEntries.filter((e) => e.action === action);
   }
 
-  /**
-   * Get average duration for an action
-   */
   getAverageDuration(action?: string): number {
-    const entries = action
-      ? this.getEntriesByAction(action)
-      : this.completedEntries;
-
+    const entries = action ? this.getEntriesByAction(action) : this.completedEntries;
     const durations = entries
-      .filter((entry) => entry.duration !== undefined)
-      .map((entry) => entry.duration!);
+      .filter((e) => e.duration !== undefined)
+      .map((e) => e.duration!);
 
-    if (durations.length === 0) {
-      return 0;
-    }
-
+    if (durations.length === 0) return 0;
     return durations.reduce((a, b) => a + b, 0) / durations.length;
   }
 
-  /**
-   * Get success rate for an action
-   */
   getSuccessRate(action?: string): number {
-    const entries = action
-      ? this.getEntriesByAction(action)
-      : this.completedEntries;
-
-    if (entries.length === 0) {
-      return 0;
-    }
-
-    const successCount = entries.filter((entry) => entry.success).length;
-    return successCount / entries.length;
+    const entries = action ? this.getEntriesByAction(action) : this.completedEntries;
+    if (entries.length === 0) return 0;
+    return entries.filter((e) => e.success).length / entries.length;
   }
 
-  /**
-   * Get pending entries (requests that haven't completed)
-   */
   getPendingEntries(): PerformanceEntry[] {
     return Array.from(this.entries.values());
   }
 
-  /**
-   * Clear all entries
-   */
   clear(): void {
     this.entries.clear();
     this.completedEntries = [];
   }
 
-  /**
-   * Export entries as JSON
-   */
   export(): string {
     return JSON.stringify(
       {
@@ -211,14 +119,11 @@ export class TimeTracker implements Middleware {
         pending: Array.from(this.entries.values()),
       },
       null,
-      2
+      2,
     );
   }
 }
 
-/**
- * Create time tracker middleware
- */
 export function createTimeTracker(maxEntries?: number): TimeTracker {
   return new TimeTracker(maxEntries);
 }
