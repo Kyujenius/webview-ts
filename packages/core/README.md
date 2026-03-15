@@ -11,7 +11,6 @@ This package provides the main bridge implementation for web applications runnin
 - **Platform Detection**: Automatically detects iOS, Android, or web environment
 - **Type-Safe API**: Full TypeScript support with strict typing
 - **Middleware Pipeline**: Extensible request/response processing
-- **Plugin System**: Register custom functionality as plugins
 - **Event Subscriptions**: Subscribe to native-initiated events
 - **Request Queue**: Manages concurrent requests with deduplication
 - **Timeout Handling**: Configurable timeouts for all bridge calls
@@ -56,17 +55,21 @@ import { createBridge, LoggerMiddleware, ValidatorMiddleware } from '@ts-bridge/
 const bridge = createBridge();
 
 // Add logging middleware
-bridge.use(new LoggerMiddleware({
-  level: 'debug',
-  includePayload: true,
-  includeResponse: true,
-}));
+bridge.use(
+  new LoggerMiddleware({
+    level: 'debug',
+    includePayload: true,
+    includeResponse: true,
+  })
+);
 
 // Add validation middleware
-bridge.use(new ValidatorMiddleware({
-  validateRequests: true,
-  validateResponses: true,
-}));
+bridge.use(
+  new ValidatorMiddleware({
+    validateRequests: true,
+    validateResponses: true,
+  })
+);
 ```
 
 ### Event Subscriptions
@@ -79,24 +82,6 @@ const unsubscribe = bridge.on('locationUpdate', (location) => {
 
 // Unsubscribe when done
 unsubscribe();
-```
-
-### With Plugins
-
-```typescript
-import { createBridge } from '@ts-bridge/core';
-import { CameraPlugin } from '@ts-bridge/plugins';
-
-const bridge = createBridge();
-
-// Register plugin
-bridge.registerPlugin(CameraPlugin);
-
-// Use plugin (plugin adds methods to bridge)
-const photo = await bridge.call('camera.capture', {
-  quality: 0.8,
-  allowsEditing: true,
-});
 ```
 
 ### Type-Safe Calls
@@ -112,10 +97,7 @@ interface UserData {
 }
 
 // Type-safe bridge call
-const userData = await bridge.call<GetUserPayload, UserData>(
-  'getUserData',
-  { userId: '123' }
-);
+const userData = await bridge.call<GetUserPayload, UserData>('getUserData', { userId: '123' });
 
 // TypeScript knows userData is UserData
 console.log(userData.name, userData.email);
@@ -128,6 +110,7 @@ console.log(userData.name, userData.email);
 Create a new bridge instance with optional configuration.
 
 **Config Options:**
+
 - `timeout` - Default timeout in milliseconds (default: 30000)
 - `debug` - Enable debug logging (default: false)
 - `maxConcurrentRequests` - Max concurrent requests (default: 100)
@@ -154,10 +137,6 @@ Check if the native bridge is available.
 ### bridge.use(middleware)
 
 Add middleware to the bridge pipeline.
-
-### bridge.registerPlugin(plugin)
-
-Register a plugin with the bridge.
 
 ## Platform Adapters
 

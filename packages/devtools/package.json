@@ -1,10 +1,10 @@
 {
   "name": "@ts-bridge/devtools",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Visual debugging tools for ts-bridge communication",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/ts-bridge",
+    "url": "https://github.com/user/ts-bridge",
     "directory": "packages/devtools"
   },
   "type": "module",

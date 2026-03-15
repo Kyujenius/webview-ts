@@ -18,14 +18,13 @@ pnpm build
 
 ## Package Structure
 
-| Package | Path | Description |
-|---------|------|-------------|
-| `@ts-bridge/shared` | `packages/shared` | Shared types (zero deps) |
-| `@ts-bridge/core` | `packages/core` | Web-side bridge engine |
-| `@ts-bridge/react` | `packages/clients/react` | React hooks and provider |
-| `@ts-bridge/native` | `packages/hosts/react-native` | React Native host |
-| `@ts-bridge/plugins` | `packages/plugins` | Plugin presets |
-| `@ts-bridge/devtools` | `packages/devtools` | Visual debugging panel |
+| Package               | Path                          | Description              |
+| --------------------- | ----------------------------- | ------------------------ |
+| `@ts-bridge/shared`   | `packages/shared`             | Shared types (zero deps) |
+| `@ts-bridge/core`     | `packages/core`               | Web-side bridge engine   |
+| `@ts-bridge/react`    | `packages/clients/react`      | React hooks and provider |
+| `@ts-bridge/native`   | `packages/hosts/react-native` | React Native host        |
+| `@ts-bridge/devtools` | `packages/devtools`           | Visual debugging panel   |
 
 ## Development
 

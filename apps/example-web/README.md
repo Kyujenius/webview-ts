@@ -70,18 +70,23 @@ Example React Native setup:
 
 ```tsx
 import { WebView } from 'react-native-webview';
-import { BridgeHost } from '@ts-bridge/native';
-import { createCameraNativePlugin } from '@ts-bridge/plugins/camera';
+import { useBridgeHost } from '@ts-bridge/native';
+import { camera } from '../shared/camera-plugin';
 
-const bridge = new BridgeHost();
-bridge.registerPlugin(createCameraNativePlugin());
+function WebViewScreen() {
+  const { webViewProps } = useBridgeHost({
+    plugins: [
+      camera.host({
+        'camera.takePhoto': async ({ quality }) => {
+          const photo = await NativeCamera.take({ quality });
+          return { uri: photo.uri, width: photo.width, height: photo.height };
+        },
+      }),
+    ],
+  });
 
-<WebView
-  source={{ uri: 'http://localhost:3000' }}
-  onMessage={(event) => {
-    bridge.handleMessage(event.nativeEvent.data);
-  }}
-/>
+  return <WebView {...webViewProps} source={{ uri: 'http://localhost:3000' }} />;
+}
 ```
 
 ## Web-Only Mode

@@ -1,11 +1,11 @@
 {
   "name": "@ts-bridge/core",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Web-side bridge engine with middleware pipeline",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/ts-bridge",
+    "url": "https://github.com/user/ts-bridge",
     "directory": "packages/core"
   },
   "keywords": [

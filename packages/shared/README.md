@@ -66,21 +66,24 @@ if (isBridgeMessage(unknownData)) {
 }
 ```
 
-### Plugin Types
+### Plugin Definition
 
 ```typescript
-import type { WebPlugin, PluginMetadata } from '@ts-bridge/shared';
+import { definePlugin } from '@ts-bridge/shared';
 
-const plugin: WebPlugin = {
-  metadata: {
-    name: 'my-plugin',
-    version: '1.0.0',
-    description: 'My custom plugin',
-  },
-  async initialize(bridge) {
-    // Plugin initialization logic
-  },
+type MyActions = {
+  'myPlugin.doSomething': {
+    payload: { input: string };
+    response: { result: string };
+  };
 };
+
+export const myPlugin = definePlugin<MyActions>()({
+  name: 'myPlugin',
+  methods: (call) => ({
+    doSomething: (input: string) => call('myPlugin.doSomething', { input }),
+  }),
+});
 ```
 
 ## Type Categories
@@ -107,10 +110,9 @@ const plugin: WebPlugin = {
 
 ### Plugin Types
 
-- `WebPlugin` - Web-side plugin interface
-- `NativePlugin` - Native-side plugin interface
-- `PluginMetadata` - Plugin metadata
-- `PermissionManager` - Permission management interface
+- `PluginInstance` - Plugin instance returned by `definePlugin`
+- `HostHandlers` - Host-side handler map for plugin actions
+- `PluginCall` - Typed call function for plugin methods
 
 ## License
 

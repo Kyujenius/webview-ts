@@ -23,7 +23,7 @@ function HomePage() {
             <strong>@ts-bridge/core</strong> - Bridge manager and communication
           </li>
           <li>
-            <strong>@ts-bridge/plugins</strong> - Camera, Location, Storage, Biometric
+            <strong>@ts-bridge/shared</strong> - Types, contracts, and plugin definitions
           </li>
           <li>
             <strong>@ts-bridge/devtools</strong> - Communication visualization

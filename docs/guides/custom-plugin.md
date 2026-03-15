@@ -34,7 +34,7 @@ Each key is an action name (namespaced by convention). Each value has `payload` 
 Use `definePlugin` to create a plugin instance. The curried call `definePlugin<TActions>()(...)` enables TypeScript to infer method return types while you explicitly provide the action map.
 
 ```typescript
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 import type { NotificationActions } from './notifications-plugin';
 
 export const notifications = definePlugin<NotificationActions>()({
@@ -42,10 +42,8 @@ export const notifications = definePlugin<NotificationActions>()({
   methods: (call) => ({
     show: (opts: { title: string; body: string; priority?: 'low' | 'default' | 'high' }) =>
       call('notifications.show', opts),
-    cancel: (id: string) =>
-      call('notifications.cancel', { id }),
-    getBadgeCount: () =>
-      call('notifications.getBadgeCount', {}),
+    cancel: (id: string) => call('notifications.cancel', { id }),
+    getBadgeCount: () => call('notifications.getBadgeCount', {}),
   }),
 });
 ```
@@ -61,12 +59,7 @@ Pass the plugin to `createBridgeReact`. This merges the plugin's action types in
 import { createBridgeReact } from '@ts-bridge/react';
 import { notifications } from './notifications-plugin';
 
-export const {
-  BridgeProvider,
-  useBridge,
-  useAction,
-  usePlugin,
-} = createBridgeReact({
+export const { BridgeProvider, useBridge, useAction, usePlugin } = createBridgeReact({
   plugins: [notifications],
 });
 ```
@@ -161,7 +154,7 @@ your-project/
 **shared/notifications-plugin.ts**
 
 ```typescript
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 
 export type NotificationActions = {
   'notifications.show': {
@@ -209,11 +202,7 @@ import { notifications } from '../shared/notifications-plugin';
 export function NotifyButton() {
   const { show } = usePlugin(notifications);
 
-  return (
-    <button onClick={() => show({ title: 'Hello', body: 'From the web!' })}>
-      Notify
-    </button>
-  );
+  return <button onClick={() => show({ title: 'Hello', body: 'From the web!' })}>Notify</button>;
 }
 ```
 

@@ -1,11 +1,11 @@
 {
   "name": "@ts-bridge/react",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "type": "module",
   "description": "React hooks and provider for ts-bridge",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/ts-bridge",
+    "url": "https://github.com/user/ts-bridge",
     "directory": "packages/clients/react"
   },
   "keywords": [

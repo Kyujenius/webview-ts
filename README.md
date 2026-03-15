@@ -15,14 +15,14 @@ Type-safe WebView <-> Native bridge for TypeScript
 ### 1. Install
 
 ```bash
-pnpm add @ts-bridge/core @ts-bridge/react @ts-bridge/plugins @ts-bridge/native
+pnpm add @ts-bridge/core @ts-bridge/react @ts-bridge/shared @ts-bridge/native
 ```
 
 ### 2. Define Actions
 
 ```typescript
 // shared/camera-plugin.ts
-import { definePlugin } from '@ts-bridge/plugins';
+import { definePlugin } from '@ts-bridge/shared';
 
 export type CameraActions = {
   'camera.takePhoto': {
@@ -34,8 +34,7 @@ export type CameraActions = {
 export const camera = definePlugin<CameraActions>()({
   name: 'camera',
   methods: (call) => ({
-    takePhoto: (opts?: { quality?: number }) =>
-      call('camera.takePhoto', opts ?? {}),
+    takePhoto: (opts?: { quality?: number }) => call('camera.takePhoto', opts ?? {}),
   }),
 });
 ```
@@ -108,14 +107,13 @@ graph LR
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `@ts-bridge/core` | Web-side bridge engine |
-| `@ts-bridge/shared` | Shared types and contracts (zero deps) |
-| `@ts-bridge/react` | React hooks and provider |
-| `@ts-bridge/native` | React Native host |
-| `@ts-bridge/plugins` | Plugin presets (camera, location, etc.) |
-| `@ts-bridge/devtools` | Visual debugging panel |
+| Package               | Description                            |
+| --------------------- | -------------------------------------- |
+| `@ts-bridge/core`     | Web-side bridge engine                 |
+| `@ts-bridge/shared`   | Shared types and contracts (zero deps) |
+| `@ts-bridge/react`    | React hooks and provider               |
+| `@ts-bridge/native`   | React Native host                      |
+| `@ts-bridge/devtools` | Visual debugging panel                 |
 
 ## Development
 
