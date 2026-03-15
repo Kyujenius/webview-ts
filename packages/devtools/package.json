@@ -48,6 +48,12 @@
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   },
-  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
+  "keywords": [
+    "webview",
+    "bridge",
+    "typescript",
+    "react-native",
+    "type-safe"
+  ],
   "license": "MIT"
 }

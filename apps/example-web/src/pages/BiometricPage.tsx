@@ -46,7 +46,10 @@ function BiometricPage() {
     <div>
       <h1>Biometric Plugin</h1>
 
-      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+      <div
+        className="result"
+        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
+      >
         <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Mock)'}
       </div>
 
@@ -57,9 +60,13 @@ function BiometricPage() {
         </button>
         {availability && (
           <div className="result" style={{ marginTop: '1rem' }}>
-            <p><strong>Available:</strong> {availability.available ? 'Yes' : 'No'}</p>
+            <p>
+              <strong>Available:</strong> {availability.available ? 'Yes' : 'No'}
+            </p>
             {availability.biometricTypes.length > 0 && (
-              <p><strong>Types:</strong> {availability.biometricTypes.join(', ')}</p>
+              <p>
+                <strong>Types:</strong> {availability.biometricTypes.join(', ')}
+              </p>
             )}
           </div>
         )}
@@ -82,8 +89,14 @@ function BiometricPage() {
         <div className="card">
           <h2>Authentication Result</h2>
           <div className={`result ${authResult.success ? 'success' : 'error'}`}>
-            <p><strong>Success:</strong> {authResult.success ? 'Yes' : 'No'}</p>
-            {authResult.error && <p><strong>Error:</strong> {authResult.error}</p>}
+            <p>
+              <strong>Success:</strong> {authResult.success ? 'Yes' : 'No'}
+            </p>
+            {authResult.error && (
+              <p>
+                <strong>Error:</strong> {authResult.error}
+              </p>
+            )}
           </div>
         </div>
       )}

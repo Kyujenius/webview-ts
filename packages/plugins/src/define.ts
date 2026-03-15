@@ -8,7 +8,7 @@ import type {
 
 export function definePlugin<TActions extends Record<string, ActionDefinitionShape>>() {
   return <TName extends string, TMethods>(
-    input: PluginInput<TName, TActions, TMethods>,
+    input: PluginInput<TName, TActions, TMethods>
   ): PluginInstance<TName, TActions, TMethods> => {
     const { name, methods } = input;
 

@@ -89,9 +89,7 @@ describe('BridgeHost', () => {
         })
       );
 
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"success":true')
-      );
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":true'));
     });
 
     it('should send error response for unregistered action', async () => {
@@ -103,9 +101,7 @@ describe('BridgeHost', () => {
 
       await bridgeHost.handleMessageString(JSON.stringify(message));
 
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"success":false')
-      );
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":false'));
     });
 
     it('should send error response when handler throws', async () => {
@@ -120,12 +116,8 @@ describe('BridgeHost', () => {
 
       await bridgeHost.handleMessageString(JSON.stringify(message));
 
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"success":false')
-      );
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('Handler error')
-      );
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":false'));
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('Handler error'));
     });
   });
 
@@ -133,20 +125,14 @@ describe('BridgeHost', () => {
     it('should emit events to WebView', () => {
       bridgeHost.emit('testEvent', { data: 'test' });
 
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"event":"testEvent"')
-      );
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"data":"test"')
-      );
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"event":"testEvent"'));
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"data":"test"'));
     });
 
     it('should emit events without payload', () => {
       bridgeHost.emit('testEvent');
 
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.stringContaining('"event":"testEvent"')
-      );
+      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"event":"testEvent"'));
     });
   });
 

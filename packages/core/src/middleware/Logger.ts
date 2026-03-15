@@ -94,6 +94,10 @@ export class LoggerMiddleware {
     this.middleware = createLogger(options);
   }
 
-  get name() { return this.middleware.name; }
-  get fn() { return this.middleware.fn; }
+  get name() {
+    return this.middleware.name;
+  }
+  get fn() {
+    return this.middleware.fn;
+  }
 }

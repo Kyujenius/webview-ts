@@ -167,7 +167,12 @@ export class BridgeManager<
 
         const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
           const timeout = options?.timeout ?? this.config.timeout;
-          this.callbacks.register(ctx.request.id, resolve as (value: unknown) => void, reject, timeout);
+          this.callbacks.register(
+            ctx.request.id,
+            resolve as (value: unknown) => void,
+            reject,
+            timeout
+          );
         });
 
         this.adapter.send(ctx.request);

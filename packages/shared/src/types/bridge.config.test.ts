@@ -9,7 +9,9 @@ describe('Extended BridgeConfig', () => {
         expectTypeOf(context).toMatchTypeOf<ErrorContext>();
       },
     };
-    expectTypeOf(config.onError).toMatchTypeOf<((error: BridgeError, context: ErrorContext) => void) | undefined>();
+    expectTypeOf(config.onError).toMatchTypeOf<
+      ((error: BridgeError, context: ErrorContext) => void) | undefined
+    >();
   });
 
   it('should accept retry config', () => {

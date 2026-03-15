@@ -2,13 +2,18 @@
  * Validator middleware — validates request before send, response after receive.
  */
 
-import type { Middleware, MiddlewareFn, MiddlewareContext, ValidatorMiddlewareOptions } from '@ts-bridge/shared';
+import type {
+  Middleware,
+  MiddlewareFn,
+  MiddlewareContext,
+  ValidatorMiddlewareOptions,
+} from '@ts-bridge/shared';
 import { isBridgeMessage, isBridgeResponse } from '@ts-bridge/shared';
 
 function handleValidationError(
   message: string,
   onError: 'throw' | 'warn' | 'ignore',
-  ctx: MiddlewareContext,
+  ctx: MiddlewareContext
 ): void {
   const error = new Error(`[Validation Error] ${message}`);
 
@@ -35,7 +40,11 @@ export function createValidator(options: ValidatorMiddlewareOptions = {}): Middl
         handleValidationError('Invalid bridge message format', onValidationError, ctx);
       }
       if (!ctx.request.id || !ctx.request.action) {
-        handleValidationError('Message missing required fields (id, action)', onValidationError, ctx);
+        handleValidationError(
+          'Message missing required fields (id, action)',
+          onValidationError,
+          ctx
+        );
       }
     }
 
@@ -47,10 +56,18 @@ export function createValidator(options: ValidatorMiddlewareOptions = {}): Middl
         handleValidationError('Invalid bridge response format', onValidationError, ctx);
       }
       if (!ctx.response.id || typeof ctx.response.success !== 'boolean') {
-        handleValidationError('Response missing required fields (id, success)', onValidationError, ctx);
+        handleValidationError(
+          'Response missing required fields (id, success)',
+          onValidationError,
+          ctx
+        );
       }
       if (!ctx.response.success && !ctx.response.error) {
-        handleValidationError('Failed response must include error information', onValidationError, ctx);
+        handleValidationError(
+          'Failed response must include error information',
+          onValidationError,
+          ctx
+        );
       }
     }
   };
@@ -68,6 +85,10 @@ export class ValidatorMiddleware {
     this.middleware = createValidator(options);
   }
 
-  get name() { return this.middleware.name; }
-  get fn() { return this.middleware.fn; }
+  get name() {
+    return this.middleware.name;
+  }
+  get fn() {
+    return this.middleware.fn;
+  }
 }

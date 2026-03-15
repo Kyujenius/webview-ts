@@ -7,7 +7,9 @@ describe('isBridgeMessage', () => {
   });
 
   it('should return true for message with payload', () => {
-    expect(isBridgeMessage({ id: '1', action: 'test', payload: { foo: 1 }, timestamp: 123 })).toBe(true);
+    expect(isBridgeMessage({ id: '1', action: 'test', payload: { foo: 1 }, timestamp: 123 })).toBe(
+      true
+    );
   });
 
   it('should return false for null', () => {
@@ -33,10 +35,14 @@ describe('isBridgeResponse', () => {
   });
 
   it('should return true for error response', () => {
-    expect(isBridgeResponse({
-      id: '1', success: false, timestamp: 123,
-      error: { code: 'ERR', message: 'fail' },
-    })).toBe(true);
+    expect(
+      isBridgeResponse({
+        id: '1',
+        success: false,
+        timestamp: 123,
+        error: { code: 'ERR', message: 'fail' },
+      })
+    ).toBe(true);
   });
 
   it('should return false for missing success', () => {

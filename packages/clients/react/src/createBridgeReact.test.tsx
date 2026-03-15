@@ -1,9 +1,8 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { createBridgeReact } from './createBridgeReact';
 import { definePlugin } from '@ts-bridge/plugins';
-import type { ActionDefinitionShape, InferPayload, InferResponse } from '@ts-bridge/shared';
 
 // Define a typed action contract
 type TestActions = {
@@ -11,16 +10,18 @@ type TestActions = {
   'test.add': { payload: { a: number; b: number }; response: { sum: number } };
 };
 
-const { BridgeProvider, useBridge, useAction, useEvent } = createBridgeReact<TestActions>();
+const { BridgeProvider, useBridge, useAction } = createBridgeReact<TestActions>();
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <BridgeProvider config={{
-    timeout: 5000,
-    fallback: {
-      'test.echo': async (payload: any) => ({ echoed: payload.message }),
-      'test.add': async (payload: any) => ({ sum: payload.a + payload.b }),
-    },
-  }}>
+  <BridgeProvider
+    config={{
+      timeout: 5000,
+      fallback: {
+        'test.echo': async (payload: any) => ({ echoed: payload.message }),
+        'test.add': async (payload: any) => ({ sum: payload.a + payload.b }),
+      },
+    }}
+  >
     {children}
   </BridgeProvider>
 );
@@ -34,7 +35,9 @@ describe('createBridgeReact', () => {
     });
 
     it('should throw when used outside provider', () => {
-      expect(() => { renderHook(() => useBridge()); }).toThrow(/BridgeProvider/);
+      expect(() => {
+        renderHook(() => useBridge());
+      }).toThrow(/BridgeProvider/);
     });
   });
 
@@ -62,15 +65,21 @@ describe('createBridgeReact', () => {
     it('should execute action with typed payload and return typed data', async () => {
       const { result } = renderHook(() => useAction('test.echo'), { wrapper });
       expect(result.current.data).toBeNull();
-      await act(async () => { await result.current.execute({ message: 'typed' }); });
+      await act(async () => {
+        await result.current.execute({ message: 'typed' });
+      });
       expect(result.current.data).toEqual({ echoed: 'typed' });
     });
 
     it('should reset state', async () => {
       const { result } = renderHook(() => useAction('test.add'), { wrapper });
-      await act(async () => { await result.current.execute({ a: 1, b: 2 }); });
+      await act(async () => {
+        await result.current.execute({ a: 1, b: 2 });
+      });
       expect(result.current.data).toEqual({ sum: 3 });
-      act(() => { result.current.reset(); });
+      act(() => {
+        result.current.reset();
+      });
       expect(result.current.data).toBeNull();
     });
   });
@@ -83,8 +92,6 @@ describe('createBridgeReact', () => {
       // call() should accept only valid action names
       // call('test.echo', ...) should require { message: string }
       // call('test.add', ...) should require { a: number; b: number }
-      type CallFn = typeof result.current.call;
-
       // Verify the call function exists and is callable
       expect(typeof result.current.call).toBe('function');
     });
@@ -131,13 +138,17 @@ describe('createBridgeReact with plugins', () => {
   it('usePlugin methods should call through bridge', async () => {
     const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
     let response: any;
-    await act(async () => { response = await result.current.echo('hello'); });
+    await act(async () => {
+      response = await result.current.echo('hello');
+    });
     expect(response).toEqual({ echoed: 'hello' });
   });
 
   it('useAction should work with plugin actions', async () => {
     const { result } = renderHook(() => usePluginAction('mock.echo'), { wrapper: pluginWrapper });
-    await act(async () => { await result.current.execute({ msg: 'test' }); });
+    await act(async () => {
+      await result.current.execute({ msg: 'test' });
+    });
     expect(result.current.data).toEqual({ echoed: 'test' });
   });
 });

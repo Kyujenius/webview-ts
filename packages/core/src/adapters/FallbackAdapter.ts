@@ -7,10 +7,7 @@ export class FallbackAdapter implements NativeAdapter {
   private readonly logOnly: boolean;
   private readonly responseCallback: (response: BridgeResponse) => void;
 
-  constructor(
-    fallback: true | FallbackMap,
-    responseCallback: (response: BridgeResponse) => void,
-  ) {
+  constructor(fallback: true | FallbackMap, responseCallback: (response: BridgeResponse) => void) {
     this.logOnly = fallback === true;
     this.handlers = fallback === true ? {} : fallback;
     this.responseCallback = responseCallback;

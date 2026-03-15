@@ -28,9 +28,7 @@ export function RequestInspector({
   message,
   showMetadata = true,
 }: RequestInspectorProps): JSX.Element {
-  const [activeTab, setActiveTab] = useState<'message' | 'metadata' | 'raw'>(
-    'message'
-  );
+  const [activeTab, setActiveTab] = useState<'message' | 'metadata' | 'raw'>('message');
 
   if (!message) {
     return (
@@ -182,13 +180,7 @@ function RawTab({ message }: { message: RecordedMessage }): JSX.Element {
 /**
  * Section component
  */
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}): JSX.Element {
+function Section({ title, children }: { title: string; children: React.ReactNode }): JSX.Element {
   return (
     <div style={styles.section}>
       <h4 style={styles.sectionTitle}>{title}</h4>

@@ -84,7 +84,10 @@ function StoragePage() {
     <div>
       <h1>Storage Plugin</h1>
 
-      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+      <div
+        className="result"
+        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
+      >
         <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (In-Memory)'}
       </div>
 
@@ -97,7 +100,12 @@ function StoragePage() {
               type="text"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              style={{ marginLeft: '0.5rem', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{
+                marginLeft: '0.5rem',
+                padding: '0.5rem',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+              }}
             />
           </label>
           <label style={{ display: 'block', marginTop: '0.5rem' }}>
@@ -106,22 +114,37 @@ function StoragePage() {
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              style={{ marginLeft: '0.5rem', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{
+                marginLeft: '0.5rem',
+                padding: '0.5rem',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+              }}
             />
           </label>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleSetItem} disabled={loading}>Set Item</button>
-          <button className="button button-secondary" onClick={handleGetItem} disabled={loading}>Get Item</button>
-          <button className="button button-secondary" onClick={handleRemoveItem} disabled={loading}>Remove Item</button>
+          <button className="button" onClick={handleSetItem} disabled={loading}>
+            Set Item
+          </button>
+          <button className="button button-secondary" onClick={handleGetItem} disabled={loading}>
+            Get Item
+          </button>
+          <button className="button button-secondary" onClick={handleRemoveItem} disabled={loading}>
+            Remove Item
+          </button>
         </div>
       </div>
 
       <div className="card">
         <h2>Bulk Operations</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleGetAllKeys} disabled={loading}>Get All Keys</button>
-          <button className="button button-secondary" onClick={handleClear} disabled={loading}>Clear Storage</button>
+          <button className="button" onClick={handleGetAllKeys} disabled={loading}>
+            Get All Keys
+          </button>
+          <button className="button button-secondary" onClick={handleClear} disabled={loading}>
+            Clear Storage
+          </button>
         </div>
       </div>
 

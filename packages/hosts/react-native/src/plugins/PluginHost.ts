@@ -114,7 +114,9 @@ export class PluginHost {
           const depEntry = this.plugins.get(dep);
 
           if (!depEntry) {
-            throw new Error(`Plugin '${pluginName}' requires dependency '${dep}' which is not registered`);
+            throw new Error(
+              `Plugin '${pluginName}' requires dependency '${dep}' which is not registered`
+            );
           }
 
           if (depEntry.state !== PluginState.INITIALIZED) {
@@ -177,10 +179,9 @@ export class PluginHost {
 
       this.log(`Plugin '${pluginName}' unregistered`);
     } catch (error) {
-      this.config.onError(
-        error instanceof Error ? error : new Error(String(error)),
-        { plugin: pluginName }
-      );
+      this.config.onError(error instanceof Error ? error : new Error(String(error)), {
+        plugin: pluginName,
+      });
       throw error;
     }
   }
@@ -240,10 +241,9 @@ export class PluginHost {
       try {
         await this.unregisterPlugin(name);
       } catch (error) {
-        this.config.onError(
-          error instanceof Error ? error : new Error(String(error)),
-          { plugin: name }
-        );
+        this.config.onError(error instanceof Error ? error : new Error(String(error)), {
+          plugin: name,
+        });
       }
     }
 
@@ -271,9 +271,6 @@ export class PluginHost {
 /**
  * Create a plugin host with the given bridge host
  */
-export function createPluginHost(
-  bridgeHost: BridgeHost,
-  config?: PluginHostConfig
-): PluginHost {
+export function createPluginHost(bridgeHost: BridgeHost, config?: PluginHostConfig): PluginHost {
   return new PluginHost(bridgeHost, config);
 }

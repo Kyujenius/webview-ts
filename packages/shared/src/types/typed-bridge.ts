@@ -5,13 +5,10 @@ export interface TypedBridge<TActions extends Record<string, ActionDefinitionSha
   call<TAction extends ActionNames<TActions>>(
     action: TAction,
     payload: InferPayload<TActions, TAction>,
-    options?: BridgeCallOptions,
+    options?: BridgeCallOptions
   ): Promise<InferResponse<TActions, TAction>>;
 
-  on<TPayload = unknown>(
-    event: string,
-    handler: (payload: TPayload) => void,
-  ): () => void;
+  on<TPayload = unknown>(event: string, handler: (payload: TPayload) => void): () => void;
 
   off(event: string, handler?: (payload: unknown) => void): void;
 

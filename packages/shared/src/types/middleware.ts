@@ -32,10 +32,7 @@ export interface MiddlewareContext {
  * - Mutating `ctx.request` before `next()` transforms the outgoing message.
  * - Mutating `ctx.response` after `next()` transforms the result.
  */
-export type MiddlewareFn = (
-  ctx: MiddlewareContext,
-  next: () => Promise<void>,
-) => Promise<void>;
+export type MiddlewareFn = (ctx: MiddlewareContext, next: () => Promise<void>) => Promise<void>;
 
 /**
  * Named middleware — a function with a name for debugging and removal.

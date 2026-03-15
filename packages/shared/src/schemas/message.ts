@@ -37,9 +37,5 @@ export function isBridgeResponse(value: unknown): value is BridgeResponse {
  * Type guard for BridgeEvent
  */
 export function isBridgeEvent(value: unknown): value is BridgeEvent {
-  return (
-    isObject(value) &&
-    typeof value.event === 'string' &&
-    typeof value.timestamp === 'number'
-  );
+  return isObject(value) && typeof value.event === 'string' && typeof value.timestamp === 'number';
 }

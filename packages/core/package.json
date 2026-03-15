@@ -8,7 +8,13 @@
     "url": "https://github.com/anthropics/ts-bridge",
     "directory": "packages/core"
   },
-  "keywords": ["webview", "bridge", "typescript", "react-native", "type-safe"],
+  "keywords": [
+    "webview",
+    "bridge",
+    "typescript",
+    "react-native",
+    "type-safe"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

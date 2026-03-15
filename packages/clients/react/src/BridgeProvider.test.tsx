@@ -22,6 +22,8 @@ describe('BridgeProvider', () => {
   });
 
   it('should throw when used outside provider', () => {
-    expect(() => { renderHook(() => useBridgeContext()); }).toThrow(/BridgeProvider/);
+    expect(() => {
+      renderHook(() => useBridgeContext());
+    }).toThrow(/BridgeProvider/);
   });
 });

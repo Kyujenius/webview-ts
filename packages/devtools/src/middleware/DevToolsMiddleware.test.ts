@@ -7,7 +7,7 @@ import { MessageDirection, MessageStatus } from '../types/index';
 async function runMiddleware(
   mw: DevToolsMiddleware,
   ctx: MiddlewareContext,
-  options?: { error?: Error },
+  options?: { error?: Error }
 ) {
   const fn = mw.fn;
   await fn(ctx, async () => {
@@ -16,10 +16,7 @@ async function runMiddleware(
   });
 }
 
-function makeCtx(
-  message: BridgeMessage,
-  response?: BridgeResponse,
-): MiddlewareContext {
+function makeCtx(message: BridgeMessage, response?: BridgeResponse): MiddlewareContext {
   return {
     request: message,
     response,
@@ -107,7 +104,9 @@ describe('DevToolsMiddleware', () => {
       const error = new Error('Test exception');
 
       await expect(
-        middleware.fn(ctx, async () => { throw error; }),
+        middleware.fn(ctx, async () => {
+          throw error;
+        })
       ).rejects.toThrow('Test exception');
 
       const messages = middleware.getStore().getMessages();
@@ -134,7 +133,7 @@ describe('DevToolsMiddleware', () => {
 
       const allowedCtx = makeCtx(
         { id: 'msg-2', action: 'allowedAction', timestamp: Date.now() },
-        { id: 'msg-2', success: true, timestamp: Date.now() },
+        { id: 'msg-2', success: true, timestamp: Date.now() }
       );
 
       // Filtered — should pass through without recording
@@ -155,7 +154,7 @@ describe('DevToolsMiddleware', () => {
 
       const ctx = makeCtx(
         { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
-        { id: 'msg-1', success: true, timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() }
       );
 
       await runMiddleware(middleware, ctx);
@@ -166,7 +165,7 @@ describe('DevToolsMiddleware', () => {
     it('should clear messages', async () => {
       const ctx = makeCtx(
         { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
-        { id: 'msg-1', success: true, timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() }
       );
 
       await runMiddleware(middleware, ctx);
@@ -187,7 +186,7 @@ describe('DevToolsMiddleware', () => {
 
       const ctx = makeCtx(
         { id: 'msg-1', action: 'testAction', timestamp: Date.now() },
-        { id: 'msg-1', success: true, timestamp: Date.now() },
+        { id: 'msg-1', success: true, timestamp: Date.now() }
       );
 
       await runMiddleware(callbackMiddleware, ctx);

@@ -2,11 +2,7 @@
  * DevToolsStore - Stores and manages recorded messages
  */
 
-import type {
-  DevToolsStore,
-  RecordedMessage,
-  PerformanceMetrics,
-} from '../types/index';
+import type { DevToolsStore, RecordedMessage, PerformanceMetrics } from '../types/index';
 import { MessageStatus } from '../types/index';
 
 /**
@@ -110,10 +106,8 @@ export class DevToolsStoreImpl implements DevToolsStore {
         responseTimes.length > 0
           ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
           : 0,
-      minResponseTime:
-        responseTimes.length > 0 ? Math.min(...responseTimes) : 0,
-      maxResponseTime:
-        responseTimes.length > 0 ? Math.max(...responseTimes) : 0,
+      minResponseTime: responseTimes.length > 0 ? Math.min(...responseTimes) : 0,
+      maxResponseTime: responseTimes.length > 0 ? Math.max(...responseTimes) : 0,
       successRate: totalResponses > 0 ? successCount / totalResponses : 0,
       errorCount,
       timeoutCount,

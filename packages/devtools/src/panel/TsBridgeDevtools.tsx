@@ -88,7 +88,7 @@ export function TsBridgeDevtools({
       result = result.filter((m) => m.direction === MessageDirection.REQUEST);
     } else if (filter === 'response') {
       result = result.filter(
-        (m) => m.direction === MessageDirection.RESPONSE && m.status !== MessageStatus.ERROR,
+        (m) => m.direction === MessageDirection.RESPONSE && m.status !== MessageStatus.ERROR
       );
     } else if (filter === 'error') {
       result = result.filter((m) => m.status === MessageStatus.ERROR);
@@ -96,7 +96,7 @@ export function TsBridgeDevtools({
     if (search) {
       const term = search.toLowerCase();
       result = result.filter((m) =>
-        'action' in m.message ? m.message.action.toLowerCase().includes(term) : false,
+        'action' in m.message ? m.message.action.toLowerCase().includes(term) : false
       );
     }
     return result.slice().reverse(); // newest first
@@ -116,11 +116,8 @@ export function TsBridgeDevtools({
         }}
         title="Open ts-bridge DevTools"
       >
-        <span style={S.logo}>{'{ }'}</span>{' '}
-        <span>{buttonLabel}</span>
-        {messages.length > 0 && (
-          <span style={S.badge}>{messages.length}</span>
-        )}
+        <span style={S.logo}>{'{ }'}</span> <span>{buttonLabel}</span>
+        {messages.length > 0 && <span style={S.badge}>{messages.length}</span>}
       </button>
     );
   }
@@ -136,7 +133,11 @@ export function TsBridgeDevtools({
           {metrics && (
             <div style={S.statsRow}>
               <Stat label="Total" value={metrics.totalMessages} />
-              <Stat label="OK" value={Math.round(metrics.successRate * 100) + '%'} color="#22c55e" />
+              <Stat
+                label="OK"
+                value={Math.round(metrics.successRate * 100) + '%'}
+                color="#22c55e"
+              />
               <Stat label="Err" value={metrics.errorCount} color="#ef4444" />
               <Stat label="Avg" value={metrics.averageResponseTime.toFixed(1) + 'ms'} />
             </div>
@@ -241,9 +242,7 @@ function MessageRow({
     >
       <span style={{ ...S.rowIcon, color }}>{icon}</span>
       <span style={S.rowAction}>{action}</span>
-      {msg.duration != null && (
-        <span style={S.rowDuration}>{msg.duration.toFixed(0)}ms</span>
-      )}
+      {msg.duration != null && <span style={S.rowDuration}>{msg.duration.toFixed(0)}ms</span>}
       <span style={S.rowTime}>{time}</span>
     </div>
   );
@@ -288,14 +287,16 @@ function Inspector({ msg }: { msg: RecordedMessage }) {
         {tab === 'payload'
           ? JSON.stringify(
               isReq
-                ? ('payload' in msg.message ? msg.message.payload : null)
-                : ('data' in msg.message
-                    ? msg.message.data
-                    : 'error' in msg.message
-                      ? msg.message.error
-                      : null),
+                ? 'payload' in msg.message
+                  ? msg.message.payload
+                  : null
+                : 'data' in msg.message
+                  ? msg.message.data
+                  : 'error' in msg.message
+                    ? msg.message.error
+                    : null,
               null,
-              2,
+              2
             )
           : JSON.stringify(msg, null, 2)}
       </pre>
@@ -303,15 +304,7 @@ function Inspector({ msg }: { msg: RecordedMessage }) {
   );
 }
 
-function Stat({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string | number;
-  color?: string;
-}) {
+function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
   return (
     <span style={S.stat}>
       <span style={S.statLabel}>{label}</span>
@@ -324,20 +317,29 @@ function Stat({
 
 function statusColor(status: MessageStatus): string {
   switch (status) {
-    case MessageStatus.SUCCESS: return '#22c55e';
-    case MessageStatus.ERROR: return '#ef4444';
-    case MessageStatus.TIMEOUT: return '#f97316';
-    case MessageStatus.PENDING: return '#3b82f6';
-    default: return '#64748b';
+    case MessageStatus.SUCCESS:
+      return '#22c55e';
+    case MessageStatus.ERROR:
+      return '#ef4444';
+    case MessageStatus.TIMEOUT:
+      return '#f97316';
+    case MessageStatus.PENDING:
+      return '#3b82f6';
+    default:
+      return '#64748b';
   }
 }
 
 function directionIcon(direction: MessageDirection): string {
   switch (direction) {
-    case MessageDirection.REQUEST: return '\u2192';
-    case MessageDirection.RESPONSE: return '\u2190';
-    case MessageDirection.EVENT: return '\u2605';
-    default: return '\u2022';
+    case MessageDirection.REQUEST:
+      return '\u2192';
+    case MessageDirection.RESPONSE:
+      return '\u2190';
+    case MessageDirection.EVENT:
+      return '\u2605';
+    default:
+      return '\u2022';
   }
 }
 

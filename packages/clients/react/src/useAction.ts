@@ -1,12 +1,21 @@
 import { useState, useCallback } from 'react';
-import type { ActionDefinitionShape, ActionNames, InferPayload, InferResponse, BridgeCallOptions } from '@ts-bridge/shared';
+import type {
+  ActionDefinitionShape,
+  ActionNames,
+  InferPayload,
+  InferResponse,
+  BridgeCallOptions,
+} from '@ts-bridge/shared';
 import { useBridgeContext } from './BridgeContext';
 
 export interface UseActionReturn<
   TActions extends Record<string, ActionDefinitionShape>,
   TAction extends ActionNames<TActions>,
 > {
-  execute: (payload: InferPayload<TActions, TAction>, options?: BridgeCallOptions) => Promise<InferResponse<TActions, TAction>>;
+  execute: (
+    payload: InferPayload<TActions, TAction>,
+    options?: BridgeCallOptions
+  ) => Promise<InferResponse<TActions, TAction>>;
   data: InferResponse<TActions, TAction> | null;
   error: Error | null;
   isLoading: boolean;
@@ -24,19 +33,31 @@ export function useAction<
   const [isLoading, setIsLoading] = useState(false);
 
   const execute = useCallback(
-    async (payload: InferPayload<TActions, TAction>, options?: BridgeCallOptions): Promise<TResponse> => {
-      setIsLoading(true); setError(null);
+    async (
+      payload: InferPayload<TActions, TAction>,
+      options?: BridgeCallOptions
+    ): Promise<TResponse> => {
+      setIsLoading(true);
+      setError(null);
       try {
         const result = await bridge.call(action, payload, options ?? defaultOptions);
-        setData(result); return result;
+        setData(result);
+        return result;
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
-        setError(e); throw e;
-      } finally { setIsLoading(false); }
+        setError(e);
+        throw e;
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [bridge, action, defaultOptions],
+    [bridge, action, defaultOptions]
   );
 
-  const reset = useCallback(() => { setData(null); setError(null); setIsLoading(false); }, []);
+  const reset = useCallback(() => {
+    setData(null);
+    setError(null);
+    setIsLoading(false);
+  }, []);
   return { execute, data, error, isLoading, reset };
 }

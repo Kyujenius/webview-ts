@@ -87,9 +87,7 @@ export class TimeTracker {
 
   getAverageDuration(action?: string): number {
     const entries = action ? this.getEntriesByAction(action) : this.completedEntries;
-    const durations = entries
-      .filter((e) => e.duration !== undefined)
-      .map((e) => e.duration!);
+    const durations = entries.filter((e) => e.duration !== undefined).map((e) => e.duration!);
 
     if (durations.length === 0) return 0;
     return durations.reduce((a, b) => a + b, 0) / durations.length;
@@ -119,7 +117,7 @@ export class TimeTracker {
         pending: Array.from(this.entries.values()),
       },
       null,
-      2,
+      2
     );
   }
 }

@@ -8,7 +8,7 @@ import { camera, storage, location, biometric, haptics } from '@ts-bridge/plugin
 const memoryStore = new Map<string, string>();
 
 // Web app URL — change to your dev server or production URL
-const WEB_APP_URL = 'http://localhost:3000';
+const WEB_APP_URL = 'http://localhost:3001';
 
 export default function App() {
   const { webViewProps } = useBridgeHost({

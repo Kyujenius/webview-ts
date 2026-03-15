@@ -25,8 +25,8 @@ describe('createSimpleBridgeHost', () => {
   it('should create bridgeHost with webViewProps', () => {
     const result = createSimpleBridgeHost<TestActions>({
       handlers: {
-        'test.echo': async (payload) => ({ echoed: payload.message }),
-        'action.one': async (payload) => ({ result: 'ok' }),
+        'test.echo': async (_payload) => ({ echoed: _payload.message }),
+        'action.one': async (_payload) => ({ result: 'ok' }),
       },
     });
 
@@ -40,8 +40,8 @@ describe('createSimpleBridgeHost', () => {
   it('should register handlers that process messages correctly', async () => {
     const { bridgeHost } = createSimpleBridgeHost<TestActions>({
       handlers: {
-        'test.echo': async (payload) => ({ echoed: payload.message }),
-        'action.one': async (payload) => ({ result: 'ok' }),
+        'test.echo': async (_payload) => ({ echoed: _payload.message }),
+        'action.one': async (_payload) => ({ result: 'ok' }),
       },
     });
 
@@ -70,7 +70,7 @@ describe('createSimpleBridgeHost', () => {
   it('should work without generic (untyped fallback)', () => {
     const result = createSimpleBridgeHost({
       handlers: {
-        'any.action': async (payload: any) => ({ done: true }),
+        'any.action': async (_payload: any) => ({ done: true }),
       },
     });
     expect(result.bridgeHost).toBeDefined();
@@ -125,24 +125,30 @@ describe('createSimpleBridgeHost with plugins', () => {
     });
 
     const pluginResponse = await result.bridgeHost.handleMessage({
-      id: '1', action: 'mock.echo', payload: { msg: 'hi' }, timestamp: 0,
+      id: '1',
+      action: 'mock.echo',
+      payload: { msg: 'hi' },
+      timestamp: 0,
     });
     expect(pluginResponse.data).toEqual({ echoed: 'hi' });
 
     const customResponse = await result.bridgeHost.handleMessage({
-      id: '2', action: 'custom.action', payload: {}, timestamp: 0,
+      id: '2',
+      action: 'custom.action',
+      payload: {},
+      timestamp: 0,
     });
     expect(customResponse.data).toEqual({ custom: true });
   });
 
   it('should throw on duplicate action names', () => {
-    expect(() => createSimpleBridgeHost({
-      plugins: [
-        mockPlugin.host({ 'mock.echo': async (p) => ({ echoed: p.msg }) }),
-      ],
-      handlers: {
-        'mock.echo': async () => ({ echoed: 'duplicate' }),
-      },
-    })).toThrow(/duplicate/i);
+    expect(() =>
+      createSimpleBridgeHost({
+        plugins: [mockPlugin.host({ 'mock.echo': async (p) => ({ echoed: p.msg }) })],
+        handlers: {
+          'mock.echo': async () => ({ echoed: 'duplicate' }),
+        },
+      })
+    ).toThrow(/duplicate/i);
   });
 });

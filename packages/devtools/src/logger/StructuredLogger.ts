@@ -92,7 +92,7 @@ export class StructuredLogger {
           LogLevel.ERROR,
           `Request failed: ${message.action}`,
           { id: message.id, action: message.action },
-          error as Error,
+          error as Error
         );
         throw error;
       }
@@ -107,9 +107,7 @@ export class StructuredLogger {
       timestamp: Date.now(),
       message,
       data,
-      error: error
-        ? { message: error.message, stack: error.stack }
-        : undefined,
+      error: error ? { message: error.message, stack: error.stack } : undefined,
     };
 
     this.logs.push(entry);
@@ -158,11 +156,7 @@ export class StructuredLogger {
   }
 
   export(): string {
-    return JSON.stringify(
-      { version: '1.0', timestamp: Date.now(), logs: this.logs },
-      null,
-      2,
-    );
+    return JSON.stringify({ version: '1.0', timestamp: Date.now(), logs: this.logs }, null, 2);
   }
 }
 

@@ -4,15 +4,8 @@
  */
 
 import type { Middleware, MiddlewareFn } from '@ts-bridge/shared';
-import type {
-  DevToolsConfig,
-  RecordedMessage,
-  DevToolsStore,
-} from '../types/index';
-import {
-  MessageDirection,
-  MessageStatus,
-} from '../types/index';
+import type { DevToolsConfig, RecordedMessage, DevToolsStore } from '../types/index';
+import { MessageDirection, MessageStatus } from '../types/index';
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 
 export class DevToolsMiddleware {
@@ -94,9 +87,7 @@ export class DevToolsMiddleware {
 
         // Record response
         if (ctx.response) {
-          const duration = this.config.trackPerformance
-            ? Date.now() - startTime
-            : undefined;
+          const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
 
           const responseRecord: RecordedMessage = {
             recordId: this.generateRecordId(),
@@ -112,9 +103,7 @@ export class DevToolsMiddleware {
         }
       } catch (error) {
         // Record error
-        const duration = this.config.trackPerformance
-          ? Date.now() - startTime
-          : undefined;
+        const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
 
         const errorRecord: RecordedMessage = {
           recordId: this.generateRecordId(),

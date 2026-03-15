@@ -3,9 +3,15 @@ import { definePlugin } from '@ts-bridge/plugins';
 
 // Define plugins inline — demonstrates how users create their own plugins
 const camera = definePlugin<{
-  'camera.takePhoto': { payload: { quality?: number }; response: { uri: string; width: number; height: number } };
+  'camera.takePhoto': {
+    payload: { quality?: number };
+    response: { uri: string; width: number; height: number };
+  };
   'camera.pickImage': { payload: { multiple?: boolean }; response: { images: { uri: string }[] } };
-  'camera.recordVideo': { payload: { maxDuration?: number }; response: { uri: string; duration: number } };
+  'camera.recordVideo': {
+    payload: { maxDuration?: number };
+    response: { uri: string; duration: number };
+  };
 }>()({
   name: 'camera',
   methods: (call) => ({
@@ -33,7 +39,10 @@ const storage = definePlugin<{
 });
 
 const location = definePlugin<{
-  'location.getCurrentPosition': { payload: undefined; response: { latitude: number; longitude: number; accuracy: number } };
+  'location.getCurrentPosition': {
+    payload: undefined;
+    response: { latitude: number; longitude: number; accuracy: number };
+  };
   'location.watchPosition': { payload: undefined; response: { watchId: number } };
   'location.clearWatch': { payload: { watchId: number }; response: Record<string, never> };
 }>()({
@@ -46,7 +55,10 @@ const location = definePlugin<{
 });
 
 const biometric = definePlugin<{
-  'biometric.checkAvailability': { payload: undefined; response: { available: boolean; biometricTypes: string[] } };
+  'biometric.checkAvailability': {
+    payload: undefined;
+    response: { available: boolean; biometricTypes: string[] };
+  };
   'biometric.authenticate': { payload: { reason?: string }; response: { success: boolean } };
 }>()({
   name: 'biometric',

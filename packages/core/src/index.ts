@@ -17,9 +17,9 @@ import type { BridgeConfig, ActionDefinitionShape } from '@ts-bridge/shared';
 /**
  * Create and initialize a new bridge instance
  */
-export function createBridge<TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>>(
-  config?: BridgeConfig,
-): BridgeManager<TActions> {
+export function createBridge<
+  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+>(config?: BridgeConfig): BridgeManager<TActions> {
   return new BridgeManager<TActions>(config);
 }
 

@@ -15,7 +15,7 @@ export default defineConfig({
       '@ts-bridge/shared': path.resolve(__dirname, '../packages/shared/src'),
       'react-native': path.resolve(__dirname, './__mocks__/react-native.ts'),
       'react-native-webview': path.resolve(__dirname, './__mocks__/react-native-webview.ts'),
-      'react': path.resolve(__dirname, './__mocks__/react.ts'),
+      react: path.resolve(__dirname, './__mocks__/react.ts'),
     },
   },
 });

@@ -16,10 +16,10 @@ describe('useEvent', () => {
   it('should use latest handler without resubscribing', () => {
     const handler1 = vi.fn();
     const handler2 = vi.fn();
-    const { rerender } = renderHook(
-      ({ handler }) => useEvent('notification', handler),
-      { wrapper, initialProps: { handler: handler1 } },
-    );
+    const { rerender } = renderHook(({ handler }) => useEvent('notification', handler), {
+      wrapper,
+      initialProps: { handler: handler1 },
+    });
     rerender({ handler: handler2 });
   });
 });

@@ -52,7 +52,10 @@ function LocationPage() {
     <div>
       <h1>Location Plugin</h1>
 
-      <div className="result" style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}>
+      <div
+        className="result"
+        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
+      >
         <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Seoul, KR)'}
       </div>
 
@@ -62,10 +65,18 @@ function LocationPage() {
           <button className="button" onClick={handleGetCurrentPosition} disabled={loading}>
             {loading ? 'Loading...' : 'Get Current Position'}
           </button>
-          <button className="button button-secondary" onClick={handleWatchPosition} disabled={watchId !== null}>
+          <button
+            className="button button-secondary"
+            onClick={handleWatchPosition}
+            disabled={watchId !== null}
+          >
             {watchId !== null ? 'Watching...' : 'Watch Position'}
           </button>
-          <button className="button button-secondary" onClick={handleClearWatch} disabled={watchId === null}>
+          <button
+            className="button button-secondary"
+            onClick={handleClearWatch}
+            disabled={watchId === null}
+          >
             Clear Watch
           </button>
         </div>
@@ -81,8 +92,13 @@ function LocationPage() {
         <div className="card">
           <h2>Current Position</h2>
           <div className="result success">
-            <p><strong>Location:</strong> {position.latitude.toFixed(6)}, {position.longitude.toFixed(6)}</p>
-            <p><strong>Accuracy:</strong> ±{position.accuracy.toFixed(2)}m</p>
+            <p>
+              <strong>Location:</strong> {position.latitude.toFixed(6)},{' '}
+              {position.longitude.toFixed(6)}
+            </p>
+            <p>
+              <strong>Accuracy:</strong> ±{position.accuracy.toFixed(2)}m
+            </p>
             <details style={{ marginTop: '1rem' }}>
               <summary>Full Data</summary>
               <pre>{JSON.stringify(position, null, 2)}</pre>

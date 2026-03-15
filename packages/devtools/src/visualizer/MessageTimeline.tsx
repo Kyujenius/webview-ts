@@ -123,8 +123,7 @@ function MessageItem({ message, selected, onClick }: MessageItemProps): JSX.Elem
   const time = new Date(message.timestamp).toLocaleTimeString();
 
   // Extract action name
-  const action =
-    'action' in message.message ? message.message.action : 'response';
+  const action = 'action' in message.message ? message.message.action : 'response';
 
   return (
     <div
@@ -142,9 +141,7 @@ function MessageItem({ message, selected, onClick }: MessageItemProps): JSX.Elem
       </div>
 
       <div style={styles.itemDetails}>
-        <span style={{ ...styles.status, color: statusColor }}>
-          {message.status}
-        </span>
+        <span style={{ ...styles.status, color: statusColor }}>{message.status}</span>
         {message.duration !== undefined && (
           <span style={styles.duration}>{message.duration.toFixed(2)}ms</span>
         )}
