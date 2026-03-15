@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { LocationPermissionType, LocationPlugin } from '@ts-bridge/plugins/location';
+import { useState, useMemo } from 'react';
+import { location } from '@ts-bridge/plugins';
 import { useBridge } from '../hooks/useBridge';
-import type { Position } from '@ts-bridge/plugins/location';
 
 function LocationPage() {
   const { bridge, isAvailable } = useBridge();
-  const [location] = useState(() => new LocationPlugin(bridge));
-  const [position, setPosition] = useState<Position | null>(null);
+  const api = useMemo(
+    () => location.methods((action, payload) => bridge.send(action, payload)),
+    [bridge],
+  );
+  const [position, setPosition] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -17,7 +23,7 @@ function LocationPage() {
     setPosition(null);
 
     try {
-      const pos = await location.getCurrentPosition({
+      const pos = await api.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
       });
@@ -38,14 +44,11 @@ function LocationPage() {
     setError(null);
 
     try {
-      const id = await location.watchPosition({
+      const res = await api.watchPosition({
         enableHighAccuracy: true,
-        distanceFilter: 10,
-        callback: (pos: Position) => {
-          setPosition(pos);
-        },
+        interval: 10000,
       });
-      setWatchId(id);
+      setWatchId(res.watchId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to watch position');
     }
@@ -58,24 +61,10 @@ function LocationPage() {
     }
 
     try {
-      await location.clearWatch(watchId);
+      await api.clearWatch(watchId);
       setWatchId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear watch');
-    }
-  };
-
-  const checkPermission = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const hasPermission = await location.checkPermission(LocationPermissionType.ALWAYS);
-      alert(`Location permission: ${hasPermission ? 'Granted' : 'Not granted'}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check permission');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -114,13 +103,6 @@ function LocationPage() {
           >
             Clear Watch
           </button>
-          <button
-            className="button button-secondary"
-            onClick={checkPermission}
-            disabled={loading || !isAvailable}
-          >
-            Check Permission
-          </button>
         </div>
       </div>
 
@@ -135,19 +117,11 @@ function LocationPage() {
           <h2>Current Position</h2>
           <div className="result success">
             <p>
-              <strong>Location:</strong> {position.coords.latitude.toFixed(6)},{' '}
-              {position.coords.longitude.toFixed(6)}
+              <strong>Location:</strong> {position.latitude.toFixed(6)},{' '}
+              {position.longitude.toFixed(6)}
             </p>
             <p>
-              <strong>Accuracy:</strong> ±{position.coords.accuracy.toFixed(2)}m
-            </p>
-            {position.coords.altitude !== null && (
-              <p>
-                <strong>Altitude:</strong> {position.coords.altitude?.toFixed(2)}m
-              </p>
-            )}
-            <p>
-              <strong>Timestamp:</strong> {new Date(position.timestamp).toLocaleString()}
+              <strong>Accuracy:</strong> ±{position.accuracy.toFixed(2)}m
             </p>
             <details style={{ marginTop: '1rem' }}>
               <summary>Full Data</summary>
@@ -159,31 +133,24 @@ function LocationPage() {
 
       <div className="card">
         <h2>API Reference</h2>
-        <pre>{`const location = new LocationPlugin(bridge);
+        <pre>{`import { location } from '@ts-bridge/plugins';
+
+const api = location.methods((action, payload) => bridge.send(action, payload));
 
 // Get current position
-const position = await location.getCurrentPosition({
+const pos = await api.getCurrentPosition({
   enableHighAccuracy: true,
   timeout: 10000,
 });
 
 // Watch position changes
-const watchId = await location.watchPosition({
+const { watchId } = await api.watchPosition({
   enableHighAccuracy: true,
-  distanceFilter: 10,
-  callback: (position) => {
-    console.log('Position updated:', position);
-  },
+  interval: 10000,
 });
 
 // Clear position watch
-await location.clearWatch(watchId);
-
-// Check location permission
-const hasPermission = await location.checkPermission('location');
-
-// Request location permission
-const granted = await location.requestPermission('location');`}</pre>
+await api.clearWatch(watchId);`}</pre>
       </div>
     </div>
   );

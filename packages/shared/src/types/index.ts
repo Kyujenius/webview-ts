@@ -8,4 +8,3 @@ export * from './middleware';
 export * from './plugin';
 export * from './action-map';
 export * from './typed-bridge';
-export * from './typed-plugin';

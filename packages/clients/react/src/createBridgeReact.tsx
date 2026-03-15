@@ -174,7 +174,7 @@ export function createBridgeReact<
     const { bridge } = useTypedContext();
     const call: PluginCall<TPlugin['_actionMap']> = useCallback(
       (action: any, payload: any) => bridge.call(action, payload) as any,
-      [bridge],
+      [bridge]
     );
     return useMemo(() => plugin.methods(call), [call, plugin]);
   }

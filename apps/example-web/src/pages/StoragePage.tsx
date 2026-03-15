@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { StoragePlugin } from '@ts-bridge/plugins/storage';
+import { useState, useMemo } from 'react';
+import { storage } from '@ts-bridge/plugins';
 import { useBridge } from '../hooks/useBridge';
 
 function StoragePage() {
   const { bridge, isAvailable } = useBridge();
-  const [storage] = useState(() => new StoragePlugin(bridge));
+  const api = useMemo(
+    () => storage.methods((action, payload) => bridge.send(action, payload)),
+    [bridge],
+  );
   const [key, setKey] = useState('test-key');
   const [value, setValue] = useState('test-value');
   const [result, setResult] = useState<string | null>(null);
@@ -17,7 +20,7 @@ function StoragePage() {
     setError(null);
 
     try {
-      await storage.setItem(key, value);
+      await api.setItem(key, value);
       setResult(`Successfully set "${key}" = "${value}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set item');
@@ -32,8 +35,8 @@ function StoragePage() {
     setResult(null);
 
     try {
-      const item = await storage.getItem(key);
-      setResult(item !== null ? `Value: "${item}"` : 'Key not found');
+      const item = await api.getItem(key);
+      setResult(item.value !== null ? `Value: "${item.value}"` : 'Key not found');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get item');
     } finally {
@@ -46,7 +49,7 @@ function StoragePage() {
     setError(null);
 
     try {
-      await storage.removeItem(key);
+      await api.removeItem(key);
       setResult(`Successfully removed "${key}"`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove item');
@@ -60,9 +63,9 @@ function StoragePage() {
     setError(null);
 
     try {
-      const keys = await storage.getAllKeys();
-      setAllKeys(keys);
-      setResult(`Found ${keys.length} keys`);
+      const res = await api.getAllKeys();
+      setAllKeys(res.keys);
+      setResult(`Found ${res.keys.length} keys`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get all keys');
     } finally {
@@ -79,47 +82,11 @@ function StoragePage() {
     setError(null);
 
     try {
-      await storage.clear();
+      await api.clear();
       setResult('Storage cleared successfully');
       setAllKeys([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear storage');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSetJSON = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = { name: 'John Doe', age: 30, email: 'john@example.com' };
-      await storage.setJSON('user', data);
-      setResult(`Successfully stored JSON object in "user"`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to set JSON');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGetJSON = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const data = await storage.getJSON<{ name: string; age: number; email: string }>(
-        'user'
-      );
-      if (data) {
-        setResult(JSON.stringify(data, null, 2));
-      } else {
-        setResult('Key "user" not found');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get JSON');
     } finally {
       setLoading(false);
     }
@@ -190,22 +157,6 @@ function StoragePage() {
       </div>
 
       <div className="card">
-        <h2>JSON Operations</h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleSetJSON} disabled={loading}>
-            Store JSON Object
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={handleGetJSON}
-            disabled={loading}
-          >
-            Retrieve JSON Object
-          </button>
-        </div>
-      </div>
-
-      <div className="card">
         <h2>Bulk Operations</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <button className="button" onClick={handleGetAllKeys} disabled={loading}>
@@ -249,26 +200,18 @@ function StoragePage() {
 
       <div className="card">
         <h2>API Reference</h2>
-        <pre>{`const storage = new StoragePlugin(bridge);
+        <pre>{`import { storage } from '@ts-bridge/plugins';
+
+const api = storage.methods((action, payload) => bridge.send(action, payload));
 
 // Basic operations
-await storage.setItem('key', 'value');
-const value = await storage.getItem('key');
-await storage.removeItem('key');
-await storage.clear();
-
-// JSON operations
-await storage.setJSON('user', { name: 'John', age: 30 });
-const user = await storage.getJSON<User>('user');
+await api.setItem('key', 'value');
+const { value } = await api.getItem('key');
+await api.removeItem('key');
+await api.clear();
 
 // Bulk operations
-const keys = await storage.getAllKeys();
-await storage.multiSet([
-  ['key1', 'value1'],
-  ['key2', 'value2'],
-]);
-const values = await storage.multiGet(['key1', 'key2']);
-await storage.multiRemove(['key1', 'key2']);`}</pre>
+const { keys } = await api.getAllKeys();`}</pre>
       </div>
     </div>
   );

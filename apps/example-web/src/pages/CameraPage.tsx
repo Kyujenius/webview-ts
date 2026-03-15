@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { CameraPermission, CameraPlugin } from '@ts-bridge/plugins/camera';
+import { useState, useMemo } from 'react';
+import { camera } from '@ts-bridge/plugins';
 import { useBridge } from '../hooks/useBridge';
-import type { ImageResult } from '@ts-bridge/plugins/camera';
 
 function CameraPage() {
   const { bridge, isAvailable } = useBridge();
-  const [camera] = useState(() => new CameraPlugin(bridge));
-  const [result, setResult] = useState<ImageResult | null>(null);
+  const api = useMemo(
+    () => camera.methods((action, payload) => bridge.send(action, payload)),
+    [bridge],
+  );
+  const [result, setResult] = useState<{ uri: string; width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,10 +18,7 @@ function CameraPage() {
     setResult(null);
 
     try {
-      const photo = await camera.takePhoto({
-        quality: 0.8,
-        allowEditing: false,
-      });
+      const photo = await api.takePhoto({ quality: 0.8 });
       setResult(photo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to take photo');
@@ -34,27 +33,12 @@ function CameraPage() {
     setResult(null);
 
     try {
-      const image = await camera.pickImage({
-        allowMultiple: false,
-        quality: 0.8,
-      });
-      setResult(Array.isArray(image) ? image[0] : image);
+      const res = await api.pickImage({ multiple: false });
+      if (res.images.length > 0) {
+        setResult({ uri: res.images[0].uri, width: 0, height: 0 });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to pick image');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkPermission = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const hasPermission = await camera.checkPermission(CameraPermission.CAMERA);
-      alert(`Camera permission: ${hasPermission ? 'Granted' : 'Not granted'}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check permission');
     } finally {
       setLoading(false);
     }
@@ -83,13 +67,6 @@ function CameraPage() {
             disabled={loading || !isAvailable}
           >
             {loading ? 'Loading...' : 'Pick Image'}
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={checkPermission}
-            disabled={loading || !isAvailable}
-          >
-            Check Permission
           </button>
         </div>
       </div>
@@ -123,25 +100,18 @@ function CameraPage() {
 
       <div className="card">
         <h2>API Reference</h2>
-        <pre>{`const camera = new CameraPlugin(bridge);
+        <pre>{`import { camera } from '@ts-bridge/plugins';
+
+const api = camera.methods((action, payload) => bridge.send(action, payload));
 
 // Take a photo
-const photo = await camera.takePhoto({
-  quality: 0.8,
-  allowEditing: false,
-});
+const photo = await api.takePhoto({ quality: 0.8 });
 
 // Pick an image from gallery
-const image = await camera.pickImage({
-  allowMultiple: false,
-  quality: 0.8,
-});
+const images = await api.pickImage({ multiple: false });
 
-// Check camera permission
-const hasPermission = await camera.checkPermission('camera');
-
-// Request camera permission
-const granted = await camera.requestPermission('camera');`}</pre>
+// Record a video
+const video = await api.recordVideo({ maxDuration: 30 });`}</pre>
       </div>
     </div>
   );
