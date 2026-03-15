@@ -57,10 +57,6 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 - `docs:` — documentation changes
 - `chore:` — maintenance tasks
 
-## Creating Plugins
-
-See the [Custom Plugin Guide](docs/guides/custom-plugin.md) for how to create your own typed plugins.
-
 ## Pull Request Guidelines
 
 - One feature or fix per PR

@@ -133,7 +133,6 @@ pnpm dev
 
 ## Links
 
-- [Custom Plugin Guide](./docs/guides/custom-plugin.md)
 - [Contributing](./CONTRIBUTING.md)
 
 ## License
