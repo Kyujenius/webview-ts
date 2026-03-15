@@ -1,10 +1,5 @@
-import type {
-  ActionDefinitionShape,
-  PluginInput,
-  PluginInstance,
-  HostHandlers,
-  HostPluginResult,
-} from './types';
+import type { ActionDefinitionShape } from '../types/action-map';
+import type { PluginInput, PluginInstance, HostHandlers, HostPluginResult } from './types';
 
 export function definePlugin<TActions extends Record<string, ActionDefinitionShape>>() {
   return <TName extends string, TMethods>(

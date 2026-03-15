@@ -9,3 +9,4 @@
 export * from './types/index';
 export * from './schemas/index';
 export * from './middleware/index';
+export * from './plugins/index';

@@ -1,12 +1,11 @@
-// Core
 export { definePlugin } from './define';
 export type {
-  ActionDefinitionShape,
-  PluginInstance,
-  PluginInput,
   PluginCall,
+  PluginInput,
+  PluginInstance,
   HostHandlers,
   HostPluginResult,
   RequestContext,
   MergePluginActions,
+  PluginFromArray,
 } from './types';

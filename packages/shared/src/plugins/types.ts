@@ -1,7 +1,4 @@
-export interface ActionDefinitionShape {
-  payload: unknown;
-  response: unknown;
-}
+import type { ActionDefinitionShape } from '../types/action-map';
 
 /** Typed call function — constrained to THIS plugin's actions only */
 export type PluginCall<TActions extends Record<string, ActionDefinitionShape>> = <
