@@ -6,7 +6,6 @@ import type {
   BridgeHost as IBridgeHost,
   Middleware,
   MiddlewareContext,
-  NativePlugin,
 } from '@ts-bridge/shared';
 import { MiddlewarePipeline } from '@ts-bridge/shared';
 
@@ -46,7 +45,6 @@ export interface RequestContext {
 export class BridgeHost implements IBridgeHost {
   private config: Required<BridgeHostConfig>;
   private handlers: Map<string, ActionHandler>;
-  private plugins: Map<string, NativePlugin>;
   private pipeline: MiddlewarePipeline;
   private messageCallback?: (message: string) => void;
 
@@ -57,7 +55,6 @@ export class BridgeHost implements IBridgeHost {
       onError: config.onError ?? ((error) => console.error('[BridgeHost]', error)),
     };
     this.handlers = new Map();
-    this.plugins = new Map();
     this.pipeline = new MiddlewarePipeline();
   }
 
@@ -95,33 +92,6 @@ export class BridgeHost implements IBridgeHost {
 
   unregisterAction(action: string): void {
     this.unregisterHandler(action);
-  }
-
-  registerPlugin(plugin: NativePlugin): void {
-    const { name } = plugin.metadata;
-    if (this.plugins.has(name)) {
-      throw new Error(`Plugin '${name}' is already registered`);
-    }
-    this.plugins.set(name, plugin);
-    plugin.initialize(this).catch((error) => {
-      this.config.onError(error, { plugin: name });
-    });
-    this.log('debug', `Registered plugin: ${name}`);
-  }
-
-  unregisterPlugin(pluginName: string): void {
-    const plugin = this.plugins.get(pluginName);
-    if (plugin && plugin.destroy) {
-      plugin.destroy().catch((error) => {
-        this.config.onError(error, { plugin: pluginName });
-      });
-    }
-    this.plugins.delete(pluginName);
-    this.log('debug', `Unregistered plugin: ${pluginName}`);
-  }
-
-  getPlugin<T extends NativePlugin = NativePlugin>(pluginName: string): T | undefined {
-    return this.plugins.get(pluginName) as T | undefined;
   }
 
   setMessageCallback(callback: (message: string) => void): void {
@@ -239,15 +209,7 @@ export class BridgeHost implements IBridgeHost {
   }
 
   destroy(): void {
-    for (const [name, plugin] of this.plugins.entries()) {
-      if (plugin.destroy) {
-        plugin.destroy().catch((error) => {
-          this.config.onError(error, { plugin: name });
-        });
-      }
-    }
     this.handlers.clear();
-    this.plugins.clear();
     this.pipeline.clear();
     this.messageCallback = undefined;
     this.log('debug', 'BridgeHost destroyed');

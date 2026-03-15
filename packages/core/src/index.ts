@@ -8,7 +8,6 @@
 export * from './bridge';
 export * from './adapters';
 export * from './middleware';
-export * from './plugins';
 export * from './utils';
 
 import { BridgeManager } from './bridge/BridgeManager';

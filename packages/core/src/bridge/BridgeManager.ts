@@ -6,7 +6,6 @@ import { MessageQueue } from './MessageQueue';
 import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
-import { PluginRegistry } from '../plugins/PluginRegistry';
 import { generateMessageId } from '../utils/id-generator';
 import type {
   BridgeConfig,
@@ -17,7 +16,6 @@ import type {
   BridgeError,
   Middleware,
   MiddlewareContext,
-  WebPlugin,
   ActionDefinitionShape,
   ActionNames,
   InferPayload,
@@ -47,7 +45,6 @@ export class BridgeManager<
   private callbacks: CallbackRegistry;
   private queue: MessageQueue;
   private middleware: MiddlewarePipeline;
-  private plugins: PluginRegistry;
   private eventHandlers = new Map<string, Set<EventHandler>>();
   /** Stores context per message id so the response phase can access it */
   private pendingContexts = new Map<string, MiddlewareContext>();
@@ -80,7 +77,6 @@ export class BridgeManager<
       maxSize: this.config.maxConcurrentRequests,
     });
     this.middleware = new MiddlewarePipeline();
-    this.plugins = new PluginRegistry();
 
     // Set up response handler
     this.setupResponseHandler();
@@ -255,30 +251,6 @@ export class BridgeManager<
   }
 
   /**
-   * Register plugin
-   */
-  registerPlugin<T = unknown>(plugin: WebPlugin<T>): void {
-    this.plugins.register(plugin);
-    plugin.initialize(this as unknown as import('@ts-bridge/shared').Bridge).catch((error) => {
-      console.error(`[ts-bridge] Failed to initialize plugin '${plugin.metadata.name}':`, error);
-    });
-  }
-
-  /**
-   * Unregister plugin
-   */
-  unregisterPlugin(pluginName: string): void {
-    this.plugins.unregister(pluginName);
-  }
-
-  /**
-   * Get plugin
-   */
-  getPlugin(pluginName: string): WebPlugin | undefined {
-    return this.plugins.get(pluginName);
-  }
-
-  /**
    * Set up response handler from native via standard message event.
    * Host sends via postMessage(), web receives via 'message' listener.
    */
@@ -350,7 +322,6 @@ export class BridgeManager<
     this.callbacks.clear();
     this.queue.clear();
     this.middleware.clear();
-    this.plugins.clear();
     this.eventHandlers.clear();
     this.pendingContexts.clear();
 

@@ -3,7 +3,7 @@
  * Zero dependencies — no Zod, no schema library.
  */
 
-import type { BridgeMessage, BridgeResponse, BridgeEvent } from '../types/message';
+import type { BridgeMessage, BridgeResponse } from '../types/message';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -31,11 +31,4 @@ export function isBridgeResponse(value: unknown): value is BridgeResponse {
     typeof value.success === 'boolean' &&
     typeof value.timestamp === 'number'
   );
-}
-
-/**
- * Type guard for BridgeEvent
- */
-export function isBridgeEvent(value: unknown): value is BridgeEvent {
-  return isObject(value) && typeof value.event === 'string' && typeof value.timestamp === 'number';
 }

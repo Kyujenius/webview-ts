@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBridgeMessage, isBridgeResponse, isBridgeEvent } from './message';
+import { isBridgeMessage, isBridgeResponse } from './message';
 
 describe('isBridgeMessage', () => {
   it('should return true for valid message', () => {
@@ -51,19 +51,5 @@ describe('isBridgeResponse', () => {
 
   it('should return false for non-boolean success', () => {
     expect(isBridgeResponse({ id: '1', success: 'yes', timestamp: 123 })).toBe(false);
-  });
-});
-
-describe('isBridgeEvent', () => {
-  it('should return true for valid event', () => {
-    expect(isBridgeEvent({ event: 'click', payload: {}, timestamp: 123 })).toBe(true);
-  });
-
-  it('should return false for missing event', () => {
-    expect(isBridgeEvent({ payload: {}, timestamp: 123 })).toBe(false);
-  });
-
-  it('should return false for missing timestamp', () => {
-    expect(isBridgeEvent({ event: 'click', payload: {} })).toBe(false);
   });
 });
