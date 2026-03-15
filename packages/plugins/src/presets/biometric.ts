@@ -11,7 +11,7 @@ export type BiometricActions = {
   };
 };
 
-export const biometric = definePlugin<BiometricActions>({
+export const biometric = definePlugin<BiometricActions>()({
   name: 'biometric',
   methods: (call) => ({
     checkAvailability: () => call('biometric.checkAvailability', {}),

@@ -7,7 +7,7 @@ type TestActions = {
 };
 
 describe('definePlugin', () => {
-  const plugin = definePlugin<TestActions>({
+  const plugin = definePlugin<TestActions>()({
     name: 'test',
     methods: (call) => ({
       echo: (message: string) => call('test.echo', { message }),
@@ -49,7 +49,7 @@ describe('definePlugin', () => {
   });
 
   it('should work without methods (contract-only)', () => {
-    const contractOnly = definePlugin<TestActions>({ name: 'contract' });
+    const contractOnly = definePlugin<TestActions>()({ name: 'contract' });
     expect(contractOnly.name).toBe('contract');
     expect(typeof contractOnly.host).toBe('function');
   });

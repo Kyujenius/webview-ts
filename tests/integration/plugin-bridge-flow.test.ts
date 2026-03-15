@@ -238,7 +238,7 @@ describe('Custom plugin: definePlugin + full flow', () => {
     };
   };
 
-  const payment = definePlugin<PaymentActions>({
+  const payment = definePlugin<PaymentActions>()({
     name: 'payment',
     methods: (call) => ({
       checkout: (amount: number, currency: string) =>
@@ -280,7 +280,7 @@ describe('Error handling: host handler throws', () => {
     'error.fail': { payload: {}; response: {} };
   };
 
-  const errorPlugin = definePlugin<ErrorActions>({
+  const errorPlugin = definePlugin<ErrorActions>()({
     name: 'error',
   });
 

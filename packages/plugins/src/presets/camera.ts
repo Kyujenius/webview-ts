@@ -15,7 +15,7 @@ export type CameraActions = {
   };
 };
 
-export const camera = definePlugin<CameraActions>({
+export const camera = definePlugin<CameraActions>()({
   name: 'camera',
   methods: (call) => ({
     takePhoto: (opts?: { quality?: number }) =>

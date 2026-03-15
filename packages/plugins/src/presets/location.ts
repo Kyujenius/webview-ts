@@ -15,7 +15,7 @@ export type LocationActions = {
   };
 };
 
-export const location = definePlugin<LocationActions>({
+export const location = definePlugin<LocationActions>()({
   name: 'location',
   methods: (call) => ({
     getCurrentPosition: (opts?: { enableHighAccuracy?: boolean; timeout?: number }) =>

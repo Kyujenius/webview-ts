@@ -15,7 +15,7 @@ export type HapticsActions = {
   };
 };
 
-export const haptics = definePlugin<HapticsActions>({
+export const haptics = definePlugin<HapticsActions>()({
   name: 'haptics',
   methods: (call) => ({
     impact: (style?: 'light' | 'medium' | 'heavy') =>

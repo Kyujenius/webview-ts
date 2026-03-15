@@ -23,7 +23,7 @@ export type StorageActions = {
   };
 };
 
-export const storage = definePlugin<StorageActions>({
+export const storage = definePlugin<StorageActions>()({
   name: 'storage',
   methods: (call) => ({
     getItem: (key: string) => call('storage.getItem', { key }),

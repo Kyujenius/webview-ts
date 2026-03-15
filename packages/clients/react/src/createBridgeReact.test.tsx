@@ -97,7 +97,7 @@ type MockActions = {
   'mock.echo': { payload: { msg: string }; response: { echoed: string } };
 };
 
-const mockPlugin = definePlugin<MockActions>({
+const mockPlugin = definePlugin<MockActions>()({
   name: 'mock',
   methods: (call) => ({
     echo: (msg: string) => call('mock.echo', { msg }),
