@@ -6,6 +6,7 @@ import type { BridgeMessage } from '@ts-bridge/shared';
 import { Platform } from '@ts-bridge/shared';
 import { IOSAdapter } from './IOSAdapter';
 import { AndroidAdapter } from './AndroidAdapter';
+import { ReactNativeWebViewAdapter, isReactNativeWebView } from './ReactNativeWebViewAdapter';
 import { platformDetector } from '../utils/platform-detector';
 
 /**
@@ -29,9 +30,20 @@ export interface NativeAdapter {
 }
 
 /**
- * Create appropriate adapter for current platform
+ * Create appropriate adapter for current platform.
+ *
+ * Priority:
+ * 1. react-native-webview (window.ReactNativeWebView) — most common RN host
+ * 2. iOS WebKit (window.webkit.messageHandlers.tsBridge)
+ * 3. Android JS interface (window.AndroidBridge)
+ * 4. MockAdapter (fallback)
  */
 export function createNativeAdapter(): NativeAdapter {
+  // react-native-webview injects window.ReactNativeWebView
+  if (isReactNativeWebView()) {
+    return new ReactNativeWebViewAdapter();
+  }
+
   const platform = platformDetector.detect();
 
   switch (platform) {

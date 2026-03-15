@@ -95,8 +95,8 @@ export class MessageHandler {
         (function() {
           try {
             const message = ${messageJson};
-            if (window.__tsBridgeReceiveMessage) {
-              window.__tsBridgeReceiveMessage(message);
+            if (window.__tsBridgeResponseHandler) {
+              window.__tsBridgeResponseHandler(message);
             } else {
               console.warn('[ts-bridge] Receive handler not registered');
             }
