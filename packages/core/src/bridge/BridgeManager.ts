@@ -9,7 +9,6 @@ import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { PluginRegistry } from '../plugins/PluginRegistry';
 import { generateMessageId } from '../utils/id-generator';
 import type {
-  Bridge,
   BridgeConfig,
   BridgeCallOptions,
   BridgeMessage,
@@ -17,6 +16,10 @@ import type {
   BridgeEvent,
   MiddlewareContext,
   WebPlugin,
+  ActionDefinitionShape,
+  ActionNames,
+  InferPayload,
+  InferResponse,
 } from '@ts-bridge/shared';
 /**
  * Event handler type
@@ -26,7 +29,9 @@ type EventHandler<T = unknown> = (payload: T) => void;
 /**
  * Bridge manager implementation
  */
-export class BridgeManager implements Bridge {
+export class BridgeManager<
+  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+> {
   private config: Required<BridgeConfig>;
   private adapter: NativeAdapter;
   private callbacks: CallbackRegistry;
@@ -59,18 +64,18 @@ export class BridgeManager implements Bridge {
   /**
    * Call native action
    */
-  async call<TPayload = unknown, TResponse = unknown>(
-    action: string,
-    payload?: TPayload,
+  async call<TAction extends ActionNames<TActions>>(
+    action: TAction,
+    payload?: InferPayload<TActions, TAction>,
     options?: BridgeCallOptions
-  ): Promise<TResponse> {
+  ): Promise<InferResponse<TActions, TAction>> {
     // Check if bridge is available
     if (!this.isAvailable()) {
       throw new Error('Native bridge not available');
     }
 
     // Create message
-    const message: BridgeMessage<TPayload> = {
+    const message: BridgeMessage = {
       id: generateMessageId(),
       action,
       payload,
@@ -92,7 +97,7 @@ export class BridgeManager implements Bridge {
       this.queue.enqueue(message);
 
       // Create promise for response
-      const responsePromise = new Promise<TResponse>((resolve, reject) => {
+      const responsePromise = new Promise<InferResponse<TActions, TAction>>((resolve, reject) => {
         const timeout = options?.timeout ?? this.config.timeout;
         this.callbacks.register(message.id, resolve as (value: unknown) => void, reject, timeout);
       });

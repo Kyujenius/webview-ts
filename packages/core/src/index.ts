@@ -12,13 +12,15 @@ export * from './plugins';
 export * from './utils';
 
 import { BridgeManager } from './bridge/BridgeManager';
-import type { BridgeConfig } from '@ts-bridge/shared';
+import type { BridgeConfig, ActionDefinitionShape } from '@ts-bridge/shared';
 
 /**
  * Create and initialize a new bridge instance
  */
-export function createBridge(config?: BridgeConfig): BridgeManager {
-  return new BridgeManager(config);
+export function createBridge<TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>>(
+  config?: BridgeConfig,
+): BridgeManager<TActions> {
+  return new BridgeManager<TActions>(config);
 }
 
 /**
