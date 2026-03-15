@@ -51,6 +51,8 @@ export class BridgeManager<
   private eventHandlers = new Map<string, Set<EventHandler>>();
   /** Stores context per message id so the response phase can access it */
   private pendingContexts = new Map<string, MiddlewareContext>();
+  /** Message event listener reference for cleanup */
+  private messageListener?: (event: MessageEvent) => void;
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
@@ -272,19 +274,34 @@ export class BridgeManager<
   }
 
   /**
-   * Set up response handler from native
+   * Set up response handler from native via standard message event.
+   * Host sends via postMessage(), web receives via 'message' listener.
    */
   private setupResponseHandler(): void {
-    // Set up global response handler
     if (typeof window !== 'undefined') {
-      (window as any).__tsBridgeResponseHandler = (response: BridgeResponse | BridgeEvent) => {
-        // Check if it's an event or response
-        if ('event' in response) {
-          this.handleEvent(response as BridgeEvent);
-        } else {
-          this.handleResponse(response as BridgeResponse);
+      this.messageListener = (event: MessageEvent) => {
+        // Ignore non-bridge messages
+        if (!event.data || typeof event.data !== 'string') return;
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(event.data);
+        } catch {
+          return; // Not a JSON message — ignore
+        }
+
+        if (typeof parsed !== 'object' || parsed === null) return;
+
+        const msg = parsed as Record<string, unknown>;
+
+        if ('event' in msg) {
+          this.handleEvent(msg as unknown as BridgeEvent);
+        } else if ('id' in msg && 'success' in msg) {
+          this.handleResponse(msg as unknown as BridgeResponse);
         }
       };
+
+      window.addEventListener('message', this.messageListener);
     }
   }
 
@@ -331,5 +348,10 @@ export class BridgeManager<
     this.plugins.clear();
     this.eventHandlers.clear();
     this.pendingContexts.clear();
+
+    if (typeof window !== 'undefined' && this.messageListener) {
+      window.removeEventListener('message', this.messageListener);
+      this.messageListener = undefined;
+    }
   }
 }

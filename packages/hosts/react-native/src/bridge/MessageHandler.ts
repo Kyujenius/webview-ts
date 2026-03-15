@@ -1,24 +1,11 @@
 import type { WebView } from 'react-native-webview';
 import type { BridgeHost } from './BridgeHost';
 
-/**
- * Configuration for MessageHandler
- */
 export interface MessageHandlerConfig {
-  /**
-   * Enable debug logging
-   */
   debug?: boolean;
-
-  /**
-   * Custom error handler
-   */
   onError?: (error: Error) => void;
 }
 
-/**
- * Message event from WebView
- */
 export interface WebViewMessageEvent {
   nativeEvent: {
     data: string;
@@ -26,8 +13,10 @@ export interface WebViewMessageEvent {
 }
 
 /**
- * MessageHandler - Integrates BridgeHost with react-native-webview
- * Handles bidirectional communication between WebView and native
+ * MessageHandler - Integrates BridgeHost with react-native-webview.
+ *
+ * Host → Web communication uses `postMessage()` (standard MessageEvent),
+ * NOT `injectJavaScript()` with string interpolation.
  */
 export class MessageHandler {
   private config: Required<MessageHandlerConfig>;
@@ -41,16 +30,11 @@ export class MessageHandler {
     };
     this.bridgeHost = bridgeHost;
 
-    // Set message callback on bridge host
     this.bridgeHost.setMessageCallback((message) => {
       this.sendToWebView(message);
     });
   }
 
-  /**
-   * Set WebView reference
-   * Call this when WebView is mounted
-   */
   setWebViewRef(webViewRef: WebView | null): void {
     if (webViewRef) {
       this.webViewRef = webViewRef;
@@ -61,16 +45,11 @@ export class MessageHandler {
     }
   }
 
-  /**
-   * Handle message from WebView
-   * Pass this to WebView's onMessage prop
-   */
   handleWebViewMessage = (event: WebViewMessageEvent): void => {
     try {
       const messageJson = event.nativeEvent.data;
       this.log('Received message from WebView', messageJson);
 
-      // Forward to bridge host
       this.bridgeHost.handleMessageString(messageJson).catch((error) => {
         this.config.onError(error instanceof Error ? error : new Error(String(error)));
       });
@@ -80,7 +59,11 @@ export class MessageHandler {
   };
 
   /**
-   * Send message to WebView
+   * Send message to WebView via postMessage().
+   *
+   * Uses the standard `window.postMessage` mechanism instead of
+   * `injectJavaScript` with raw string interpolation.
+   * The web side listens via `window.addEventListener('message', ...)`.
    */
   private sendToWebView(messageJson: string): void {
     if (!this.webViewRef) {
@@ -90,46 +73,19 @@ export class MessageHandler {
     }
 
     try {
-      // Inject JavaScript to handle the message
-      const script = `
-        (function() {
-          try {
-            const message = ${messageJson};
-            if (window.__tsBridgeResponseHandler) {
-              window.__tsBridgeResponseHandler(message);
-            } else {
-              console.warn('[ts-bridge] Receive handler not registered');
-            }
-          } catch (error) {
-            console.error('[ts-bridge] Failed to receive message:', error);
-          }
-        })();
-        true; // Required for iOS
-      `;
-
-      this.webViewRef.injectJavaScript(script);
+      (this.webViewRef as any).postMessage(messageJson);
       this.log('Sent message to WebView', messageJson);
     } catch (error) {
       this.config.onError(error instanceof Error ? error : new Error(String(error)));
     }
   }
 
-  /**
-   * Get the onMessage handler for WebView
-   * Convenience method to pass to WebView component
-   */
   getOnMessageHandler(): (event: WebViewMessageEvent) => void {
     return this.handleWebViewMessage;
   }
 
-  /**
-   * Internal logging
-   */
   private log(message: string, data?: unknown): void {
-    if (!this.config.debug) {
-      return;
-    }
-
+    if (!this.config.debug) return;
     const prefix = '[MessageHandler]';
     if (data !== undefined) {
       console.log(prefix, message, data);
@@ -139,9 +95,6 @@ export class MessageHandler {
   }
 }
 
-/**
- * Create a message handler with the given bridge host
- */
 export function createMessageHandler(
   bridgeHost: BridgeHost,
   config?: MessageHandlerConfig

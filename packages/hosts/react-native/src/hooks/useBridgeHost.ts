@@ -1,4 +1,4 @@
-import type { ActionDefinitionShape } from '@ts-bridge/shared';
+import type { ActionDefinitionShape, Middleware } from '@ts-bridge/shared';
 import type { HostPluginResult } from '@ts-bridge/plugins';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
@@ -23,6 +23,8 @@ export interface SimpleBridgeHostOptions<
   handlers?: TypedHandlers<TActions>;
   /** Plugins that provide additional handlers */
   plugins?: HostPluginResult[];
+  /** Middleware — same MiddlewareFn type as web side */
+  middleware?: Middleware[];
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
   /** Optional debug mode */
@@ -63,9 +65,17 @@ export interface SimpleBridgeHostResult {
 export function createSimpleBridgeHost<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(options: SimpleBridgeHostOptions<TActions>): SimpleBridgeHostResult {
-  const { handlers, plugins, config, debug } = options;
+  const { handlers, plugins, middleware, config, debug } = options;
 
   const bridgeHost = new BridgeHost({ ...config, debug });
+
+  // Register middleware
+  if (middleware) {
+    for (const mw of middleware) {
+      bridgeHost.use(mw);
+    }
+  }
+
   const messageHandler = new MessageHandler(bridgeHost, { debug });
 
   const registeredActions = new Set<string>();
@@ -83,9 +93,7 @@ export function createSimpleBridgeHost<
     for (const plugin of plugins) {
       for (const [action, handler] of Object.entries(plugin.handlers)) {
         if (registeredActions.has(action)) {
-          throw new Error(
-            `Duplicate action name '${action}' from plugin '${plugin.pluginName}'`
-          );
+          throw new Error(`Duplicate action name '${action}' from plugin '${plugin.pluginName}'`);
         }
         bridgeHost.registerHandler(action, handler as any);
         registeredActions.add(action);
@@ -147,7 +155,6 @@ export interface UseBridgeHostReturn {
 export function useBridgeHost<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(options: SimpleBridgeHostOptions<TActions>): UseBridgeHostReturn {
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers are captured once on mount
   const result = useMemo(() => createSimpleBridgeHost(options), []);
 
   useEffect(() => {
