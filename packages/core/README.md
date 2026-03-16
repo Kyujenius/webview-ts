@@ -1,159 +1,161 @@
 # @webview-ts/core
 
-Core bridge engine for web-side WebView-Native communication.
+![npm](https://img.shields.io/npm/v/@webview-ts/core)
 
-## Overview
-
-This package provides the main bridge implementation for web applications running in WebView environments. It handles communication with native platforms (iOS, Android, React Native) with type safety and extensibility.
-
-## Features
-
-- **Platform Detection**: Automatically detects iOS, Android, or web environment
-- **Type-Safe API**: Full TypeScript support with strict typing
-- **Middleware Pipeline**: Extensible request/response processing
-- **Event Subscriptions**: Subscribe to native-initiated events
-- **Request Queue**: Manages concurrent requests with deduplication
-- **Timeout Handling**: Configurable timeouts for all bridge calls
+Core bridge engine for web-side WebView-to-Native communication.
 
 ## Installation
 
 ```bash
 npm install @webview-ts/core @webview-ts/shared
-# or
-pnpm add @webview-ts/core @webview-ts/shared
-# or
-yarn add @webview-ts/core @webview-ts/shared
 ```
 
-## Usage
-
-### Basic Usage
+## Quick Start
 
 ```typescript
 import { createBridge } from '@webview-ts/core';
+import { definePlugin, action } from '@webview-ts/shared';
 
-// Create bridge instance
-const bridge = createBridge({
-  timeout: 30000,
+// Define plugins
+const camera = definePlugin('camera', {
+  takePhoto: action<{ quality?: number }, { uri: string }>(),
+});
+
+// Create a typed bridge
+const bridge = createBridge<typeof camera._actionMap>({
+  timeout: 5000,
   debug: true,
 });
 
-// Call native function
-try {
-  const result = await bridge.call('getUserData', { userId: '123' });
-  console.log('User data:', result);
-} catch (error) {
-  console.error('Bridge call failed:', error);
-}
+// Type-safe call — payload and return type are inferred
+const result = await bridge.call('camera.takePhoto', { quality: 0.8 });
+// result is typed as { uri: string }
 ```
 
-### With Middleware
+## Middleware
+
+Koa-style onion middleware -- code before `next()` runs on request, code after runs on response:
 
 ```typescript
-import { createBridge, LoggerMiddleware, ValidatorMiddleware } from '@webview-ts/core';
+import { createBridge, createLogger, createValidator } from '@webview-ts/core';
 
 const bridge = createBridge();
 
-// Add logging middleware
-bridge.use(
-  new LoggerMiddleware({
-    level: 'debug',
-    includePayload: true,
-    includeResponse: true,
-  })
-);
+// Built-in logger
+bridge.use(createLogger({ level: 'debug', includePayload: true }));
 
-// Add validation middleware
-bridge.use(
-  new ValidatorMiddleware({
-    validateRequests: true,
-    validateResponses: true,
-  })
-);
+// Built-in validator
+bridge.use(createValidator({ validateRequests: true, validateResponses: true }));
+
+// Custom middleware
+bridge.use({
+  name: 'timing',
+  fn: async (ctx, next) => {
+    const start = Date.now();
+    await next();
+    console.log(`${ctx.request.action} took ${Date.now() - start}ms`);
+  },
+});
 ```
 
-### Event Subscriptions
+## Events
+
+Subscribe to native-initiated events pushed from the host:
 
 ```typescript
-// Subscribe to native events
-const unsubscribe = bridge.on('locationUpdate', (location) => {
-  console.log('Location updated:', location);
-});
+const unsubscribe = bridge.on<{ latitude: number; longitude: number }>(
+  'location.updated',
+  (pos) => {
+    console.log(pos.latitude, pos.longitude);
+  }
+);
 
-// Unsubscribe when done
+// Clean up
 unsubscribe();
 ```
 
-### Type-Safe Calls
+## FallbackAdapter
+
+When no native bridge is detected (e.g., during local development in a browser), you can provide fallback handlers:
 
 ```typescript
-interface GetUserPayload {
-  userId: string;
-}
+const bridge = createBridge({
+  fallback: {
+    'camera.takePhoto': (payload) => ({ uri: '/mock-photo.jpg' }),
+    'storage.get': (payload) => ({ value: localStorage.getItem(payload.key) }),
+  },
+});
+```
 
-interface UserData {
-  name: string;
-  email: string;
-}
+Pass `fallback: true` to log all calls without handlers:
 
-// Type-safe bridge call
-const userData = await bridge.call<GetUserPayload, UserData>('getUserData', { userId: '123' });
+```typescript
+const bridge = createBridge({ fallback: true });
+```
 
-// TypeScript knows userData is UserData
-console.log(userData.name, userData.email);
+## Retry and Error Handling
+
+```typescript
+const bridge = createBridge({
+  retry: { maxAttempts: 3, delay: 1000, exponentialBackoff: true },
+  onError: (error, context) => {
+    console.error(`[${context.action}] attempt ${context.attempt}:`, error.message);
+  },
+});
 ```
 
 ## API
 
-### createBridge(config?)
+### `createBridge<TActions>(config?)`
 
-Create a new bridge instance with optional configuration.
+Creates a `BridgeManager` instance.
 
-**Config Options:**
+**Config:**
 
-- `timeout` - Default timeout in milliseconds (default: 30000)
-- `debug` - Enable debug logging (default: false)
-- `maxConcurrentRequests` - Max concurrent requests (default: 100)
-- `enableDeduplication` - Enable request deduplication (default: true)
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `timeout` | `number` | `30000` | Default timeout (ms) |
+| `debug` | `boolean` | `false` | Enable debug logging |
+| `maxConcurrentRequests` | `number` | `100` | Max concurrent requests |
+| `enableDeduplication` | `boolean` | `true` | Deduplicate identical requests |
+| `retry` | `RetryConfig` | -- | Retry configuration |
+| `fallback` | `true \| FallbackMap` | -- | Fallback handlers for non-native environments |
+| `onError` | `(error, context) => void` | -- | Global error handler |
 
-### bridge.call(action, payload?, options?)
+### `bridge.call(action, payload?, options?)`
 
-Call a native action and wait for response.
+Call a native action. Returns a `Promise` with the typed response.
 
-Returns a Promise that resolves with the response data or rejects with an error.
-
-### bridge.on(event, handler)
+### `bridge.on(event, handler)`
 
 Subscribe to native events. Returns an unsubscribe function.
 
-### bridge.off(event, handler?)
+### `bridge.use(middleware)`
 
-Unsubscribe from native events.
+Add a `{ name, fn }` middleware to the onion pipeline.
 
-### bridge.isAvailable()
+### `bridge.isAvailable()`
 
-Check if the native bridge is available.
+Check if the native bridge adapter is available.
 
-### bridge.use(middleware)
+### `bridge.destroy()`
 
-Add middleware to the bridge pipeline.
+Clean up all listeners, callbacks, and middleware.
+
+### Built-in Middleware
+
+| Factory | Description |
+|---|---|
+| `createLogger(options?)` | Log requests, responses, and errors |
+| `createValidator(options?)` | Validate message structure before send / after receive |
 
 ## Platform Adapters
 
-The bridge automatically selects the appropriate adapter based on the detected platform:
+The bridge auto-detects the native platform:
 
-- **iOS**: Uses `webkit.messageHandlers.tsBridge`
-- **Android**: Uses `window.AndroidBridge` or `window.Android`
-- **Web**: Uses mock adapter (bridge calls will fail gracefully)
-
-## Middleware
-
-Built-in middleware:
-
-- **LoggerMiddleware**: Logs all bridge communication
-- **ValidatorMiddleware**: Validates messages against schemas
-
-Create custom middleware by implementing the `Middleware` interface from `@webview-ts/shared`.
+- **iOS** -- `webkit.messageHandlers.tsBridge`
+- **Android** -- `window.AndroidBridge`
+- **Web** -- `FallbackAdapter` (when `fallback` config is provided)
 
 ## License
 

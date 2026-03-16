@@ -1,303 +1,176 @@
 # @webview-ts/devtools
 
-Communication visualization and debugging tools for ts-bridge.
+![npm](https://img.shields.io/npm/v/@webview-ts/devtools)
 
-## Features
-
-- 📊 **Message Timeline** - Visual timeline of all bridge communications
-- 🔍 **Request Inspector** - Detailed inspection of messages and responses
-- ⏱️ **Performance Tracking** - Monitor response times and success rates
-- 📝 **Structured Logging** - Configurable logging with multiple levels
-- 💾 **Export/Import** - Save and load message history for analysis
-- 🎨 **React Components** - Ready-to-use visualization components
+Debugging and visualization tools for `@webview-ts` bridge communication.
 
 ## Installation
 
 ```bash
 npm install @webview-ts/devtools
-# or
-pnpm add @webview-ts/devtools
 ```
 
-## Usage
+## Quick Start
 
-### Basic Setup
-
-```typescript
+```tsx
 import { createBridge } from '@webview-ts/core';
-import { createDevTools } from '@webview-ts/devtools';
+import { createDevToolsMiddleware, createTimeTracker, TsBridgeDevtools } from '@webview-ts/devtools';
 
-// Create DevTools bundle
-const devTools = createDevTools({
-  devtools: {
-    enabled: true,
-    maxRecords: 1000,
-  },
-  logger: {
-    console: true,
-    minLevel: 'debug',
-  },
-});
+const bridge = createBridge();
 
-// Create bridge with DevTools middleware
-const bridge = createBridge({
-  middleware: [
-    devTools.middleware,
-    devTools.timeTracker,
-    devTools.logger,
-  ],
-});
+// Add devtools middleware
+const devtools = createDevToolsMiddleware({ maxRecords: 500 });
+const timeTracker = createTimeTracker();
+
+bridge.use(devtools);
+bridge.use(timeTracker);
+
+// Render floating panel (TanStack Query DevTools-style)
+function App() {
+  return (
+    <>
+      <MyApp />
+      <TsBridgeDevtools bridge={bridge} />
+    </>
+  );
+}
 ```
 
-### Using Individual Components
+## DevToolsMiddleware
 
-#### DevTools Middleware
-
-Records all bridge messages for visualization:
+Records all bridge messages for inspection. Uses the onion model -- captures requests before `next()`, responses/errors after.
 
 ```typescript
 import { createDevToolsMiddleware } from '@webview-ts/devtools';
 
-const middleware = createDevToolsMiddleware({
+const devtools = createDevToolsMiddleware({
   enabled: true,
   maxRecords: 1000,
   trackPerformance: true,
   captureStackTraces: true,
-
-  // Custom filter
-  filter: (message) => {
-    // Only record certain actions
-    return message.action !== 'ping';
-  },
-
-  // Real-time notifications
-  onMessage: (record) => {
-    console.log('New message:', record);
-  },
+  filter: (message) => message.action !== 'heartbeat',
+  onMessage: (record) => console.log('recorded:', record.status),
 });
 
-// Get recorded messages
-const messages = middleware.getStore().getMessages();
+bridge.use(devtools);
 
-// Get performance metrics
-const metrics = middleware.getStore().getMetrics();
+// Access recorded data
+const store = devtools.getStore();
+const messages = store.getMessages();
+const metrics = store.getMetrics();
+const json = store.export();
 
-// Export for analysis
-const json = middleware.getStore().export();
+// Toggle at runtime
+devtools.setEnabled(false);
+devtools.clear();
 ```
 
-#### Time Tracker
+## TsBridgeDevtools Component
 
-Tracks performance metrics:
+Floating panel with message timeline, request inspector, filtering, and performance stats:
+
+```tsx
+import { TsBridgeDevtools } from '@webview-ts/devtools';
+
+<TsBridgeDevtools
+  bridge={bridge}
+  initialOpen={false}
+  position="bottom-left"   // or 'bottom-right'
+  panelHeight={420}
+  buttonLabel="ts-bridge"
+/>
+```
+
+The component auto-attaches a `DevToolsMiddleware` to the bridge instance on mount.
+
+## TimeTracker
+
+Performance tracking middleware:
 
 ```typescript
 import { createTimeTracker } from '@webview-ts/devtools';
 
-const timeTracker = createTimeTracker(1000);
+const tracker = createTimeTracker(1000); // max entries
+bridge.use(tracker);
 
-// Get all performance entries
-const entries = timeTracker.getEntries();
-
-// Get average duration for an action
-const avgDuration = timeTracker.getAverageDuration('getUserProfile');
-
-// Get success rate
-const successRate = timeTracker.getSuccessRate('updateSettings');
-
-// Export performance data
-const perfData = timeTracker.export();
+// Query performance data
+tracker.getEntries();
+tracker.getEntriesByAction('camera.takePhoto');
+tracker.getAverageDuration('camera.takePhoto'); // ms
+tracker.getSuccessRate();                       // 0-1
+tracker.getPendingEntries();
+tracker.export(); // JSON string
 ```
 
-#### Structured Logger
+## StructuredLogger
 
-Configurable logging with multiple levels:
+Configurable structured logging middleware:
 
 ```typescript
 import { createStructuredLogger, LogLevel } from '@webview-ts/devtools';
 
 const logger = createStructuredLogger({
-  minLevel: LogLevel.INFO,
+  minLevel: LogLevel.DEBUG,
   console: true,
-  includePayloads: false, // Hide sensitive data
-
-  onLog: (entry) => {
-    // Send to external logging service
-    sendToLoggingService(entry);
-  },
+  includePayloads: false, // hide sensitive data
+  onLog: (entry) => sendToService(entry),
 });
 
-// Manual logging
-logger.log(LogLevel.INFO, 'Custom message', { data: 'value' });
+bridge.use(logger);
 
-// Get all logs
-const logs = logger.getLogs();
-
-// Get error logs only
-const errors = logger.getLogsByLevel(LogLevel.ERROR);
+// Query logs
+logger.getLogs();
+logger.getLogsByLevel(LogLevel.ERROR);
+logger.log(LogLevel.INFO, 'custom message', { key: 'value' });
+logger.export(); // JSON string
 ```
+
+## API Overview
+
+### Middleware Factories
+
+| Factory | Description |
+|---|---|
+| `createDevToolsMiddleware(config?)` | Message recording and metrics |
+| `createTimeTracker(maxEntries?)` | Per-action performance tracking |
+| `createStructuredLogger(config?)` | Structured logging with levels |
 
 ### React Components
 
-#### Message Timeline
+| Component | Description |
+|---|---|
+| `TsBridgeDevtools` | Floating debug panel (timeline + inspector) |
+| `MessageTimeline` | Standalone message timeline |
+| `RequestInspector` | Standalone request/response inspector |
 
-Visual timeline of bridge messages:
+### DevToolsConfig
 
-```tsx
-import { MessageTimeline } from '@webview-ts/devtools';
-import { useState } from 'react';
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | `boolean` | `true` | Enable/disable recording |
+| `maxRecords` | `number` | `1000` | Max stored messages |
+| `trackPerformance` | `boolean` | `true` | Track durations |
+| `captureStackTraces` | `boolean` | `true` | Capture error stacks |
+| `filter` | `(msg) => boolean` | -- | Message filter |
+| `onMessage` | `(record) => void` | -- | New record callback |
 
-function DevToolsPanel() {
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const messages = devTools.middleware.getStore().getMessages();
+## Production
 
-  return (
-    <MessageTimeline
-      messages={messages}
-      selectedId={selectedMessage?.recordId}
-      onSelect={setSelectedMessage}
-      maxHeight={600}
-      filter={(msg) => msg.status !== 'pending'}
-    />
-  );
-}
-```
+Disable devtools in production to avoid memory overhead:
 
-#### Request Inspector
-
-Detailed message inspector:
-
-```tsx
-import { RequestInspector } from '@webview-ts/devtools';
-
-function InspectorPanel() {
-  return (
-    <RequestInspector
-      message={selectedMessage}
-      showMetadata={true}
-    />
-  );
-}
-```
-
-### Complete Example
-
-```tsx
-import { createBridge } from '@webview-ts/core';
-import {
-  createDevTools,
-  MessageTimeline,
-  RequestInspector,
-} from '@webview-ts/devtools';
-import { useState } from 'react';
-
-// Create DevTools
-const devTools = createDevTools();
-
-// Create bridge
-const bridge = createBridge({
-  middleware: [
-    devTools.middleware,
-    devTools.timeTracker,
-    devTools.logger,
-  ],
+```typescript
+const devtools = createDevToolsMiddleware({
+  enabled: process.env.NODE_ENV !== 'production',
 });
-
-// DevTools UI Component
-function DevToolsUI() {
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const [messages, setMessages] = useState([]);
-
-  // Update messages in real-time
-  devTools.middleware.config.onMessage = () => {
-    setMessages(devTools.middleware.getStore().getMessages());
-  };
-
-  return (
-    <div style={{ display: 'flex', gap: '16px', height: '100vh' }}>
-      <div style={{ flex: 1 }}>
-        <MessageTimeline
-          messages={messages}
-          selectedId={selectedMessage?.recordId}
-          onSelect={setSelectedMessage}
-        />
-      </div>
-      <div style={{ flex: 1 }}>
-        <RequestInspector message={selectedMessage} />
-      </div>
-    </div>
-  );
-}
 ```
 
-## API Reference
-
-### Types
-
-#### `RecordedMessage`
-
-Represents a recorded bridge message:
+Or conditionally skip the middleware entirely:
 
 ```typescript
-interface RecordedMessage {
-  recordId: string;
-  direction: MessageDirection;
-  status: MessageStatus;
-  message: BridgeMessage | BridgeResponse;
-  timestamp: number;
-  duration?: number;
-  stackTrace?: string;
-  metadata?: Record<string, unknown>;
+if (__DEV__) {
+  bridge.use(createDevToolsMiddleware());
 }
 ```
-
-#### `PerformanceMetrics`
-
-Performance statistics:
-
-```typescript
-interface PerformanceMetrics {
-  totalMessages: number;
-  averageResponseTime: number;
-  minResponseTime: number;
-  maxResponseTime: number;
-  successRate: number;
-  errorCount: number;
-  timeoutCount: number;
-}
-```
-
-### Configuration
-
-#### `DevToolsConfig`
-
-```typescript
-interface DevToolsConfig {
-  enabled?: boolean;              // Enable recording (default: true)
-  maxRecords?: number;            // Max messages to store (default: 1000)
-  trackPerformance?: boolean;     // Track durations (default: true)
-  captureStackTraces?: boolean;   // Capture error stacks (default: true)
-  filter?: (message) => boolean;  // Message filter
-  onMessage?: (record) => void;   // New message callback
-}
-```
-
-#### `LoggerConfig`
-
-```typescript
-interface LoggerConfig {
-  minLevel?: LogLevel;            // Minimum log level (default: INFO)
-  console?: boolean;              // Log to console (default: false)
-  onLog?: (entry) => void;        // Custom log handler
-  includePayloads?: boolean;      // Include payloads (default: true)
-}
-```
-
-## Performance Considerations
-
-- **Memory**: DevTools stores messages in memory. Configure `maxRecords` to limit memory usage
-- **Production**: Disable DevTools in production or use minimal configuration
-- **Filtering**: Use filters to reduce recorded messages
-- **Payloads**: Set `includePayloads: false` for sensitive data or large payloads
 
 ## License
 

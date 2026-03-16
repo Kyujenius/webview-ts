@@ -1,297 +1,170 @@
 # @webview-ts/native
 
-React Native host implementation for ts-bridge - handles WebView-to-Native communication.
+![npm](https://img.shields.io/npm/v/@webview-ts/native)
 
-## Overview
-
-This package provides the React Native side of the ts-bridge library. It receives messages from the WebView, processes them, and sends responses back. It also supports sending events from native to the web.
-
-## Features
-
-- **BridgeHost**: Main orchestrator for handling messages from WebView
-- **MessageHandler**: Integration with react-native-webview
-- **Type-Safe**: Full TypeScript support with strict typing
+React Native host for `@webview-ts` -- receives messages from the WebView, executes handlers, and sends responses and events back.
 
 ## Installation
 
 ```bash
 npm install @webview-ts/native @webview-ts/shared react-native-webview
-# or
-pnpm add @webview-ts/native @webview-ts/shared react-native-webview
-# or
-yarn add @webview-ts/native @webview-ts/shared react-native-webview
 ```
 
-## Usage
-
-### Basic Setup
+## Quick Start with Plugins
 
 ```typescript
-import { createBridgeHost } from '@webview-ts/native';
+import { definePlugin, action } from '@webview-ts/shared';
+import { useBridgeHost } from '@webview-ts/native';
 import { WebView } from 'react-native-webview';
 
-// Create bridge host bundle
-const { bridgeHost, messageHandler } = createBridgeHost({
-  bridge: {
-    debug: true,
-    timeout: 30000,
-  },
+// Define plugin (shared with web side)
+const camera = definePlugin('camera', {
+  takePhoto: action<{ quality?: number }, { uri: string }>(),
 });
 
-// Register action handlers
-bridgeHost.registerAction('getUserData', async (payload) => {
-  const userId = payload.userId;
-  // Fetch user data from native storage or API
-  return {
-    id: userId,
-    name: 'John Doe',
-    email: 'john@example.com',
-  };
-});
-
-// Use in React component
 function App() {
-  const webViewRef = React.useRef<WebView>(null);
+  const { webViewProps, sendEvent } = useBridgeHost({
+    plugins: [
+      camera.host({
+        takePhoto: async (payload) => {
+          // payload is typed as { quality?: number }
+          const photo = await takeNativePhoto(payload.quality);
+          return { uri: photo.uri };
+        },
+      }),
+    ],
+  });
 
-  React.useEffect(() => {
-    // Set WebView reference when mounted
-    messageHandler.setWebViewRef(webViewRef.current);
-
-    return () => {
-      // Clean up
-      messageHandler.setWebViewRef(null);
-    };
-  }, []);
-
-  return (
-    <WebView
-      ref={webViewRef}
-      source={{ uri: 'https://your-web-app.com' }}
-      onMessage={messageHandler.getOnMessageHandler()}
-    />
-  );
+  return <WebView {...webViewProps} source={{ uri: 'https://your-app.com' }} />;
 }
 ```
 
-### Registering Action Handlers
+## Direct Handlers (without plugins)
+
+For ad-hoc actions that don't need a shared plugin definition:
 
 ```typescript
-// Simple sync handler
-bridgeHost.registerAction('getDeviceInfo', () => {
-  return {
-    platform: Platform.OS,
-    version: Platform.Version,
-  };
-});
-
-// Async handler
-bridgeHost.registerAction('fetchUserData', async (payload) => {
-  const response = await fetch(`https://api.example.com/users/${payload.userId}`);
-  return await response.json();
-});
-
-// Handler with context
-bridgeHost.registerAction('logEvent', (payload, context) => {
-  console.log(`[${context.messageId}] Event:`, payload.eventName);
-  return { logged: true };
+const { webViewProps, sendEvent } = useBridgeHost({
+  handlers: {
+    'device.getInfo': async () => ({
+      platform: Platform.OS,
+      version: String(Platform.Version),
+    }),
+    'storage.get': async (payload) => ({
+      value: await AsyncStorage.getItem(payload.key),
+    }),
+  },
 });
 ```
 
-### Sending Events to WebView
+Use a generic for full type safety on direct handlers:
 
 ```typescript
-// Send event to web
-bridgeHost.emit('locationUpdate', {
+type MyActions = {
+  'device.getInfo': { payload: void; response: { platform: string; version: string } };
+  'storage.get': { payload: { key: string }; response: { value: string | null } };
+};
+
+const { webViewProps } = useBridgeHost<MyActions>({
+  handlers: {
+    'device.getInfo': async () => ({ platform: Platform.OS, version: '1.0' }),
+    'storage.get': async (payload) => ({ value: await AsyncStorage.getItem(payload.key) }),
+  },
+});
+```
+
+## Sending Events to Web
+
+Push events from native to the web side:
+
+```typescript
+const { sendEvent } = useBridgeHost({ plugins: [cameraHost] });
+
+// Send typed event
+sendEvent('location.updated', {
   latitude: 37.7749,
   longitude: -122.4194,
 });
-
-// Send event without payload
-bridgeHost.emit('appDidBecomeActive');
 ```
 
-### Permission Management
+## Mixing Plugins and Direct Handlers
 
 ```typescript
-import { PermissionsAndroid } from 'react-native';
-
-// Register permission handler for camera
-permissionManager.registerPermission('camera', async () => {
-  if (Platform.OS === 'android') {
-    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-    return {
-      status: granted === PermissionsAndroid.RESULTS.GRANTED ? 'granted' : 'denied',
-      canAskAgain: granted !== PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN,
-    };
-  } else {
-    // iOS permission handling
-    // Use react-native-permissions or similar
-    return { status: 'granted' };
-  }
-});
-
-// Check permission
-const hasCamera = await permissionManager.hasPermission('camera');
-
-// Request permission
-const status = await permissionManager.requestPermission('camera');
-```
-
-### Complete Example with React Native
-
-```typescript
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { createBridgeHost } from '@webview-ts/native';
-
-// Create bridge host (outside component to avoid recreating)
-const { bridgeHost, messageHandler } = createBridgeHost({
-  bridge: { debug: __DEV__ },
-});
-
-// Register actions
-bridgeHost.registerAction('showToast', (payload) => {
-  // Show native toast
-  console.log('Toast:', payload.message);
-  return { shown: true };
-});
-
-bridgeHost.registerAction('getDeviceInfo', () => {
-  return {
-    platform: Platform.OS,
-    version: String(Platform.Version),
-  };
-});
-
-export default function App() {
-  const webViewRef = useRef<WebView>(null);
-
-  useEffect(() => {
-    // Connect WebView
-    messageHandler.setWebViewRef(webViewRef.current);
-
-    return () => {
-      // Disconnect
-      messageHandler.setWebViewRef(null);
-    };
-  }, []);
-
-  return (
-    <View style={styles.container}>
-      <WebView
-        ref={webViewRef}
-        source={{ uri: 'https://your-web-app.com' }}
-        onMessage={messageHandler.getOnMessageHandler()}
-        javaScriptEnabled={true}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+const { webViewProps } = useBridgeHost({
+  plugins: [
+    camera.host({ takePhoto: async (p) => ({ uri: '/photo.jpg' }) }),
+  ],
+  handlers: {
+    'custom.action': async () => ({ ok: true }),
   },
+});
+```
+
+Duplicate action names across plugins and handlers will throw at setup time.
+
+## Host-side Middleware
+
+The host supports the same Koa-style onion middleware as the web side:
+
+```typescript
+import { createLogger } from '@webview-ts/core';
+
+const { webViewProps } = useBridgeHost({
+  plugins: [cameraHost],
+  middleware: [createLogger({ level: 'debug' })],
+});
+```
+
+## Non-React Usage
+
+Use `createSimpleBridgeHost` outside of React components:
+
+```typescript
+import { createSimpleBridgeHost } from '@webview-ts/native';
+
+const { bridgeHost, webViewProps, sendEvent } = createSimpleBridgeHost({
+  plugins: [cameraHost],
+  config: { debug: true, timeout: 10000 },
 });
 ```
 
 ## API
 
-### createBridgeHost(options?)
+### `useBridgeHost<TActions>(options)`
 
-Creates a complete bridge host bundle with all components.
+React hook that creates and manages a bridge host. Handlers are captured on mount.
 
 **Options:**
 
-- `bridge` - BridgeHost configuration
-- `messageHandler` - MessageHandler configuration
+| Option | Type | Description |
+|---|---|---|
+| `handlers` | `TypedHandlers<TActions>` | Direct action handlers |
+| `plugins` | `HostPluginResult[]` | Plugin host results from `plugin.host()` |
+| `middleware` | `Middleware[]` | Koa-style middleware array |
+| `config` | `BridgeHostConfig` | Host configuration (`debug`, `timeout`, `onError`) |
 
-**Returns:** `BridgeHostBundle` with:
+**Returns:**
 
-- `bridgeHost` - BridgeHost instance
-- `messageHandler` - MessageHandler instance
+| Property | Type | Description |
+|---|---|---|
+| `webViewProps` | `{ onMessage, ref }` | Spread onto `<WebView>` |
+| `sendEvent` | `(event, payload) => void` | Push event to web side |
+| `bridgeHost` | `BridgeHost` | Direct access (advanced) |
 
-### BridgeHost
+### `createSimpleBridgeHost<TActions>(options)`
 
-Main orchestrator for handling WebView messages.
+Pure function equivalent of `useBridgeHost`. Same options, same return shape plus `messageHandler`.
 
-**Methods:**
+### `BridgeHost`
 
-- `registerAction(action, handler)` - Register action handler
-- `unregisterAction(action)` - Unregister action handler
-- `emit(event, payload?)` - Send event to WebView
-- `destroy()` - Clean up resources
+Lower-level class powering the host:
 
-### MessageHandler
-
-Integrates BridgeHost with react-native-webview.
-
-**Methods:**
-
-- `setWebViewRef(ref)` - Set WebView reference
-- `getOnMessageHandler()` - Get handler for WebView's onMessage prop
-
-### PermissionManager
-
-Handles OS permissions for iOS and Android.
-
-**Methods:**
-
-- `registerPermission(permission, handler)` - Register permission handler
-- `checkPermission(permission)` - Check permission status
-- `requestPermission(permission)` - Request permission
-- `hasPermission(permission)` - Check if permission is granted
-- `requestPermissions(permissions)` - Request multiple permissions
-- `clearCache(permission?)` - Clear permission cache
-
-## Type Safety
-
-All actions and events are fully typed when using TypeScript:
-
-```typescript
-interface GetUserPayload {
-  userId: string;
-}
-
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-}
-
-bridgeHost.registerAction<GetUserPayload, UserData>('getUserData', async (payload) => {
-  // payload is typed as GetUserPayload
-  const userId = payload.userId;
-
-  // Return must match UserData
-  return {
-    id: userId,
-    name: 'John',
-    email: 'john@example.com',
-  };
-});
-```
-
-## Error Handling
-
-```typescript
-const bridgeHost = new BridgeHost({
-  onError: (error, context) => {
-    // Custom error handling
-    console.error('Bridge error:', error);
-
-    // Report to error tracking service
-    Sentry.captureException(error, { extra: context });
-  },
-});
-
-// Errors in handlers are automatically caught and sent as error responses
-bridgeHost.registerAction('riskyAction', async () => {
-  throw new Error('Something went wrong');
-  // Web side will receive error response
-});
-```
+- `registerHandler(action, handler)` -- register an action handler
+- `unregisterHandler(action)` -- remove a handler
+- `sendEvent(event, payload)` -- send event to web
+- `handleMessage(message)` -- process a `BridgeMessage`, returns `BridgeResponse`
+- `use(middleware)` -- add middleware
+- `destroy()` -- clean up
 
 ## License
 
