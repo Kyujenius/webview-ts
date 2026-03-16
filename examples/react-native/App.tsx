@@ -1,15 +1,32 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useBridgeHost } from '@webview-ts/native';
-import { cameraHost, storageHost, locationHost, biometricHost, hapticsHost } from './hosts';
+import {
+  cameraHost,
+  storageHost,
+  locationHost,
+  biometricHost,
+  hapticsHost,
+  clipboardHost,
+  deviceHost,
+  shareHost,
+} from './hosts';
 import { setLocationSendEvent } from './hosts/location';
 
 const WEB_APP_URL = 'http://localhost:3001';
 
 export default function App() {
   const { webViewProps, sendEvent } = useBridgeHost({
-    plugins: [cameraHost, storageHost, locationHost, biometricHost, hapticsHost],
+    plugins: [
+      cameraHost,
+      storageHost,
+      locationHost,
+      biometricHost,
+      hapticsHost,
+      clipboardHost,
+      deviceHost,
+      shareHost,
+    ],
     debug: true,
   });
 
@@ -29,7 +46,6 @@ export default function App() {
         javaScriptEnabled
         domStorageEnabled
       />
-      <StatusBar style="auto" />
     </>
   );
 }

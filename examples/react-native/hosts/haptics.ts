@@ -1,16 +1,32 @@
+import * as Haptics from 'expo-haptics';
 import { haptics } from '@example/plugins';
+
+const impactStyles: Record<string, Haptics.ImpactFeedbackStyle> = {
+  light: Haptics.ImpactFeedbackStyle.Light,
+  medium: Haptics.ImpactFeedbackStyle.Medium,
+  heavy: Haptics.ImpactFeedbackStyle.Heavy,
+};
+
+const notificationTypes: Record<string, Haptics.NotificationFeedbackType> = {
+  success: Haptics.NotificationFeedbackType.Success,
+  warning: Haptics.NotificationFeedbackType.Warning,
+  error: Haptics.NotificationFeedbackType.Error,
+};
 
 export const hapticsHost = haptics.host({
   impact: async (payload) => {
-    // TODO: replace with expo-haptics
-    console.log('[Host] haptics.impact', payload.style);
+    const style = impactStyles[payload.style ?? 'medium'] ?? Haptics.ImpactFeedbackStyle.Medium;
+    await Haptics.impactAsync(style);
     return {};
   },
   notification: async (payload) => {
-    console.log('[Host] haptics.notification', payload.type);
+    const type =
+      notificationTypes[payload.type ?? 'success'] ?? Haptics.NotificationFeedbackType.Success;
+    await Haptics.notificationAsync(type);
     return {};
   },
   selection: async () => {
+    await Haptics.selectionAsync();
     return {};
   },
 });

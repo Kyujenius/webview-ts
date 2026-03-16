@@ -1,7 +1,7 @@
+import * as Location from 'expo-location';
 import { location } from '@example/plugins';
-import type { Position } from '@example/plugins';
 
-let watchInterval: ReturnType<typeof setInterval> | null = null;
+let watchSubscription: Location.LocationSubscription | null = null;
 let sendEventFn: ((event: string, payload: unknown) => void) | null = null;
 
 /** Call this from App.tsx to wire up sendEvent */
@@ -11,28 +11,52 @@ export function setLocationSendEvent(fn: (event: string, payload: unknown) => vo
 
 export const locationHost = location.host({
   getCurrentPosition: async () => {
-    // TODO: replace with expo-location
-    return { latitude: 37.5665, longitude: 126.978, accuracy: 5 };
-  },
-  watchPosition: async () => {
-    if (watchInterval) return { watchId: 1 };
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Location permission denied');
+    }
 
-    // Simulate periodic location updates via event push
-    watchInterval = setInterval(() => {
-      const pos: Position = {
-        latitude: 37.5665 + (Math.random() - 0.5) * 0.01,
-        longitude: 126.978 + (Math.random() - 0.5) * 0.01,
-        accuracy: Math.round(Math.random() * 20),
-      };
-      sendEventFn?.('location.updated', pos);
-    }, 3000);
+    const loc = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+
+    return {
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+      accuracy: loc.coords.accuracy ?? 0,
+    };
+  },
+
+  watchPosition: async () => {
+    if (watchSubscription) return { watchId: 1 };
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Location permission denied');
+    }
+
+    watchSubscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 3000,
+        distanceInterval: 5,
+      },
+      (loc) => {
+        sendEventFn?.('location.updated', {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+          accuracy: loc.coords.accuracy ?? 0,
+        });
+      }
+    );
 
     return { watchId: 1 };
   },
+
   clearWatch: async () => {
-    if (watchInterval) {
-      clearInterval(watchInterval);
-      watchInterval = null;
+    if (watchSubscription) {
+      watchSubscription.remove();
+      watchSubscription = null;
     }
     return {};
   },
