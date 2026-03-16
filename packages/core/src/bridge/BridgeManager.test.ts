@@ -16,7 +16,7 @@ describe('BridgeManager', () => {
       const defaultBridge = new BridgeManager();
       const config = defaultBridge.getConfig();
 
-      expect(config.timeout).toBe(30000);
+      expect(config.timeout).toBe(0);
       expect(config.debug).toBe(false);
       expect(config.maxConcurrentRequests).toBe(100);
       expect(config.enableDeduplication).toBe(true);

@@ -9,7 +9,6 @@ describe('BridgeHost', () => {
   beforeEach(() => {
     bridgeHost = new BridgeHost({
       debug: false,
-      timeout: 5000,
     });
 
     messageCallback = vi.fn();
@@ -22,7 +21,7 @@ describe('BridgeHost', () => {
       const config = defaultHost.getConfig();
 
       expect(config.debug).toBe(false);
-      expect(config.timeout).toBe(30000);
+      expect(config.timeout).toBe(0);
       expect(typeof config.onError).toBe('function');
     });
 

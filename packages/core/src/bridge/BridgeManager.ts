@@ -52,12 +52,14 @@ export class BridgeManager<
   private pendingContexts = new Map<string, MiddlewareContext>();
   /** Per-action interceptors: { 'camera.takePhoto': Middleware[] } */
   private actionInterceptors = new Map<string, Middleware[]>();
+  /** Per-action timeouts: { 'camera.getInfo': 5000 } */
+  private actionTimeouts = new Map<string, number>();
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
-      timeout: config.timeout ?? 30000,
+      timeout: config.timeout ?? 0,
       debug: config.debug ?? false,
       maxConcurrentRequests: config.maxConcurrentRequests ?? 100,
       enableDeduplication: config.enableDeduplication ?? true,
@@ -166,7 +168,9 @@ export class BridgeManager<
         this.queue.enqueue(ctx.request);
 
         const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
-          const timeout = options?.timeout ?? this.config.timeout;
+          // Priority: per-call > per-action > global (0 = disabled)
+          const timeout =
+            options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
           this.callbacks.register(
             ctx.request.id,
             resolve as (value: unknown) => void,
@@ -312,12 +316,28 @@ export class BridgeManager<
   }
 
   /**
+   * Remove middleware by name
+   */
+  removeMiddleware(name: string): boolean {
+    return this.middleware.remove(name);
+  }
+
+  /**
    * Register per-action interceptors (from plugin definitions)
    */
   registerInterceptors(interceptorMap: Record<string, Middleware[]>): void {
     for (const [action, interceptors] of Object.entries(interceptorMap)) {
       const existing = this.actionInterceptors.get(action) ?? [];
       this.actionInterceptors.set(action, [...existing, ...interceptors]);
+    }
+  }
+
+  /**
+   * Register per-action timeouts (from plugin definitions)
+   */
+  registerTimeouts(timeoutMap: Record<string, number>): void {
+    for (const [action, timeout] of Object.entries(timeoutMap)) {
+      this.actionTimeouts.set(action, timeout);
     }
   }
 
@@ -588,7 +608,14 @@ export class BridgeManager<
     this.eventHandlers.clear();
     this.pendingContexts.clear();
     this.actionInterceptors.clear();
+    this.actionTimeouts.clear();
+  }
 
+  /**
+   * Full disposal — removes message listener. Call only on true unmount.
+   */
+  dispose(): void {
+    this.destroy();
     if (typeof window !== 'undefined' && this.messageListener) {
       window.removeEventListener('message', this.messageListener);
       this.messageListener = undefined;

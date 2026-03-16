@@ -84,6 +84,9 @@ export function createBridgeReact<
           if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
             b.registerInterceptors(plugin.interceptors);
           }
+          if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
+            b.registerTimeouts(plugin.timeouts);
+          }
         }
       }
       return b;

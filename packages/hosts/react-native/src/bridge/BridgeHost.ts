@@ -15,7 +15,7 @@ import { MiddlewarePipeline } from '@webview-ts/shared';
 export interface BridgeHostConfig {
   /** Enable debug logging */
   debug?: boolean;
-  /** Maximum time to process a request (ms) */
+  /** Maximum time to process a request (ms). 0 = disabled (default) */
   timeout?: number;
   /** Custom error handler */
   onError?: (error: Error, context?: unknown) => void;
@@ -51,7 +51,7 @@ export class BridgeHost implements IBridgeHost {
   constructor(config: BridgeHostConfig = {}) {
     this.config = {
       debug: config.debug ?? false,
-      timeout: config.timeout ?? 30000,
+      timeout: config.timeout ?? 0,
       onError: config.onError ?? ((error) => console.error('[BridgeHost]', error)),
     };
     this.handlers = new Map();
@@ -111,38 +111,41 @@ export class BridgeHost implements IBridgeHost {
       metadata: new Map(),
     };
 
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Request timeout after ${this.config.timeout}ms`));
-      }, this.config.timeout);
-    });
+    const executeFn = () =>
+      this.pipeline.execute(ctx, async () => {
+        // Core: find and execute the action handler
+        const handler = this.handlers.get(message.action);
+        if (!handler) {
+          throw new Error(`No handler registered for action: ${message.action}`);
+        }
+
+        const requestContext: RequestContext = {
+          messageId: message.id,
+          timestamp: message.timestamp,
+          metadata: Object.fromEntries(ctx.metadata),
+        };
+
+        const data = await Promise.resolve(handler(message.payload, requestContext));
+
+        ctx.response = {
+          id: message.id,
+          success: true,
+          data,
+          timestamp: Date.now(),
+        };
+      });
 
     try {
-      await Promise.race([
-        this.pipeline.execute(ctx, async () => {
-          // Core: find and execute the action handler
-          const handler = this.handlers.get(message.action);
-          if (!handler) {
-            throw new Error(`No handler registered for action: ${message.action}`);
-          }
-
-          const requestContext: RequestContext = {
-            messageId: message.id,
-            timestamp: message.timestamp,
-            metadata: Object.fromEntries(ctx.metadata),
-          };
-
-          const data = await Promise.resolve(handler(message.payload, requestContext));
-
-          ctx.response = {
-            id: message.id,
-            success: true,
-            data,
-            timestamp: Date.now(),
-          };
-        }),
-        timeoutPromise,
-      ]);
+      if (this.config.timeout > 0) {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error(`Request timeout after ${this.config.timeout}ms`));
+          }, this.config.timeout);
+        });
+        await Promise.race([executeFn(), timeoutPromise]);
+      } else {
+        await executeFn();
+      }
 
       return ctx.response!;
     } catch (error) {

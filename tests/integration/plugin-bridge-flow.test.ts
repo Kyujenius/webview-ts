@@ -65,7 +65,7 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
     }
   }
 
-  const bridge = createBridge({ timeout: 5000, fallback });
+  const bridge = createBridge({ fallback });
   return { bridge, bridgeHost };
 }
 
