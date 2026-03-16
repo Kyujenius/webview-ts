@@ -34,6 +34,11 @@ describe('createBridgeReact', () => {
       expect(typeof result.current.isAvailable).toBe('boolean');
     });
 
+    it('should expose connectionMode as fallback when using fallback config', () => {
+      const { result } = renderHook(() => useBridge(), { wrapper });
+      expect(result.current.connectionMode).toBe('fallback');
+    });
+
     it('should throw when used outside provider', () => {
       expect(() => {
         renderHook(() => useBridge());

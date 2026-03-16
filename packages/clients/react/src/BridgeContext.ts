@@ -1,12 +1,13 @@
 import { createContext, useContext } from 'react';
 import type { BridgeManager } from '@webview-ts/core';
-import type { ActionDefinitionShape } from '@webview-ts/shared';
+import type { ActionDefinitionShape, ConnectionMode } from '@webview-ts/shared';
 
 export interface BridgeContextValue<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 > {
   bridge: BridgeManager<TActions>;
   isAvailable: boolean;
+  connectionMode: ConnectionMode;
 }
 
 export const BridgeContext = createContext<BridgeContextValue | null>(null);

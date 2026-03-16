@@ -21,6 +21,14 @@ describe('BridgeProvider', () => {
     expect(typeof result.current.isAvailable).toBe('boolean');
   });
 
+  it('should expose connectionMode', () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <BridgeProvider config={{ timeout: 5000 }}>{children}</BridgeProvider>
+    );
+    const { result } = renderHook(() => useBridgeContext(), { wrapper });
+    expect(['native', 'fallback', 'disconnected']).toContain(result.current.connectionMode);
+  });
+
   it('should throw when used outside provider', () => {
     expect(() => {
       renderHook(() => useBridgeContext());

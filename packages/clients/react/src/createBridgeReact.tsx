@@ -12,6 +12,7 @@ import type { BridgeManager } from '@webview-ts/core';
 import type {
   BridgeConfig,
   BridgeCallOptions,
+  ConnectionMode,
   ActionDefinitionShape,
   ActionNames,
   InferPayload,
@@ -22,6 +23,7 @@ import type { PluginInstance, PluginCall, MergePluginActions } from '@webview-ts
 interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
   bridge: BridgeManager<TActions>;
   isAvailable: boolean;
+  connectionMode: ConnectionMode;
 }
 
 export interface TypedBridgeProviderProps {
@@ -87,20 +89,25 @@ export function createBridgeReact<
       return b;
     }, []);
     const [isAvailable, setIsAvailable] = useState(() => bridge.isAvailable());
+    const [connectionMode, setConnectionMode] = useState(() => bridge.connectionMode);
     useEffect(() => {
       setIsAvailable(bridge.isAvailable());
+      setConnectionMode(bridge.connectionMode);
       return () => {
         bridge.destroy();
       };
     }, [bridge]);
-    const value = useMemo(() => ({ bridge, isAvailable }), [bridge, isAvailable]);
+    const value = useMemo(
+      () => ({ bridge, isAvailable, connectionMode }),
+      [bridge, isAvailable, connectionMode]
+    );
     return <Context.Provider value={value}>{children}</Context.Provider>;
   }
 
   // ---- useBridge ----
 
   function useBridge() {
-    const { bridge, isAvailable } = useTypedContext();
+    const { bridge, isAvailable, connectionMode } = useTypedContext();
     const call = useCallback(
       <TAction extends ActionNames<TAllActions>>(
         action: TAction,
@@ -118,7 +125,7 @@ export function createBridgeReact<
       (event: string, handler?: (payload: unknown) => void) => bridge.off(event, handler),
       [bridge]
     );
-    return { call, on, off, isAvailable, bridge };
+    return { call, on, off, isAvailable, connectionMode, bridge };
   }
 
   // ---- useAction ----
