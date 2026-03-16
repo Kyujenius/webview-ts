@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DevToolsStoreImpl } from './DevToolsStore';
 import type { RecordedMessage } from '../types/index';
-import { MessageDirection, MessageStatus } from '../types/index';
+
+function makeRecord(overrides: Partial<RecordedMessage> = {}): RecordedMessage {
+  return {
+    recordId: `record-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    status: 'pending',
+    action: 'testAction',
+    timestamp: Date.now(),
+    ...overrides,
+  };
+}
 
 describe('DevToolsStore', () => {
   let store: DevToolsStoreImpl;
@@ -12,18 +21,7 @@ describe('DevToolsStore', () => {
 
   describe('message management', () => {
     it('should add and retrieve messages', () => {
-      const message: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
+      const message = makeRecord({ recordId: 'record-1', action: 'testAction' });
       store.addMessage(message);
 
       const messages = store.getMessages();
@@ -32,71 +30,40 @@ describe('DevToolsStore', () => {
     });
 
     it('should get message by record ID', () => {
-      const message: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
+      const message = makeRecord({ recordId: 'record-1' });
       store.addMessage(message);
 
       const retrieved = store.getMessage('record-1');
       expect(retrieved).toEqual(message);
     });
 
-    it('should get messages by message ID', () => {
-      const request: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
+    it('should get messages by action name', () => {
+      store.addMessage(makeRecord({ recordId: 'record-1', action: 'camera.takePhoto' }));
+      store.addMessage(makeRecord({ recordId: 'record-2', action: 'storage.get' }));
+      store.addMessage(makeRecord({ recordId: 'record-3', action: 'camera.takePhoto' }));
 
-      const response: RecordedMessage = {
-        recordId: 'record-2',
-        direction: MessageDirection.RESPONSE,
-        status: MessageStatus.SUCCESS,
-        message: {
-          id: 'msg-1',
-          success: true,
-          data: { result: 'ok' },
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
-      store.addMessage(request);
-      store.addMessage(response);
-
-      const messages = store.getMessagesByMessageId('msg-1');
+      const messages = store.getMessagesByAction('camera.takePhoto');
       expect(messages).toHaveLength(2);
     });
 
-    it('should clear all messages', () => {
-      const message: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
+    it('should update message in-place', () => {
+      const message = makeRecord({ recordId: 'record-1', status: 'pending' });
       store.addMessage(message);
+
+      store.updateMessage('record-1', {
+        status: 'success',
+        duration: 42,
+        responseData: { result: 'ok' },
+      });
+
+      const updated = store.getMessage('record-1');
+      expect(updated?.status).toBe('success');
+      expect(updated?.duration).toBe(42);
+      expect(updated?.responseData).toEqual({ result: 'ok' });
+    });
+
+    it('should clear all messages', () => {
+      store.addMessage(makeRecord({ recordId: 'record-1' }));
       expect(store.getMessages()).toHaveLength(1);
 
       store.clear();
@@ -107,55 +74,19 @@ describe('DevToolsStore', () => {
       const smallStore = new DevToolsStoreImpl(3);
 
       for (let i = 0; i < 5; i++) {
-        smallStore.addMessage({
-          recordId: `record-${i}`,
-          direction: MessageDirection.REQUEST,
-          status: MessageStatus.PENDING,
-          message: {
-            id: `msg-${i}`,
-            action: 'testAction',
-            timestamp: Date.now(),
-          },
-          timestamp: Date.now(),
-        });
+        smallStore.addMessage(makeRecord({ recordId: `record-${i}` }));
       }
 
       const messages = smallStore.getMessages();
       expect(messages).toHaveLength(3);
-      expect(messages[0].recordId).toBe('record-2'); // First two should be removed
+      expect(messages[0].recordId).toBe('record-2');
     });
   });
 
   describe('metrics', () => {
     it('should calculate performance metrics', () => {
-      // Add success message
-      store.addMessage({
-        recordId: 'record-1',
-        direction: MessageDirection.RESPONSE,
-        status: MessageStatus.SUCCESS,
-        message: {
-          id: 'msg-1',
-          success: true,
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-        duration: 100,
-      });
-
-      // Add error message
-      store.addMessage({
-        recordId: 'record-2',
-        direction: MessageDirection.RESPONSE,
-        status: MessageStatus.ERROR,
-        message: {
-          id: 'msg-2',
-          success: false,
-          error: { code: 'ERROR', message: 'Failed' },
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-        duration: 50,
-      });
+      store.addMessage(makeRecord({ recordId: 'r-1', status: 'success', duration: 100 }));
+      store.addMessage(makeRecord({ recordId: 'r-2', status: 'error', duration: 50 }));
 
       const metrics = store.getMetrics();
 
@@ -170,42 +101,18 @@ describe('DevToolsStore', () => {
 
   describe('export/import', () => {
     it('should export messages as JSON', () => {
-      const message: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
-      store.addMessage(message);
+      store.addMessage(makeRecord({ recordId: 'record-1' }));
 
       const exported = store.export();
       const parsed = JSON.parse(exported);
 
-      expect(parsed.version).toBe('1.0');
+      expect(parsed.version).toBe('2.0');
       expect(parsed.messages).toHaveLength(1);
       expect(parsed.metrics).toBeDefined();
     });
 
     it('should import messages from JSON', () => {
-      const message: RecordedMessage = {
-        recordId: 'record-1',
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message: {
-          id: 'msg-1',
-          action: 'testAction',
-          timestamp: Date.now(),
-        },
-        timestamp: Date.now(),
-      };
-
-      store.addMessage(message);
+      store.addMessage(makeRecord({ recordId: 'record-1' }));
       const exported = store.export();
 
       const newStore = new DevToolsStoreImpl(100);
