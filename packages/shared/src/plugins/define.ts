@@ -1,6 +1,7 @@
 import type {
   ActionMarkerMap,
   InterceptorMap,
+  TimeoutMap,
   PluginInstance,
   ShortHostHandlers,
   HostPluginResult,
@@ -32,11 +33,21 @@ export function definePlugin<TName extends string, const TMarkers extends Action
     }
   }
 
+  // Extract per-action timeouts from markers
+  const timeouts: TimeoutMap = {};
+  for (const short of shortNames) {
+    const marker = markers[short] as { __timeout?: number };
+    if (marker.__timeout && marker.__timeout > 0) {
+      timeouts[`${name}.${short}`] = marker.__timeout;
+    }
+  }
+
   return {
     name,
     _actionMap: {} as ExpandActions<TName, TMarkers>,
     actions: actions as ActionNameMap<TName, TMarkers>,
     interceptors,
+    timeouts,
 
     methods(call: PluginCall<ExpandActions<TName, TMarkers>>) {
       const methods: Record<string, (payload: any) => Promise<any>> = {};

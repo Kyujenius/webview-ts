@@ -3,21 +3,32 @@ import type { Middleware } from '../types/middleware';
 
 // ─── action() type marker ───
 
+/** Options for action() marker */
+export interface ActionOptions {
+  /** Timeout in ms for this action. 0 or undefined = no timeout (default) */
+  timeout?: number;
+}
+
 /** Branded type marker — carries Payload/Response at type level, empty at runtime */
 export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __payload: TPayload;
   readonly __response: TResponse;
   /** Per-action interceptors (runtime) */
   readonly __interceptors?: Middleware[];
+  /** Per-action timeout in ms (runtime) */
+  readonly __timeout?: number;
   /** Chain an interceptor to this action */
   use(interceptor: Middleware): ActionMarker<TPayload, TResponse>;
 }
 
 /** Zero-runtime type marker for defining plugin actions */
-export function action<TPayload = void, TResponse = void>(): ActionMarker<TPayload, TResponse> {
+export function action<TPayload = void, TResponse = void>(
+  options?: ActionOptions
+): ActionMarker<TPayload, TResponse> {
   const interceptors: Middleware[] = [];
   const marker: any = {
     __interceptors: interceptors,
+    __timeout: options?.timeout,
     use(interceptor: Middleware) {
       interceptors.push(interceptor);
       return marker;
@@ -70,6 +81,9 @@ export type ShortHostHandlers<TMarkers extends ActionMarkerMap> = {
 /** Per-action interceptor map: { 'camera.takePhoto': Middleware[] } */
 export type InterceptorMap = Record<string, Middleware[]>;
 
+/** Per-action timeout map: { 'camera.takePhoto': 5000 } */
+export type TimeoutMap = Record<string, number>;
+
 /** Plugin instance returned by definePlugin */
 export interface PluginInstance<
   TName extends string = string,
@@ -79,6 +93,7 @@ export interface PluginInstance<
   readonly _actionMap: ExpandActions<TName, TMarkers>;
   readonly actions: ActionNameMap<TName, TMarkers>;
   readonly interceptors: InterceptorMap;
+  readonly timeouts: TimeoutMap;
   readonly methods: (call: PluginCall<ExpandActions<TName, TMarkers>>) => AutoMethods<TMarkers>;
   readonly host: (handlers: ShortHostHandlers<TMarkers>) => HostPluginResult;
 }

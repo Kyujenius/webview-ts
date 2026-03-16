@@ -22,8 +22,9 @@ export interface ErrorContext {
  */
 export interface BridgeConfig {
   /**
-   * Default timeout for bridge calls in milliseconds
-   * @default 30000
+   * Default timeout for bridge calls in milliseconds.
+   * 0 = disabled (no timeout). Per-action and per-call timeouts take priority.
+   * @default 0
    */
   timeout?: number;
 
