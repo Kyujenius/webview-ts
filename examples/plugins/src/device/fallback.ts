@@ -1,6 +1,7 @@
+import type { FallbackMap } from '@webview-ts/shared';
 import { DeviceActions } from './plugin';
 
-export const deviceFallback = {
+export const deviceFallback: FallbackMap = {
   [DeviceActions.getInfo]: async () => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     let osName = 'Unknown';

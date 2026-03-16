@@ -4,7 +4,7 @@ import { share } from '@example/plugins';
 
 function SharePage() {
   const { connectionMode } = useBridge();
-  const { call } = usePlugin(share);
+  const { share: doShare } = usePlugin(share);
   const [title, setTitle] = useState('Check this out!');
   const [message, setMessage] = useState('Hello from ts-bridge');
   const [url, setUrl] = useState('https://github.com');
@@ -14,7 +14,7 @@ function SharePage() {
   const handleShare = async () => {
     try {
       setError(null);
-      const res = await call('share', {
+      const res = await doShare({
         title: title || undefined,
         message: message || undefined,
         url: url || undefined,

@@ -4,15 +4,15 @@ import { device } from '@example/plugins';
 
 function DevicePage() {
   const { connectionMode } = useBridge();
-  const { call } = usePlugin(device);
+  const { getInfo } = usePlugin(device);
   const [info, setInfo] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGetInfo = async () => {
     try {
       setError(null);
-      const result = await call('getInfo', undefined);
-      setInfo(result as Record<string, unknown>);
+      const result = await getInfo();
+      setInfo(result as unknown as Record<string, unknown>);
     } catch (e) {
       setError((e as Error).message);
     }

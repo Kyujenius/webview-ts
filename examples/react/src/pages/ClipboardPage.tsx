@@ -4,15 +4,15 @@ import { clipboard } from '@example/plugins';
 
 function ClipboardPage() {
   const { connectionMode } = useBridge();
-  const { call } = usePlugin(clipboard);
-  const [text, setText] = useState('');
+  const { getText, setText } = usePlugin(clipboard);
+  const [text, setTextInput] = useState('');
   const [clipboardText, setClipboardText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleCopy = async () => {
     try {
       setError(null);
-      await call('setText', { text });
+      await setText({ text });
     } catch (e) {
       setError((e as Error).message);
     }
@@ -21,7 +21,7 @@ function ClipboardPage() {
   const handlePaste = async () => {
     try {
       setError(null);
-      const result = await call('getText', undefined);
+      const result = await getText();
       setClipboardText(result.text);
     } catch (e) {
       setError((e as Error).message);
@@ -44,7 +44,7 @@ function ClipboardPage() {
         <input
           type="text"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setTextInput(e.target.value)}
           placeholder="Enter text to copy..."
           style={{ width: '100%', padding: '8px', marginBottom: '8px' }}
         />
