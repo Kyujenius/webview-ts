@@ -9,7 +9,7 @@ The current `TsBridgeDevtools` is a 1,062-line floating panel that overlays on t
 
 ## Solution
 
-Replace the floating panel with a **separate-window dashboard**. A small floating button (visible only in `__DEV__`) opens a full dashboard in a new browser window.
+Replace the floating panel with a **separate-window dashboard**. A small floating button (visible only in dev mode) opens a full dashboard in a new browser window.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ Replace the floating panel with a **separate-window dashboard**. A small floatin
 │    bridge={bridge} │                 │  - MessageTimeline   │
 │  />                │                 │  - RequestInspector  │
 │                    │                 │  - Waterfall         │
-│         [btn] ◄─── __DEV__ only     │                      │
+│         [btn] ◄─── dev mode only    │                      │
 └────────────────────┘                 └──────────────────────┘
 
 [React Native App]
@@ -40,10 +40,18 @@ Pluggable transport abstraction so web and RN use the same middleware but differ
 
 ```ts
 interface DevToolsTransport {
-  send(message: RecordedMessage): void;
-  onMessage(handler: (msg: RecordedMessage) => void): void;
+  send(data: TransportMessage): void;
+  onMessage(handler: (data: TransportMessage) => void): void;
+  onDisconnect(handler: () => void): void;
+  readonly connected: boolean;
   disconnect(): void;
 }
+
+// Messages sent over transport
+type TransportMessage =
+  | { type: 'record'; record: RecordedMessage }
+  | { type: 'clear' }
+  | { type: 'metrics'; metrics: PerformanceMetrics };
 ```
 
 ### BroadcastChannelTransport (Web default)
@@ -51,34 +59,52 @@ interface DevToolsTransport {
 - Uses `BroadcastChannel` API for same-origin tab communication
 - Zero config — works immediately with `window.open()`
 - Channel name: `__ts-bridge-devtools__`
+- `connected` is always `true` (BroadcastChannel has no connection lifecycle)
+- Minimum browser requirement: Chrome 54+, Firefox 38+, Safari 15.4+. No fallback — DevTools simply won't open in unsupported browsers.
 
 ### WebSocketTransport (RN default)
 
 - Connects to a local WebSocket server
 - Config: `{ host?: string; port?: number }` (default `localhost:4000`)
-- Used by both the RN app (sender) and the CLI dashboard server (receiver)
+- `connected` reflects WebSocket `readyState`
+- `onDisconnect` fires on close/error; auto-reconnect with exponential backoff
+
+## DevToolsConfig Extension
+
+The existing `DevToolsConfig` type gains an optional `transport` field:
+
+```ts
+interface DevToolsConfig {
+  // ... existing fields unchanged ...
+  transport?: DevToolsTransport;
+}
+```
+
+When `transport` is provided, `DevToolsMiddleware` sends each `RecordedMessage` update over the transport in addition to storing it locally in `DevToolsStore`.
+
+## Dev Mode Detection
+
+The component uses `process.env.NODE_ENV !== 'production'` to determine dev mode. This works with all major bundlers (webpack, vite, esbuild, rollup) and is tree-shaken in production builds. No custom `__DEV__` global required.
 
 ## Component API
 
 ### Web usage
 
 ```tsx
-// Unchanged from current API shape
 <TsBridgeDevtools bridge={bridge} />
 ```
 
 Internal behavior:
-1. Returns `null` if `__DEV__` is falsy (tree-shaken in production)
-2. Registers `DevToolsMiddleware` on mount, removes on unmount
-3. Renders a small fixed-position floating button
-4. On click: opens dashboard via `window.open()` with inline HTML, hides button
-5. On child window close: shows button again
+1. Returns `null` if `process.env.NODE_ENV === 'production'`
+2. Registers `DevToolsMiddleware` with `BroadcastChannelTransport` on mount, cleans up on unmount
+3. Renders a small fixed-position floating button (bottom-left)
+4. On click: opens dashboard via `window.open()` + blob URL, hides button
+5. On child window close (detected via `setInterval` polling `window.closed`): shows button again
 
 ### RN usage (headless)
 
 ```ts
-import { createDevToolsMiddleware } from '@webview-ts/devtools';
-import { WebSocketTransport } from '@webview-ts/devtools/transport';
+import { createDevToolsMiddleware, WebSocketTransport } from '@webview-ts/devtools';
 
 const transport = new WebSocketTransport({ port: 4000 });
 const devtools = createDevToolsMiddleware({ transport });
@@ -94,66 +120,96 @@ npx @webview-ts/devtools --port 4000
 
 ```
 packages/devtools/src/
-├── index.ts                          # public API
-├── types/index.ts                    # unchanged
-├── middleware/DevToolsMiddleware.ts   # add transport support
+├── index.ts                          # public API (updated exports)
+├── types/index.ts                    # add transport field to DevToolsConfig
+├── middleware/DevToolsMiddleware.ts   # add transport.send() calls
 ├── middleware/TimeTracker.ts          # unchanged
 ├── logger/DevToolsStore.ts           # unchanged
 ├── logger/StructuredLogger.ts        # unchanged
 ├── transport/
-│   ├── DevToolsTransport.ts          # NEW — interface
+│   ├── DevToolsTransport.ts          # NEW — interface + TransportMessage type
 │   ├── BroadcastChannelTransport.ts  # NEW — web
 │   └── WebSocketTransport.ts         # NEW — RN
 ├── panel/
 │   ├── TsBridgeDevtools.tsx          # REWRITE — button + window.open()
-│   └── Dashboard.tsx                 # NEW — full dashboard UI
+│   └── Dashboard.tsx                 # NEW — full dashboard UI (dark theme)
+├── dashboard/
+│   ├── WaterfallView.tsx             # NEW — extracted from old panel
+│   ├── Toolbar.tsx                   # NEW — stats + actions
+│   └── FilterBar.tsx                 # NEW — status/plugin/search filters
 ├── visualizer/
-│   ├── MessageTimeline.tsx           # unchanged (reused by Dashboard)
-│   └── RequestInspector.tsx          # unchanged (reused by Dashboard)
+│   ├── MessageTimeline.tsx           # MODIFY — add optional theme prop
+│   └── RequestInspector.tsx          # MODIFY — add optional theme prop
 └── server/
     └── index.ts                      # NEW — CLI server for RN
 ```
 
-## What Gets Deleted
+## Visualizer Theme Support
 
-- `panel/TsBridgeDevtools.tsx` — entire 1,062-line floating panel (rewritten from scratch)
-- Props: `position`, `panelHeight`, `buttonLabel`, `initialOpen`
+`MessageTimeline` and `RequestInspector` currently use a light theme (white bg, light borders). The Dashboard uses a dark theme. To support both:
 
-## What Stays
-
-- `DevToolsMiddleware`, `DevToolsStore`, `TimeTracker`, `StructuredLogger` — logic intact
-- `MessageTimeline`, `RequestInspector` — reused inside Dashboard
-- All type definitions
-- All existing tests (middleware, store)
-
-## Dashboard UI
-
-The Dashboard component renders in the separate window. It reuses existing visualizer components and adds:
-
-- **Toolbar**: title, live stats (total, success rate, errors, avg response time), clear, export, connection status
-- **Filter bar**: status filter, plugin filter, search
-- **Split view**: MessageTimeline (left) + RequestInspector (right)
-- **Waterfall view**: middleware execution trace (extracted from old panel code)
-
-Dark theme consistent with current design tokens.
+- Add an optional `theme?: 'light' | 'dark'` prop to both components
+- Default to `'light'` for backward compatibility
+- Dashboard passes `theme="dark"`
+- Theme affects only color tokens, not layout or structure
 
 ## Dashboard Window (Web)
 
-Opened via `window.open()` with a data URI or `document.write()`:
+The dashboard is opened via `window.open()` with a **blob URL**:
 
-1. Minimal HTML shell with React mount point
-2. Inline-bundled Dashboard component
-3. Connects back to main tab via `BroadcastChannelTransport`
-4. Main tab detects window close via `setInterval` polling `window.closed`
+1. Build an HTML string containing a minimal shell + inline `<script>` with the Dashboard bundle
+2. Create a `Blob` with `text/html` type → `URL.createObjectURL(blob)`
+3. `window.open(blobUrl)` → no size limits (unlike data URIs), no server needed
+4. Dashboard component connects via `BroadcastChannelTransport` receiver mode
+5. Main tab polls `childWindow.closed` via `setInterval` (1s interval)
+
+## Dashboard UI
+
+The Dashboard component renders in the separate window with a dark theme:
+
+- **Toolbar**: title, live stats, clear/export buttons, connection status indicator
+- **Filter bar**: status filter (all/success/error/pending), plugin filter, search input
+- **Split view**: MessageTimeline (left, dark theme) + RequestInspector (right, dark theme)
+- **Waterfall view**: middleware execution trace with timing bars (extracted from old panel into `WaterfallView.tsx`)
 
 ## CLI Server (RN)
 
 `packages/devtools/src/server/index.ts`:
 
-- HTTP server serves dashboard HTML (same Dashboard component, SSR or pre-bundled)
+- HTTP server serves pre-bundled dashboard HTML
 - WebSocket server receives `RecordedMessage` from RN app
-- Forwards messages to dashboard via WebSocket
-- Minimal dependencies: `ws` for WebSocket
+- Forwards messages to connected dashboard clients via WebSocket
+- Dependencies: `ws` for WebSocket (no express — use Node `http` module)
+
+## Package.json Updates
+
+Add sub-path export for transport:
+
+```json
+{
+  "exports": {
+    ".": { ... },
+    "./transport": {
+      "types": "./dist/transport/index.d.ts",
+      "import": "./dist/transport/index.js",
+      "require": "./dist/transport/index.cjs"
+    }
+  }
+}
+```
+
+## What Gets Deleted
+
+- `panel/TsBridgeDevtools.tsx` — entire floating panel (rewritten)
+- Props: `position`, `panelHeight`, `buttonLabel`, `initialOpen`
+- `panel/TsBridgeDevtools.test.tsx` — rewritten to test new button + window.open() behavior
+
+## What Stays
+
+- `DevToolsMiddleware`, `DevToolsStore`, `TimeTracker`, `StructuredLogger` — logic intact
+- `MessageTimeline`, `RequestInspector` — modified only to add theme prop
+- All type definitions (extended, not replaced)
+- Tests for middleware and store — unchanged
 
 ## Migration
 
@@ -167,4 +223,4 @@ After:
 <TsBridgeDevtools bridge={bridge} />
 ```
 
-No other changes needed for web users. The component signature is simplified.
+No other changes needed for web users.
