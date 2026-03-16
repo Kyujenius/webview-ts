@@ -32,10 +32,3 @@ export type { WaterfallViewProps } from './dashboard/index';
 // Floating button (opens dashboard in new window)
 export { TsBridgeDevtools } from './panel/TsBridgeDevtools';
 export type { TsBridgeDevtoolsProps } from './panel/TsBridgeDevtools';
-
-// Legacy visualizer components (deprecated — use Dashboard)
-export { MessageTimeline } from './visualizer/MessageTimeline';
-export type { MessageTimelineProps } from './visualizer/MessageTimeline';
-
-export { RequestInspector } from './visualizer/RequestInspector';
-export type { RequestInspectorProps } from './visualizer/RequestInspector';
