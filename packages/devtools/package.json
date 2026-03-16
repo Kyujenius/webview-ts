@@ -39,7 +39,8 @@
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "eslint src",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "serve": "node server/index.mjs"
   },
   "dependencies": {
     "@webview-ts/shared": "workspace:*",

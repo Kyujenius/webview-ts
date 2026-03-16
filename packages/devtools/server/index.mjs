@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { createServer } from 'node:http';
+import { exec } from 'node:child_process';
+import { platform } from 'node:os';
 import { WebSocketServer } from 'ws';
 import { dashboardHTML } from './dashboard.mjs';
 
@@ -50,4 +52,14 @@ http.listen(PORT, () => {
   console.log();
   console.log('  Waiting for connections...');
   console.log();
+
+  // Auto-open browser unless --no-open flag
+  if (!process.argv.includes('--no-open')) {
+    const url = `http://localhost:${PORT}/`;
+    const cmd =
+      platform() === 'darwin' ? `open "${url}"` :
+      platform() === 'win32' ? `start "${url}"` :
+      `xdg-open "${url}"`;
+    exec(cmd);
+  }
 });
