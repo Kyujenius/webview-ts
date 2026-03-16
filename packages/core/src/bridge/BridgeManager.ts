@@ -21,6 +21,7 @@ import type {
   ActionNames,
   InferPayload,
   InferResponse,
+  ConnectionMode,
 } from '@webview-ts/shared';
 /**
  * Event handler type
@@ -189,15 +190,49 @@ export class BridgeManager<
         this.queue.complete(ctx.request.id);
       };
 
+      // Initialize trace collection
+      const traces: Array<{
+        name: string;
+        layer: string;
+        plugin?: string;
+        enterMs: number;
+        exitMs: number;
+        shortCircuit: boolean;
+        shortCircuitReason?: string;
+        error?: { message: string; stack?: string };
+        logs?: string[];
+        metadataChanges?: Record<string, unknown>;
+      }> = [];
+      ctx.metadata.set('__mwTraces', traces);
+      const handlerStart = { value: 0 };
+      const handlerEnd = { value: 0 };
+
       // Wrap core with per-action interceptors (inner layer),
       // then wrap that with global middleware (outer layer).
       // Result: Global MW → Plugin Interceptors → core → Plugin Interceptors → Global MW
       const interceptors = this.actionInterceptors.get(action as string);
+      const trackedCore = async () => {
+        handlerStart.value = performance.now();
+        await coreFn();
+        handlerEnd.value = performance.now();
+      };
       const innerFn = interceptors?.length
-        ? () => this.executeInterceptors(ctx, interceptors, coreFn)
-        : coreFn;
+        ? () => this.executeInterceptors(ctx, interceptors, trackedCore)
+        : trackedCore;
 
-      await this.middleware.execute(ctx, innerFn);
+      // Execute global middleware with trace wrapping
+      await this.executeWithTracing(ctx, innerFn, traces);
+
+      // Store handler timing
+      if (handlerStart.value > 0) {
+        ctx.metadata.set(
+          '__handlerMs',
+          Math.round((handlerEnd.value - handlerStart.value) * 100) / 100
+        );
+        ctx.metadata.set('__handlerSkipped', false);
+      } else {
+        ctx.metadata.set('__handlerSkipped', true);
+      }
 
       return ctx.response?.data as InferResponse<TActions, TAction>;
     } finally {
@@ -241,6 +276,13 @@ export class BridgeManager<
   }
 
   /**
+   * Current connection mode
+   */
+  get connectionMode(): ConnectionMode {
+    return this.adapter.connectionMode;
+  }
+
+  /**
    * Check if bridge is available
    */
   isAvailable(): boolean {
@@ -255,10 +297,18 @@ export class BridgeManager<
   }
 
   /**
-   * Use global middleware
+   * Use global middleware (appended — runs as inner layer)
    */
   use(middleware: Middleware): void {
     this.middleware.use(middleware);
+  }
+
+  /**
+   * Prepend global middleware (runs as outermost layer).
+   * Useful for DevTools that must wrap all other middleware.
+   */
+  prepend(middleware: Middleware): void {
+    this.middleware.prepend(middleware);
   }
 
   /**
@@ -272,7 +322,109 @@ export class BridgeManager<
   }
 
   /**
+   * Execute global middleware pipeline with trace recording.
+   * Wraps each middleware to measure enter/exit timing.
+   */
+  private async executeWithTracing(
+    ctx: MiddlewareContext,
+    core: () => Promise<void>,
+    traces: Array<{
+      name: string;
+      layer: string;
+      plugin?: string;
+      enterMs: number;
+      exitMs: number;
+      shortCircuit: boolean;
+      shortCircuitReason?: string;
+      error?: { message: string; stack?: string };
+      logs?: string[];
+      metadataChanges?: Record<string, unknown>;
+    }>
+  ): Promise<void> {
+    const middlewares = this.middleware.getAll();
+    if (middlewares.length === 0) {
+      return core();
+    }
+
+    let index = -1;
+    let reachedCore = false;
+
+    const dispatch = (i: number): Promise<void> => {
+      if (i <= index) {
+        return Promise.reject(new Error('next() called multiple times'));
+      }
+      index = i;
+      if (i === middlewares.length) {
+        reachedCore = true;
+        return core();
+      }
+
+      const mw = middlewares[i];
+      // Skip tracing for middleware that opts out (e.g. devtools itself)
+      const skipTrace = (mw as any).__skipTrace === true;
+
+      if (skipTrace) {
+        return mw.fn(ctx, () => dispatch(i + 1));
+      }
+
+      const enterStart = performance.now();
+      let enterEnd: number;
+
+      // Snapshot metadata keys before this MW runs
+      const keysBefore = new Set(ctx.metadata.keys());
+
+      const recordTrace = (error?: Error) => {
+        const exitEnd = performance.now();
+        enterEnd = enterEnd ?? exitEnd;
+        const didShortCircuit = !reachedCore && i === index;
+
+        // Collect MW logs
+        const logs = ctx.metadata.get(`__mwLog:${mw.name}`) as string[] | undefined;
+
+        // Detect metadata changes (new or modified keys, excluding internal __ keys)
+        const metadataChanges: Record<string, unknown> = {};
+        for (const [key, value] of ctx.metadata.entries()) {
+          if (key.startsWith('__')) continue;
+          if (!keysBefore.has(key)) {
+            metadataChanges[key] = value;
+          }
+        }
+
+        traces.push({
+          name: mw.name,
+          layer: 'global',
+          enterMs: Math.round((enterEnd - enterStart) * 100) / 100,
+          exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
+          shortCircuit: didShortCircuit,
+          shortCircuitReason: didShortCircuit
+            ? (ctx.metadata.get(`__shortCircuitReason:${mw.name}`) as string | undefined)
+            : undefined,
+          error: error ? { message: error.message, stack: error.stack } : undefined,
+          logs,
+          metadataChanges: Object.keys(metadataChanges).length > 0 ? metadataChanges : undefined,
+        });
+      };
+
+      return mw
+        .fn(ctx, () => {
+          enterEnd = performance.now();
+          return dispatch(i + 1);
+        })
+        .then(() => {
+          recordTrace();
+        })
+        .catch((err: Error) => {
+          recordTrace(err);
+          throw err;
+        });
+    };
+
+    await dispatch(0);
+  }
+
+  /**
    * Execute per-action interceptors as an onion pipeline (same model as global middleware).
+   * Records timing traces in ctx.metadata for DevTools visualization.
    */
   private async executeInterceptors(
     ctx: MiddlewareContext,
@@ -280,7 +432,24 @@ export class BridgeManager<
     core: () => Promise<void>
   ): Promise<void> {
     const fns: MiddlewareFn[] = interceptors.map((m) => m.fn);
+    const traces = (ctx.metadata.get('__mwTraces') ?? []) as Array<{
+      name: string;
+      layer: string;
+      plugin?: string;
+      enterMs: number;
+      exitMs: number;
+      shortCircuit: boolean;
+      shortCircuitReason?: string;
+      error?: { message: string; stack?: string };
+      logs?: string[];
+      metadataChanges?: Record<string, unknown>;
+    }>;
+    ctx.metadata.set('__mwTraces', traces);
+
+    const pluginName = ctx.request.action.split('.')[0];
+
     let index = -1;
+    let reachedCore = false;
 
     const dispatch = (i: number): Promise<void> => {
       if (i <= index) {
@@ -288,9 +457,57 @@ export class BridgeManager<
       }
       index = i;
       if (i === fns.length) {
+        reachedCore = true;
         return core();
       }
-      return fns[i](ctx, () => dispatch(i + 1));
+
+      const name = interceptors[i].name;
+      const enterStart = performance.now();
+      let enterEnd: number;
+      const keysBefore = new Set(ctx.metadata.keys());
+
+      const recordTrace = (error?: Error) => {
+        const exitEnd = performance.now();
+        enterEnd = enterEnd ?? exitEnd;
+        const didShortCircuit = !reachedCore && i === index;
+
+        const logs = ctx.metadata.get(`__mwLog:${name}`) as string[] | undefined;
+
+        const metadataChanges: Record<string, unknown> = {};
+        for (const [key, value] of ctx.metadata.entries()) {
+          if (key.startsWith('__')) continue;
+          if (!keysBefore.has(key)) {
+            metadataChanges[key] = value;
+          }
+        }
+
+        traces.push({
+          name,
+          layer: 'plugin',
+          plugin: pluginName,
+          enterMs: Math.round((enterEnd - enterStart) * 100) / 100,
+          exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
+          shortCircuit: didShortCircuit,
+          shortCircuitReason: didShortCircuit
+            ? (ctx.metadata.get(`__shortCircuitReason:${name}`) as string | undefined)
+            : undefined,
+          error: error ? { message: error.message, stack: error.stack } : undefined,
+          logs,
+          metadataChanges: Object.keys(metadataChanges).length > 0 ? metadataChanges : undefined,
+        });
+      };
+
+      return fns[i](ctx, () => {
+        enterEnd = performance.now();
+        return dispatch(i + 1);
+      })
+        .then(() => {
+          recordTrace();
+        })
+        .catch((err: Error) => {
+          recordTrace(err);
+          throw err;
+        });
     };
 
     await dispatch(0);
