@@ -22,13 +22,3 @@ export type { PerformanceEntry } from './middleware/TimeTracker';
 // Logger
 export { createStructuredLogger, LogLevel } from './logger/StructuredLogger';
 export type { LogEntry, LoggerConfig } from './logger/StructuredLogger';
-
-// Dashboard (standalone window)
-export { Dashboard } from './dashboard/index';
-export type { DashboardProps } from './dashboard/index';
-export { WaterfallView } from './dashboard/index';
-export type { WaterfallViewProps } from './dashboard/index';
-
-// Floating button (opens dashboard in new window)
-export { TsBridgeDevtools } from './panel/TsBridgeDevtools';
-export type { TsBridgeDevtoolsProps } from './panel/TsBridgeDevtools';

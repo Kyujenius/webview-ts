@@ -25,6 +25,7 @@ export class DevToolsMiddleware {
       filter: config.filter ?? (() => true),
       onMessage: config.onMessage ?? (() => {}),
       transport: config.transport,
+      debug: config.debug ?? false,
     };
 
     this.store = store ?? new DevToolsStoreImpl(this.config.maxRecords);
@@ -86,6 +87,7 @@ export class DevToolsMiddleware {
       this.store.addMessage(record);
       this.config.onMessage(record);
       this.config.transport?.send({ type: 'record', record: { ...record } });
+      if (this.config.debug) console.log(`[devtools] → ${record.action} (pending)`);
 
       const startTime = Date.now();
 
@@ -117,6 +119,10 @@ export class DevToolsMiddleware {
         Object.assign(record, updates);
         this.config.onMessage(record);
         this.config.transport?.send({ type: 'record', record: { ...record } });
+        if (this.config.debug)
+          console.log(
+            `[devtools] ← ${record.action} (${updates.status} ${duration?.toFixed(0)}ms)`
+          );
       } catch (error) {
         const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
         const middlewareTrace = ctx.metadata.get(
@@ -142,6 +148,8 @@ export class DevToolsMiddleware {
         Object.assign(record, updates);
         this.config.onMessage(record);
         this.config.transport?.send({ type: 'record', record: { ...record } });
+        if (this.config.debug)
+          console.log(`[devtools] ✗ ${record.action} (error: ${(error as Error).message})`);
 
         throw error;
       }

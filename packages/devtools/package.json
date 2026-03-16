@@ -26,21 +26,20 @@
     }
   },
   "bin": {
-    "devtools": "./server/index.mjs"
+    "devtools": "./dist/cli.mjs"
   },
   "files": [
-    "dist",
-    "server"
+    "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "vite build --config vite.config.dashboard.ts && tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "eslint src",
     "clean": "rm -rf dist",
-    "serve": "node server/index.mjs"
+    "serve": "node dist/cli.mjs"
   },
   "dependencies": {
     "@webview-ts/shared": "workspace:*",
@@ -52,12 +51,17 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.0.0",
+    "@types/node": "^20.14.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
+    "vite": "^5.1.0",
+    "vite-plugin-singlefile": "^2.3.2",
     "vitest": "^1.4.0"
   },
   "keywords": [

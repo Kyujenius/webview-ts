@@ -3,19 +3,36 @@ import type { DevToolsTransport, TransportMessage } from './DevToolsTransport';
 export interface WebSocketTransportConfig {
   host?: string;
   port?: number;
+  reconnectInterval?: number;
 }
 
 export class WebSocketTransport implements DevToolsTransport {
-  private ws: WebSocket;
+  private ws: WebSocket | null = null;
   private handlers: Array<(data: TransportMessage) => void> = [];
   private disconnectHandlers: Array<() => void> = [];
+  private url: string;
+  private reconnectInterval: number;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private disposed = false;
 
   constructor(config: WebSocketTransportConfig = {}) {
     const host = config.host ?? 'localhost';
     const port = config.port ?? 4000;
-    this.ws = new WebSocket(`ws://${host}:${port}`);
+    this.url = `ws://${host}:${port}`;
+    this.reconnectInterval = config.reconnectInterval ?? 3000;
+    this.connect();
+  }
 
-    this.ws.onmessage = (event: MessageEvent) => {
+  private connect(): void {
+    if (this.disposed) return;
+
+    const ws = new WebSocket(this.url);
+
+    ws.onopen = () => {
+      this.ws = ws;
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data as string) as TransportMessage;
         for (const h of this.handlers) h(data);
@@ -24,17 +41,21 @@ export class WebSocketTransport implements DevToolsTransport {
       }
     };
 
-    this.ws.onclose = () => {
+    ws.onclose = () => {
+      this.ws = null;
       for (const h of this.disconnectHandlers) h();
+      if (!this.disposed) {
+        this.timer = setTimeout(() => this.connect(), this.reconnectInterval);
+      }
     };
 
-    this.ws.onerror = () => {
+    ws.onerror = () => {
       // onclose will fire after onerror
     };
   }
 
   send(data: TransportMessage): void {
-    if (this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
     }
   }
@@ -48,11 +69,15 @@ export class WebSocketTransport implements DevToolsTransport {
   }
 
   get connected(): boolean {
-    return this.ws.readyState === WebSocket.OPEN;
+    return this.ws?.readyState === WebSocket.OPEN;
   }
 
   disconnect(): void {
-    this.ws.close();
+    this.disposed = true;
+    if (this.timer) clearTimeout(this.timer);
+    this.ws?.close();
+    this.ws = null;
     this.handlers = [];
+    this.disconnectHandlers = [];
   }
 }

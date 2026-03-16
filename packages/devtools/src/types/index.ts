@@ -159,6 +159,12 @@ export interface DevToolsConfig {
    * Transport for sending recorded messages to external dashboard
    */
   transport?: DevToolsTransport;
+
+  /**
+   * Enable debug logging to console
+   * @default false
+   */
+  debug?: boolean;
 }
 
 /**
