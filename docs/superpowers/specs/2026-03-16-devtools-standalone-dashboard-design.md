@@ -131,27 +131,19 @@ packages/devtools/src/
 │   ├── BroadcastChannelTransport.ts  # NEW — web
 │   └── WebSocketTransport.ts         # NEW — RN
 ├── panel/
-│   ├── TsBridgeDevtools.tsx          # REWRITE — button + window.open()
-│   └── Dashboard.tsx                 # NEW — full dashboard UI (dark theme)
+│   └── TsBridgeDevtools.tsx          # REWRITE — button + window.open()
 ├── dashboard/
+│   ├── Dashboard.tsx                 # NEW — full dashboard UI (dark theme)
 │   ├── WaterfallView.tsx             # NEW — extracted from old panel
-│   ├── Toolbar.tsx                   # NEW — stats + actions
-│   └── FilterBar.tsx                 # NEW — status/plugin/search filters
-├── visualizer/
-│   ├── MessageTimeline.tsx           # MODIFY — add optional theme prop
-│   └── RequestInspector.tsx          # MODIFY — add optional theme prop
+│   └── index.ts                      # NEW — barrel export
+├── visualizer/                       # DELETE — replaced by dashboard components
 └── server/
     └── index.ts                      # NEW — CLI server for RN
 ```
 
-## Visualizer Theme Support
+## Old Visualizers
 
-`MessageTimeline` and `RequestInspector` currently use a light theme (white bg, light borders). The Dashboard uses a dark theme. To support both:
-
-- Add an optional `theme?: 'light' | 'dark'` prop to both components
-- Default to `'light'` for backward compatibility
-- Dashboard passes `theme="dark"`
-- Theme affects only color tokens, not layout or structure
+`MessageTimeline` and `RequestInspector` (light-themed standalone components) are deleted. The Dashboard has its own integrated timeline and inspector with dark theme. This avoids maintaining two sets of UI components.
 
 ## Dashboard Window (Web)
 
@@ -207,7 +199,7 @@ Add sub-path export for transport:
 ## What Stays
 
 - `DevToolsMiddleware`, `DevToolsStore`, `TimeTracker`, `StructuredLogger` — logic intact
-- `MessageTimeline`, `RequestInspector` — modified only to add theme prop
+- `MessageTimeline`, `RequestInspector` — deleted, replaced by dashboard components
 - All type definitions (extended, not replaced)
 - Tests for middleware and store — unchanged
 
