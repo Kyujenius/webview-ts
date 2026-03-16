@@ -1,4 +1,5 @@
 import type { ActionDefinitionShape } from '../types/action-map';
+import type { Middleware } from '../types/middleware';
 
 // ─── action() type marker ───
 
@@ -6,11 +7,23 @@ import type { ActionDefinitionShape } from '../types/action-map';
 export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __payload: TPayload;
   readonly __response: TResponse;
+  /** Per-action interceptors (runtime) */
+  readonly __interceptors?: Middleware[];
+  /** Chain an interceptor to this action */
+  use(interceptor: Middleware): ActionMarker<TPayload, TResponse>;
 }
 
 /** Zero-runtime type marker for defining plugin actions */
 export function action<TPayload = void, TResponse = void>(): ActionMarker<TPayload, TResponse> {
-  return {} as ActionMarker<TPayload, TResponse>;
+  const interceptors: Middleware[] = [];
+  const marker: any = {
+    __interceptors: interceptors,
+    use(interceptor: Middleware) {
+      interceptors.push(interceptor);
+      return marker;
+    },
+  };
+  return marker as ActionMarker<TPayload, TResponse>;
 }
 
 /** A record of short-name action markers */
@@ -54,6 +67,9 @@ export type ShortHostHandlers<TMarkers extends ActionMarkerMap> = {
 
 // ─── Plugin instance ───
 
+/** Per-action interceptor map: { 'camera.takePhoto': Middleware[] } */
+export type InterceptorMap = Record<string, Middleware[]>;
+
 /** Plugin instance returned by definePlugin */
 export interface PluginInstance<
   TName extends string = string,
@@ -62,6 +78,7 @@ export interface PluginInstance<
   readonly name: TName;
   readonly _actionMap: ExpandActions<TName, TMarkers>;
   readonly actions: ActionNameMap<TName, TMarkers>;
+  readonly interceptors: InterceptorMap;
   readonly methods: (call: PluginCall<ExpandActions<TName, TMarkers>>) => AutoMethods<TMarkers>;
   readonly host: (handlers: ShortHostHandlers<TMarkers>) => HostPluginResult;
 }

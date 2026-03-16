@@ -1,5 +1,6 @@
 import type {
   ActionMarkerMap,
+  InterceptorMap,
   PluginInstance,
   ShortHostHandlers,
   HostPluginResult,
@@ -8,6 +9,7 @@ import type {
   ExpandActions,
   PluginCall,
 } from './types';
+import type { Middleware } from '../types/middleware';
 
 export function definePlugin<TName extends string, const TMarkers extends ActionMarkerMap>(
   name: TName,
@@ -21,10 +23,20 @@ export function definePlugin<TName extends string, const TMarkers extends Action
     actions[short] = `${name}.${short}`;
   }
 
+  // Extract per-action interceptors from markers
+  const interceptors: InterceptorMap = {};
+  for (const short of shortNames) {
+    const marker = markers[short] as { __interceptors?: Middleware[] };
+    if (marker.__interceptors?.length) {
+      interceptors[`${name}.${short}`] = marker.__interceptors;
+    }
+  }
+
   return {
     name,
     _actionMap: {} as ExpandActions<TName, TMarkers>,
     actions: actions as ActionNameMap<TName, TMarkers>,
+    interceptors,
 
     methods(call: PluginCall<ExpandActions<TName, TMarkers>>) {
       const methods: Record<string, (payload: any) => Promise<any>> = {};

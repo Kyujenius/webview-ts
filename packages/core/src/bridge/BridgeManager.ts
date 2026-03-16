@@ -16,6 +16,7 @@ import type {
   BridgeError,
   Middleware,
   MiddlewareContext,
+  MiddlewareFn,
   ActionDefinitionShape,
   ActionNames,
   InferPayload,
@@ -48,6 +49,8 @@ export class BridgeManager<
   private eventHandlers = new Map<string, Set<EventHandler>>();
   /** Stores context per message id so the response phase can access it */
   private pendingContexts = new Map<string, MiddlewareContext>();
+  /** Per-action interceptors: { 'camera.takePhoto': Middleware[] } */
+  private actionInterceptors = new Map<string, Middleware[]>();
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
 
@@ -157,8 +160,8 @@ export class BridgeManager<
     this.pendingContexts.set(message.id, ctx);
 
     try {
-      await this.middleware.execute(ctx, async () => {
-        // === Core: send message and wait for response ===
+      // Core function: send message and wait for response
+      const coreFn = async () => {
         this.queue.enqueue(ctx.request);
 
         const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
@@ -173,10 +176,8 @@ export class BridgeManager<
 
         this.adapter.send(ctx.request);
 
-        // CallbackRegistry now resolves with full BridgeResponse
         const response = await responsePromise;
 
-        // Error handling: reject failed responses
         if (!response.success) {
           const error = new Error(response.error?.message || 'Bridge call failed');
           (error as any).code = response.error?.code;
@@ -186,7 +187,17 @@ export class BridgeManager<
 
         ctx.response = response;
         this.queue.complete(ctx.request.id);
-      });
+      };
+
+      // Wrap core with per-action interceptors (inner layer),
+      // then wrap that with global middleware (outer layer).
+      // Result: Global MW → Plugin Interceptors → core → Plugin Interceptors → Global MW
+      const interceptors = this.actionInterceptors.get(action as string);
+      const innerFn = interceptors?.length
+        ? () => this.executeInterceptors(ctx, interceptors, coreFn)
+        : coreFn;
+
+      await this.middleware.execute(ctx, innerFn);
 
       return ctx.response?.data as InferResponse<TActions, TAction>;
     } finally {
@@ -244,10 +255,45 @@ export class BridgeManager<
   }
 
   /**
-   * Use middleware
+   * Use global middleware
    */
   use(middleware: Middleware): void {
     this.middleware.use(middleware);
+  }
+
+  /**
+   * Register per-action interceptors (from plugin definitions)
+   */
+  registerInterceptors(interceptorMap: Record<string, Middleware[]>): void {
+    for (const [action, interceptors] of Object.entries(interceptorMap)) {
+      const existing = this.actionInterceptors.get(action) ?? [];
+      this.actionInterceptors.set(action, [...existing, ...interceptors]);
+    }
+  }
+
+  /**
+   * Execute per-action interceptors as an onion pipeline (same model as global middleware).
+   */
+  private async executeInterceptors(
+    ctx: MiddlewareContext,
+    interceptors: Middleware[],
+    core: () => Promise<void>
+  ): Promise<void> {
+    const fns: MiddlewareFn[] = interceptors.map((m) => m.fn);
+    let index = -1;
+
+    const dispatch = (i: number): Promise<void> => {
+      if (i <= index) {
+        return Promise.reject(new Error('next() called multiple times'));
+      }
+      index = i;
+      if (i === fns.length) {
+        return core();
+      }
+      return fns[i](ctx, () => dispatch(i + 1));
+    };
+
+    await dispatch(0);
   }
 
   /**
@@ -324,6 +370,7 @@ export class BridgeManager<
     this.middleware.clear();
     this.eventHandlers.clear();
     this.pendingContexts.clear();
+    this.actionInterceptors.clear();
 
     if (typeof window !== 'undefined' && this.messageListener) {
       window.removeEventListener('message', this.messageListener);

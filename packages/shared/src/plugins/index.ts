@@ -7,6 +7,7 @@ export type {
   ExpandActions,
   ShortHostHandlers,
   PluginCall,
+  InterceptorMap,
   PluginInstance,
   HostPluginResult,
   RequestContext,

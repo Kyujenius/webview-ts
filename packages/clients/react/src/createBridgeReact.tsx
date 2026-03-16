@@ -74,7 +74,18 @@ export function createBridgeReact<
 
   function BridgeProvider({ config: propConfig, children }: TypedBridgeProviderProps) {
     const mergedConfig = propConfig ?? options?.config;
-    const bridge = useMemo(() => createBridge<TAllActions>(mergedConfig), []);
+    const bridge = useMemo(() => {
+      const b = createBridge<TAllActions>(mergedConfig);
+      // Register per-action interceptors from plugin definitions
+      if (options?.plugins) {
+        for (const plugin of options.plugins) {
+          if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
+            b.registerInterceptors(plugin.interceptors);
+          }
+        }
+      }
+      return b;
+    }, []);
     const [isAvailable, setIsAvailable] = useState(() => bridge.isAvailable());
     useEffect(() => {
       setIsAvailable(bridge.isAvailable());
