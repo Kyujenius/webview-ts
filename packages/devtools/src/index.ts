@@ -5,18 +5,14 @@
 
 // Types
 export type {
-  MessageDirection,
-  MessageStatus,
+  MiddlewareTrace,
   RecordedMessage,
   PerformanceMetrics,
   DevToolsConfig,
   DevToolsStore,
 } from './types/index';
 
-export {
-  MessageDirection as MessageDirectionEnum,
-  MessageStatus as MessageStatusEnum,
-} from './types/index';
+export type { MessageStatus } from './types/index';
 
 // Middleware
 export { DevToolsMiddleware, createDevToolsMiddleware } from './middleware/DevToolsMiddleware';
@@ -27,13 +23,19 @@ export type { PerformanceEntry } from './middleware/TimeTracker';
 export { createStructuredLogger, LogLevel } from './logger/StructuredLogger';
 export type { LogEntry, LoggerConfig } from './logger/StructuredLogger';
 
-// Visualizer components
+// Dashboard (standalone window)
+export { Dashboard } from './dashboard/index';
+export type { DashboardProps } from './dashboard/index';
+export { WaterfallView } from './dashboard/index';
+export type { WaterfallViewProps } from './dashboard/index';
+
+// Floating button (opens dashboard in new window)
+export { TsBridgeDevtools } from './panel/TsBridgeDevtools';
+export type { TsBridgeDevtoolsProps } from './panel/TsBridgeDevtools';
+
+// Legacy visualizer components (deprecated — use Dashboard)
 export { MessageTimeline } from './visualizer/MessageTimeline';
 export type { MessageTimelineProps } from './visualizer/MessageTimeline';
 
 export { RequestInspector } from './visualizer/RequestInspector';
 export type { RequestInspectorProps } from './visualizer/RequestInspector';
-
-// Floating panel (TanStack Query DevTools-style)
-export { TsBridgeDevtools } from './panel/TsBridgeDevtools';
-export type { TsBridgeDevtoolsProps } from './panel/TsBridgeDevtools';

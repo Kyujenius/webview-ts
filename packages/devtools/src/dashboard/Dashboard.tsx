@@ -310,9 +310,7 @@ function MessageRow({
 function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
   return (
     <div style={S.stat}>
-      <div style={S.statValue} {...(color ? { style: { ...S.statValue, color } } : {})}>
-        {value}
-      </div>
+      <div style={color ? { ...S.statValue, color } : S.statValue}>{value}</div>
       <div style={S.statLabel}>{label}</div>
     </div>
   );
