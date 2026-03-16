@@ -2,7 +2,7 @@
  * iOS WebKit message handler adapter
  */
 
-import type { BridgeMessage } from '@webview-ts/shared';
+import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
@@ -63,5 +63,9 @@ export class IOSAdapter implements NativeAdapter {
    */
   getPlatform(): Platform {
     return Platform.IOS;
+  }
+
+  get connectionMode(): ConnectionMode {
+    return 'native';
   }
 }

@@ -6,7 +6,7 @@
  * This adapter uses that channel to send messages to the host.
  */
 
-import type { BridgeMessage } from '@webview-ts/shared';
+import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
@@ -50,6 +50,10 @@ export class ReactNativeWebViewAdapter implements NativeAdapter {
     // ReactNativeWebView runs on both iOS and Android,
     // but from the bridge's perspective the transport is the same.
     return Platform.IOS; // Could be Android too; platform-specific logic is host-side
+  }
+
+  get connectionMode(): ConnectionMode {
+    return 'native';
   }
 }
 

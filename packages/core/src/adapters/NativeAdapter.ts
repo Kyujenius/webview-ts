@@ -2,7 +2,7 @@
  * Base adapter interface and factory
  */
 
-import type { BridgeMessage } from '@webview-ts/shared';
+import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
 import { IOSAdapter } from './IOSAdapter';
 import { AndroidAdapter } from './AndroidAdapter';
@@ -27,6 +27,11 @@ export interface NativeAdapter {
    * Get platform
    */
   getPlatform(): Platform;
+
+  /**
+   * Current connection mode
+   */
+  connectionMode: ConnectionMode;
 }
 
 /**
@@ -70,5 +75,9 @@ class MockAdapter implements NativeAdapter {
 
   getPlatform(): Platform {
     return Platform.WEB;
+  }
+
+  get connectionMode(): ConnectionMode {
+    return 'disconnected';
   }
 }

@@ -1,4 +1,9 @@
-import type { BridgeMessage, BridgeResponse, FallbackMap } from '@webview-ts/shared';
+import type {
+  BridgeMessage,
+  BridgeResponse,
+  FallbackMap,
+  ConnectionMode,
+} from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
@@ -60,5 +65,9 @@ export class FallbackAdapter implements NativeAdapter {
 
   getPlatform(): Platform {
     return Platform.WEB;
+  }
+
+  get connectionMode(): ConnectionMode {
+    return 'fallback';
   }
 }

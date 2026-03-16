@@ -2,7 +2,7 @@
  * Android JavaScript interface adapter
  */
 
-import type { BridgeMessage } from '@webview-ts/shared';
+import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
 import type { NativeAdapter } from './NativeAdapter';
 
@@ -61,5 +61,9 @@ export class AndroidAdapter implements NativeAdapter {
    */
   getPlatform(): Platform {
     return Platform.ANDROID;
+  }
+
+  get connectionMode(): ConnectionMode {
+    return 'native';
   }
 }
