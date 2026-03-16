@@ -4,7 +4,7 @@ import { storage } from '@example/plugins';
 
 function StoragePage() {
   const { getItem, setItem, removeItem, clear, getAllKeys } = usePlugin(storage);
-  const { isAvailable } = useBridge();
+  const { connectionMode } = useBridge();
   const [key, setKey] = useState('test-key');
   const [value, setValue] = useState('test-value');
   const [result, setResult] = useState<string | null>(null);
@@ -89,7 +89,12 @@ function StoragePage() {
         className="result"
         style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
       >
-        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (In-Memory)'}
+        <strong>Mode:</strong>{' '}
+        {connectionMode === 'native'
+          ? 'Native Bridge'
+          : connectionMode === 'fallback'
+            ? 'Fallback (In-Memory)'
+            : 'Disconnected'}
       </div>
 
       <div className="card">

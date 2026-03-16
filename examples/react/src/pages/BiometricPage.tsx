@@ -8,7 +8,7 @@ import {
 
 function BiometricPage() {
   const { checkAvailability, authenticate } = usePlugin(biometric);
-  const { isAvailable } = useBridge();
+  const { connectionMode } = useBridge();
   const [availability, setAvailability] = useState<CheckAvailabilityResponse | null>(null);
   const [authResult, setAuthResult] = useState<AuthenticateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,12 @@ function BiometricPage() {
         className="result"
         style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
       >
-        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Mock)'}
+        <strong>Mode:</strong>{' '}
+        {connectionMode === 'native'
+          ? 'Native Bridge'
+          : connectionMode === 'fallback'
+            ? 'Fallback (Mock)'
+            : 'Disconnected'}
       </div>
 
       <div className="card">

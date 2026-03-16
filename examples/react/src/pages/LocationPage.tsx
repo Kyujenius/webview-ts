@@ -4,7 +4,7 @@ import { location, type Position } from '@example/plugins';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
-  const { isAvailable } = useBridge();
+  const { connectionMode } = useBridge();
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,7 +61,12 @@ function LocationPage() {
         className="result"
         style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
       >
-        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Seoul, KR)'}
+        <strong>Mode:</strong>{' '}
+        {connectionMode === 'native'
+          ? 'Native Bridge'
+          : connectionMode === 'fallback'
+            ? 'Fallback (Seoul, KR)'
+            : 'Disconnected'}
       </div>
 
       <div className="card">

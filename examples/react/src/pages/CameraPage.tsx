@@ -4,7 +4,7 @@ import { camera, type TakePhotoResponse } from '@example/plugins';
 
 function CameraPage() {
   const { takePhoto, pickImage } = usePlugin(camera);
-  const { isAvailable } = useBridge();
+  const { connectionMode } = useBridge();
 
   const [result, setResult] = useState<TakePhotoResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +50,12 @@ function CameraPage() {
         className="result"
         style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
       >
-        <strong>Mode:</strong> {isAvailable ? 'Native Bridge' : 'Fallback (Mock Data)'}
+        <strong>Mode:</strong>{' '}
+        {connectionMode === 'native'
+          ? 'Native Bridge'
+          : connectionMode === 'fallback'
+            ? 'Fallback (Mock Data)'
+            : 'Disconnected'}
       </div>
 
       <div className="card">

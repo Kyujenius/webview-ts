@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { TsBridgeDevtools } from '@webview-ts/devtools';
 import { useBridge } from './bridge';
@@ -6,10 +7,41 @@ import CameraPage from './pages/CameraPage';
 import LocationPage from './pages/LocationPage';
 import StoragePage from './pages/StoragePage';
 import BiometricPage from './pages/BiometricPage';
+import ClipboardPage from './pages/ClipboardPage';
+import DevicePage from './pages/DevicePage';
+import SharePage from './pages/SharePage';
 
 function App() {
   const location = useLocation();
   const { bridge } = useBridge();
+  useEffect(() => {
+    // Demo middleware that logs actions for DevTools drill-down
+    bridge.use({
+      name: 'request-logger',
+      fn: async (ctx, next) => {
+        const logs: string[] = [];
+        logs.push(`Action: ${ctx.request.action}`);
+        logs.push(`Payload: ${JSON.stringify(ctx.request.payload ?? null)}`);
+        ctx.metadata.set('__mwLog:request-logger', logs);
+        ctx.metadata.set('requestedAt', new Date().toISOString());
+        await next();
+        if (ctx.response?.success) {
+          logs.push(`Response: success`);
+        }
+      },
+    });
+    bridge.use({
+      name: 'auth-check',
+      fn: async (ctx, next) => {
+        const logs: string[] = [];
+        logs.push('Checking auth token...');
+        logs.push('Token valid, proceeding');
+        ctx.metadata.set('__mwLog:auth-check', logs);
+        ctx.metadata.set('authUser', 'demo-user');
+        await next();
+      },
+    });
+  }, [bridge]);
 
   const isActive = (path: string) => {
     return location.pathname === path ? 'active' : '';
@@ -44,6 +76,21 @@ function App() {
               Biometric
             </Link>
           </li>
+          <li>
+            <Link to="/clipboard" className={isActive('/clipboard')}>
+              Clipboard
+            </Link>
+          </li>
+          <li>
+            <Link to="/device" className={isActive('/device')}>
+              Device
+            </Link>
+          </li>
+          <li>
+            <Link to="/share" className={isActive('/share')}>
+              Share
+            </Link>
+          </li>
         </ul>
       </nav>
 
@@ -54,6 +101,9 @@ function App() {
           <Route path="/location" element={<LocationPage />} />
           <Route path="/storage" element={<StoragePage />} />
           <Route path="/biometric" element={<BiometricPage />} />
+          <Route path="/clipboard" element={<ClipboardPage />} />
+          <Route path="/device" element={<DevicePage />} />
+          <Route path="/share" element={<SharePage />} />
         </Routes>
       </div>
 

@@ -1,7 +1,7 @@
 import { useBridge } from '../bridge';
 
 function HomePage() {
-  const { isAvailable } = useBridge();
+  const { connectionMode } = useBridge();
 
   return (
     <div>
@@ -11,8 +11,20 @@ function HomePage() {
         <h2>Bridge Status</h2>
         <p>
           Status:{' '}
-          <span className={isAvailable ? 'status-connected' : 'status-disconnected'}>
-            {isAvailable ? 'Connected to Native' : 'Web Only Mode'}
+          <span
+            className={
+              connectionMode === 'native'
+                ? 'status-connected'
+                : connectionMode === 'fallback'
+                  ? 'status-fallback'
+                  : 'status-disconnected'
+            }
+          >
+            {connectionMode === 'native'
+              ? 'Connected to Native'
+              : connectionMode === 'fallback'
+                ? 'Fallback Mode'
+                : 'Disconnected'}
           </span>
         </p>
         <p style={{ marginTop: '1rem' }}>
@@ -35,20 +47,36 @@ function HomePage() {
         <h2>Features</h2>
         <div className="grid">
           <div>
-            <h3>Camera Plugin</h3>
+            <h3>Camera</h3>
             <p>Take photos, pick images, and record videos</p>
           </div>
           <div>
-            <h3>Location Plugin</h3>
+            <h3>Location</h3>
             <p>Get current position and watch location changes</p>
           </div>
           <div>
-            <h3>Storage Plugin</h3>
-            <p>Persistent key-value storage with JSON support</p>
+            <h3>Storage</h3>
+            <p>Persistent key-value storage</p>
           </div>
           <div>
-            <h3>Biometric Plugin</h3>
+            <h3>Biometric</h3>
             <p>Fingerprint and Face ID authentication</p>
+          </div>
+          <div>
+            <h3>Haptics</h3>
+            <p>Tactile feedback for touch interactions</p>
+          </div>
+          <div>
+            <h3>Clipboard</h3>
+            <p>Read and write system clipboard</p>
+          </div>
+          <div>
+            <h3>Device</h3>
+            <p>Device name, model, OS information</p>
+          </div>
+          <div>
+            <h3>Share</h3>
+            <p>Native share sheet for content sharing</p>
           </div>
         </div>
       </div>
@@ -59,11 +87,12 @@ function HomePage() {
           Use the navigation menu above to explore different plugin examples. Each page demonstrates
           the plugin's API and shows live results.
         </p>
-        {!isAvailable && (
+        {connectionMode !== 'native' && (
           <div className="result error" style={{ marginTop: '1rem' }}>
-            <strong>Note:</strong> You are currently in web-only mode. To test native features, run
-            this app inside a React Native WebView with the <code>@webview-ts/native</code> package
-            configured.
+            <strong>Note:</strong> You are currently in{' '}
+            {connectionMode === 'fallback' ? 'fallback' : 'disconnected'} mode. To test native
+            features, run this app inside a React Native WebView with the{' '}
+            <code>@webview-ts/native</code> package configured.
           </div>
         )}
       </div>
