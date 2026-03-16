@@ -13,6 +13,9 @@ out/
 coverage/
 .nyc_output/
 
+# Expo
+.expo/
+
 # Cache
 .turbo/
 .cache/
