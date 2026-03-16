@@ -3,6 +3,9 @@ export { storage, StorageActions, storageFallback } from './storage';
 export { location, LocationActions, locationFallback } from './location';
 export { biometric, BiometricActions, biometricFallback } from './biometric';
 export { haptics, HapticsActions, hapticsFallback } from './haptics';
+export { clipboard, ClipboardActions, clipboardFallback } from './clipboard';
+export { device, DeviceActions, deviceFallback } from './device';
+export { share, ShareActions, shareFallback } from './share';
 
 // Plugin types
 export type {
@@ -31,3 +34,9 @@ export type {
 } from './biometric';
 
 export type { ImpactPayload, NotificationPayload } from './haptics';
+
+export type { SetClipboardPayload, GetClipboardResponse } from './clipboard';
+
+export type { DeviceInfoResponse } from './device';
+
+export type { SharePayload, ShareResponse } from './share';

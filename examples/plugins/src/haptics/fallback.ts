@@ -1,4 +1,4 @@
-import { HapticsActions } from '.';
+import { HapticsActions } from './plugin';
 
 export const hapticsFallback = {
   [HapticsActions.impact]: async () => ({}),

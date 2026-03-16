@@ -1,4 +1,4 @@
-import { LocationActions } from '.';
+import { LocationActions } from './plugin';
 
 export const locationFallback = {
   [LocationActions.getCurrentPosition]: async () => ({

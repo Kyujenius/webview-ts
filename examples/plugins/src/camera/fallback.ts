@@ -1,4 +1,4 @@
-import { CameraActions } from '.';
+import { CameraActions } from './plugin';
 
 export const cameraFallback = {
   [CameraActions.takePhoto]: async () => ({

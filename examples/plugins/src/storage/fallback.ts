@@ -1,4 +1,4 @@
-import { StorageActions } from '.';
+import { StorageActions } from './plugin';
 
 const memoryStore = new Map<string, string>();
 

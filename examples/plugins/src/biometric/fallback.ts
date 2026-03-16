@@ -1,4 +1,4 @@
-import { BiometricActions } from '.';
+import { BiometricActions } from './plugin';
 
 export const biometricFallback = {
   [BiometricActions.checkAvailability]: async () => ({
