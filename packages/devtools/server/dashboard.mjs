@@ -1,140 +1,4 @@
-/**
- * TsBridgeDevtools — Small floating button that opens a standalone
- * dashboard in a new browser window.
- *
- * Usage:
- *   import { TsBridgeDevtools } from '@webview-ts/devtools';
- *   <TsBridgeDevtools bridge={bridge} />
- *
- * The button is only rendered when process.env.NODE_ENV !== 'production'.
- */
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { DevToolsMiddleware } from '../middleware/DevToolsMiddleware';
-import { BroadcastChannelTransport } from '../transport/BroadcastChannelTransport';
-import { WebSocketTransport } from '../transport/WebSocketTransport';
-import type { DevToolsTransport } from '../transport/DevToolsTransport';
-
-declare const process: { env: { NODE_ENV?: string } };
-
-export interface TsBridgeDevtoolsProps {
-  /** BridgeManager instance */
-  bridge: { use(middleware: unknown): void; prepend?(middleware: unknown): void };
-  /** Button position */
-  position?: 'bottom-left' | 'bottom-right';
-  /** Toggle button label */
-  buttonLabel?: string;
-  /** Custom transport (defaults to BroadcastChannelTransport) */
-  transport?: DevToolsTransport;
-}
-
-export function TsBridgeDevtools({
-  bridge,
-  position = 'bottom-left',
-  buttonLabel = 'ts-bridge',
-  transport: customTransport,
-}: TsBridgeDevtoolsProps) {
-  const [dashboardOpen, setDashboardOpen] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
-  const transportRef = useRef<DevToolsTransport | null>(null);
-  const windowRef = useRef<Window | null>(null);
-
-  // Detect WebView — window.open is blocked or unsupported
-  const isWebView =
-    typeof navigator !== 'undefined' &&
-    (/wv|WebView/i.test(navigator.userAgent) ||
-      (/iPhone|iPad|iPod/.test(navigator.userAgent) && !/Safari/.test(navigator.userAgent)));
-
-  // Dev-only guard
-  if (process.env.NODE_ENV === 'production') return null;
-
-  // Attach middleware with transport
-  // WebView → WebSocketTransport (connects to CLI server), Web → BroadcastChannel
-  useEffect(() => {
-    const transport =
-      customTransport ?? (isWebView ? new WebSocketTransport() : new BroadcastChannelTransport());
-    transportRef.current = transport;
-
-    const mw = new DevToolsMiddleware({
-      transport,
-      onMessage: () => {
-        setMessageCount(mw.getStore().getMessages().length);
-      },
-    });
-
-    if (bridge.prepend) {
-      bridge.prepend(mw);
-    } else {
-      bridge.use(mw);
-    }
-
-    return () => {
-      mw.setEnabled(false);
-      transport.disconnect();
-    };
-  }, [bridge, customTransport]);
-
-  // Poll for window close
-  useEffect(() => {
-    if (!dashboardOpen) return;
-    const interval = setInterval(() => {
-      if (windowRef.current?.closed) {
-        setDashboardOpen(false);
-        windowRef.current = null;
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, [dashboardOpen]);
-
-  const openDashboard = useCallback(() => {
-    if (windowRef.current && !windowRef.current.closed) {
-      windowRef.current.focus();
-      return;
-    }
-
-    const html = buildDashboardHTML();
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    try {
-      const win = window.open(url, 'ts-bridge-devtools', 'width=1200,height=700');
-      if (win) {
-        windowRef.current = win;
-        setDashboardOpen(true);
-      }
-    } catch {
-      // WebView environments may throw on window.open
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }, [isWebView]);
-
-  // In WebView, don't render the button (dashboard needs CLI server for RN)
-  if (isWebView) return null;
-
-  const isRight = position === 'bottom-right';
-
-  return (
-    <button
-      onClick={openDashboard}
-      style={{
-        ...S.toggleBtn,
-        [isRight ? 'right' : 'left']: 16,
-        ...(dashboardOpen ? S.toggleBtnActive : {}),
-      }}
-      title={dashboardOpen ? 'Focus ts-bridge DevTools' : 'Open ts-bridge DevTools'}
-    >
-      <span style={S.logo}>{'{ }'}</span>
-      <span>{buttonLabel}</span>
-      {messageCount > 0 && <span style={S.badge}>{messageCount}</span>}
-      {dashboardOpen && <span style={S.liveDot} />}
-    </button>
-  );
-}
-
-// ---------- Dashboard HTML builder ----------
-
-function buildDashboardHTML(): string {
+export function dashboardHTML(port) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -152,6 +16,9 @@ function buildDashboardHTML(): string {
   #toolbar h1 { font-size:14px; color:#3b82f6; font-weight:600; }
   #stats { display:flex; gap:16px; font-size:12px; color:#94a3b8; font-family:monospace; }
   .stat-val { color:#e2e8f0; font-weight:600; }
+  #conn { font-size:11px; padding:3px 8px; border-radius:4px; }
+  #conn.on { background:#064e3b; color:#6ee7b7; }
+  #conn.off { background:#7f1d1d; color:#fca5a5; }
   #filter-bar { display:flex; align-items:center; gap:6px; padding:6px 16px;
     border-bottom:1px solid #1e293b; }
   .filter-btn { padding:3px 10px; background:transparent; color:#94a3b8;
@@ -183,17 +50,16 @@ function buildDashboardHTML(): string {
   .tab.active { color:#3b82f6; border-bottom-color:#3b82f6; }
   #toolbar button { padding:4px 10px; background:transparent; color:#94a3b8;
     border:1px solid #334155; border-radius:4px; font-size:12px; cursor:pointer; }
-  .status-success { color:#22c55e; }
-  .status-error { color:#ef4444; }
-  .status-pending { color:#3b82f6; }
-  .status-timeout { color:#f97316; }
 </style>
 </head>
 <body>
   <div id="toolbar">
     <h1>ts-bridge DevTools</h1>
     <div id="stats"></div>
-    <div><button onclick="clearAll()">Clear</button></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="conn" class="off">disconnected</span>
+      <button onclick="clearAll()">Clear</button>
+    </div>
   </div>
   <div id="filter-bar">
     <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All (0)</button>
@@ -210,23 +76,41 @@ function buildDashboardHTML(): string {
 const records = new Map();
 let currentFilter = 'all';
 let selectedId = null;
+let ws;
 
-const ch = new BroadcastChannel('__ts-bridge-devtools__');
-ch.onmessage = (e) => {
-  const msg = e.data;
-  if (msg.type === 'record') {
-    records.set(msg.record.recordId, msg.record);
-    renderTimeline();
-    renderStats();
-    if (selectedId === msg.record.recordId) renderInspector(msg.record);
-  } else if (msg.type === 'clear') {
-    records.clear();
-    selectedId = null;
-    renderTimeline();
-    renderStats();
-    document.getElementById('inspector').innerHTML = '<div class="empty">Select a message to inspect</div>';
-  }
-};
+function connect() {
+  ws = new WebSocket('ws://localhost:${port}');
+  const connEl = document.getElementById('conn');
+
+  ws.onopen = () => {
+    connEl.textContent = 'connected';
+    connEl.className = 'on';
+  };
+
+  ws.onclose = () => {
+    connEl.textContent = 'disconnected';
+    connEl.className = 'off';
+    setTimeout(connect, 1000);
+  };
+
+  ws.onmessage = (e) => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+    if (msg.type === 'record') {
+      records.set(msg.record.recordId, msg.record);
+      renderTimeline();
+      renderStats();
+      if (selectedId === msg.record.recordId) renderInspector(msg.record);
+    } else if (msg.type === 'clear') {
+      records.clear();
+      selectedId = null;
+      renderTimeline();
+      renderStats();
+      document.getElementById('inspector').innerHTML = '<div class="empty">Select a message to inspect</div>';
+    }
+  };
+}
+connect();
 
 function getFiltered() {
   const search = document.getElementById('search').value.toLowerCase();
@@ -255,7 +139,6 @@ function renderTimeline() {
       + '<span class="msg-time">' + time + '</span>'
       + '</div>';
   }).join('');
-  // update all count
   document.querySelector('[data-filter="all"]').textContent = 'All (' + records.size + ')';
 }
 
@@ -341,51 +224,3 @@ function esc(s) {
 </body>
 </html>`;
 }
-
-// ---------- Styles ----------
-
-const S: Record<string, React.CSSProperties> = {
-  toggleBtn: {
-    position: 'fixed',
-    bottom: 16,
-    zIndex: 99999,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '8px 14px',
-    backgroundColor: '#0f172a',
-    color: '#e2e8f0',
-    border: '1px solid #334155',
-    borderRadius: 8,
-    fontSize: 13,
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-    transition: 'transform 0.15s',
-  },
-  toggleBtnActive: {
-    borderColor: '#3b82f6',
-    boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
-  },
-  logo: {
-    fontFamily: 'monospace',
-    fontWeight: 700,
-    color: '#3b82f6',
-  },
-  badge: {
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '1px 6px',
-    borderRadius: 10,
-    marginLeft: 2,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: '50%',
-    backgroundColor: '#22c55e',
-    marginLeft: 4,
-  },
-};

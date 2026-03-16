@@ -25,8 +25,12 @@
       "require": "./dist/transport/index.cjs"
     }
   },
+  "bin": {
+    "devtools": "./server/index.mjs"
+  },
   "files": [
-    "dist"
+    "dist",
+    "server"
   ],
   "scripts": {
     "build": "tsup",
@@ -38,7 +42,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@webview-ts/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*",
+    "ws": "^8.17.0"
   },
   "peerDependencies": {
     "react": ">=17.0.0"
