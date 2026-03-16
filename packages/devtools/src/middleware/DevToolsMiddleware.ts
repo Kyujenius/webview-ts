@@ -1,15 +1,19 @@
 /**
- * DevToolsMiddleware — Records all bridge messages for debugging/visualization.
- * Uses the onion model: records request before next(), response/error after.
+ * DevToolsMiddleware — Records all bridge calls for debugging/visualization.
+ * One record per call: PENDING → SUCCESS/ERROR.
  */
 
 import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
 import type { DevToolsConfig, RecordedMessage, DevToolsStore } from '../types/index';
-import { MessageDirection, MessageStatus } from '../types/index';
+import type { DevToolsTransport } from '../transport/DevToolsTransport';
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 
+type ResolvedConfig = Omit<Required<DevToolsConfig>, 'transport'> & {
+  transport?: DevToolsTransport;
+};
+
 export class DevToolsMiddleware {
-  private config: Required<DevToolsConfig>;
+  private config: ResolvedConfig;
   private store: DevToolsStore;
 
   constructor(config: DevToolsConfig = {}, store?: DevToolsStore) {
@@ -20,24 +24,26 @@ export class DevToolsMiddleware {
       captureStackTraces: config.captureStackTraces ?? true,
       filter: config.filter ?? (() => true),
       onMessage: config.onMessage ?? (() => {}),
+      transport: config.transport,
     };
 
     this.store = store ?? new DevToolsStoreImpl(this.config.maxRecords);
   }
 
-  /** Get the named middleware object for bridge.use() */
   toMiddleware(): Middleware {
-    return { name: 'devtools', fn: this.createFn() };
+    return { name: 'devtools', fn: this.createFn(), __skipTrace: true } as Middleware;
   }
 
-  /** Shorthand — name property for backward compat */
   get name(): string {
     return 'devtools';
   }
 
-  /** Shorthand — fn property for backward compat */
   get fn(): MiddlewareFn {
     return this.createFn();
+  }
+
+  get __skipTrace(): boolean {
+    return true;
   }
 
   getStore(): DevToolsStore {
@@ -62,69 +68,80 @@ export class DevToolsMiddleware {
         return next();
       }
 
-      const message = ctx.request;
+      const { request } = ctx;
 
-      if (!this.config.filter(message)) {
+      if (!this.config.filter(request)) {
         return next();
       }
 
-      // Record request
-      const requestRecord: RecordedMessage = {
+      // Create a single record for this call lifecycle
+      const record: RecordedMessage = {
         recordId: this.generateRecordId(),
-        direction: MessageDirection.REQUEST,
-        status: MessageStatus.PENDING,
-        message,
+        status: 'pending',
+        action: request.action,
+        payload: request.payload,
         timestamp: Date.now(),
       };
 
-      this.store.addMessage(requestRecord);
-      this.config.onMessage(requestRecord);
+      this.store.addMessage(record);
+      this.config.onMessage(record);
+      this.config.transport?.send({ type: 'record', record: { ...record } });
 
       const startTime = Date.now();
 
       try {
         await next();
 
-        // Record response
-        if (ctx.response) {
-          const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
-
-          const responseRecord: RecordedMessage = {
-            recordId: this.generateRecordId(),
-            direction: MessageDirection.RESPONSE,
-            status: ctx.response.success ? MessageStatus.SUCCESS : MessageStatus.ERROR,
-            message: ctx.response,
-            timestamp: Date.now(),
-            duration,
-          };
-
-          this.store.addMessage(responseRecord);
-          this.config.onMessage(responseRecord);
-        }
-      } catch (error) {
-        // Record error
         const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
+        const middlewareTrace = ctx.metadata.get(
+          '__mwTraces'
+        ) as RecordedMessage['middlewareTrace'];
+        const handlerMs = ctx.metadata.get('__handlerMs') as number | undefined;
+        const handlerSkipped = ctx.metadata.get('__handlerSkipped') as boolean | undefined;
 
-        const errorRecord: RecordedMessage = {
-          recordId: this.generateRecordId(),
-          direction: MessageDirection.RESPONSE,
-          status: MessageStatus.ERROR,
-          message: {
-            id: message.id,
-            success: false,
-            error: {
-              code: 'MIDDLEWARE_ERROR',
-              message: (error as Error).message,
-            },
-            timestamp: Date.now(),
-          },
-          timestamp: Date.now(),
+        const updates: Partial<RecordedMessage> = {
+          status: ctx.response?.success ? 'success' : 'error',
           duration,
-          stackTrace: this.config.captureStackTraces ? (error as Error).stack : undefined,
+          middlewareTrace,
+          handlerMs,
+          handlerSkipped,
         };
 
-        this.store.addMessage(errorRecord);
-        this.config.onMessage(errorRecord);
+        if (ctx.response?.success) {
+          updates.responseData = ctx.response.data;
+        } else if (ctx.response) {
+          updates.error = ctx.response.error as RecordedMessage['error'];
+        }
+
+        this.store.updateMessage(record.recordId, updates);
+        Object.assign(record, updates);
+        this.config.onMessage(record);
+        this.config.transport?.send({ type: 'record', record: { ...record } });
+      } catch (error) {
+        const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
+        const middlewareTrace = ctx.metadata.get(
+          '__mwTraces'
+        ) as RecordedMessage['middlewareTrace'];
+        const handlerMs = ctx.metadata.get('__handlerMs') as number | undefined;
+        const handlerSkipped = ctx.metadata.get('__handlerSkipped') as boolean | undefined;
+
+        const updates: Partial<RecordedMessage> = {
+          status: 'error',
+          duration,
+          error: {
+            code: 'MIDDLEWARE_ERROR',
+            message: (error as Error).message,
+          },
+          stackTrace: this.config.captureStackTraces ? (error as Error).stack : undefined,
+          middlewareTrace,
+          handlerMs,
+          handlerSkipped,
+        };
+
+        this.store.updateMessage(record.recordId, updates);
+        Object.assign(record, updates);
+        this.config.onMessage(record);
+        this.config.transport?.send({ type: 'record', record: { ...record } });
 
         throw error;
       }

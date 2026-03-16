@@ -2,70 +2,79 @@
  * DevTools types and interfaces
  */
 
-import type { BridgeMessage, BridgeResponse } from '@webview-ts/shared';
+import type { DevToolsTransport } from '../transport/DevToolsTransport';
 
 /**
- * Message direction
+ * Call status lifecycle: PENDING → SUCCESS | ERROR | TIMEOUT
  */
-export enum MessageDirection {
-  REQUEST = 'request',
-  RESPONSE = 'response',
-  EVENT = 'event',
+export type MessageStatus = 'pending' | 'success' | 'error' | 'timeout';
+
+/**
+ * Trace entry for a single middleware or interceptor execution
+ */
+export interface MiddlewareTrace {
+  /** Middleware name */
+  name: string;
+  /** Layer: global middleware or plugin interceptor */
+  layer: 'global' | 'plugin';
+  /** Plugin name (only when layer='plugin') */
+  plugin?: string;
+  /** Time spent before next() (request phase) in ms */
+  enterMs: number;
+  /** Time spent after next() (response phase) in ms */
+  exitMs: number;
+  /** Whether this middleware short-circuited (did not call next()) */
+  shortCircuit: boolean;
+  /** Reason for short-circuit (e.g. "cache-hit", "auth-rejected") */
+  shortCircuitReason?: string;
+  /** Error thrown by this specific middleware */
+  error?: { message: string; stack?: string };
+  /** Logs left by middleware via ctx.metadata.set('__mwLog:<name>', [...]) */
+  logs?: string[];
+  /** Metadata keys added/changed during this middleware's execution */
+  metadataChanges?: Record<string, unknown>;
 }
 
 /**
- * Message status
- */
-export enum MessageStatus {
-  PENDING = 'pending',
-  SUCCESS = 'success',
-  ERROR = 'error',
-  TIMEOUT = 'timeout',
-}
-
-/**
- * Recorded message for timeline
+ * Recorded call — one entry per bridge.call() lifecycle.
+ * Starts as PENDING, then updates to SUCCESS/ERROR/TIMEOUT.
  */
 export interface RecordedMessage {
-  /**
-   * Unique ID for this recording
-   */
+  /** Unique ID for this recording */
   recordId: string;
 
-  /**
-   * Message direction
-   */
-  direction: MessageDirection;
-
-  /**
-   * Message status
-   */
+  /** Call status: PENDING → SUCCESS | ERROR | TIMEOUT */
   status: MessageStatus;
 
-  /**
-   * Original message (request or response)
-   */
-  message: BridgeMessage | BridgeResponse;
+  /** Action name (e.g. 'camera.takePhoto') */
+  action: string;
 
-  /**
-   * Timestamp when recorded
-   */
+  /** Request payload */
+  payload?: unknown;
+
+  /** Response data (populated after completion) */
+  responseData?: unknown;
+
+  /** Error info (populated on failure) */
+  error?: { code: string; message: string; details?: unknown };
+
+  /** Timestamp when the call started */
   timestamp: number;
 
-  /**
-   * Duration in milliseconds (for responses)
-   */
+  /** Duration in ms (populated after completion) */
   duration?: number;
 
-  /**
-   * Stack trace (for errors)
-   */
+  /** Stack trace (for errors) */
   stackTrace?: string;
 
-  /**
-   * Additional metadata
-   */
-  metadata?: Record<string, unknown>;
+  /** Middleware/interceptor execution trace (for waterfall) */
+  middlewareTrace?: MiddlewareTrace[];
+
+  /** Handler execution time in ms */
+  handlerMs?: number;
+
+  /** Whether handler was skipped (short-circuited) */
+  handlerSkipped?: boolean;
 }
 
 /**
@@ -137,14 +146,19 @@ export interface DevToolsConfig {
   captureStackTraces?: boolean;
 
   /**
-   * Custom message filter
+   * Custom filter — return false to skip recording this action
    */
-  filter?: (message: BridgeMessage | BridgeResponse) => boolean;
+  filter?: (request: { action: string; payload?: unknown }) => boolean;
 
   /**
    * Custom event listener for new messages
    */
   onMessage?: (record: RecordedMessage) => void;
+
+  /**
+   * Transport for sending recorded messages to external dashboard
+   */
+  transport?: DevToolsTransport;
 }
 
 /**
@@ -157,6 +171,11 @@ export interface DevToolsStore {
   addMessage(record: RecordedMessage): void;
 
   /**
+   * Update an existing message in-place (for PENDING → SUCCESS/ERROR transitions)
+   */
+  updateMessage(recordId: string, updates: Partial<RecordedMessage>): void;
+
+  /**
    * Get all recorded messages
    */
   getMessages(): RecordedMessage[];
@@ -167,9 +186,9 @@ export interface DevToolsStore {
   getMessage(recordId: string): RecordedMessage | undefined;
 
   /**
-   * Get messages by message ID
+   * Get messages by action name
    */
-  getMessagesByMessageId(messageId: string): RecordedMessage[];
+  getMessagesByAction(action: string): RecordedMessage[];
 
   /**
    * Clear all recorded messages

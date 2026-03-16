@@ -1,352 +1,333 @@
 /**
- * TsBridgeDevtools — TanStack Query DevTools-style floating panel
- * for inspecting bridge communication in real-time.
+ * TsBridgeDevtools — Small floating button that opens a standalone
+ * dashboard in a new browser window.
  *
  * Usage:
  *   import { TsBridgeDevtools } from '@webview-ts/devtools';
- *   const { bridge } = useBridge();
  *   <TsBridgeDevtools bridge={bridge} />
+ *
+ * The button is only rendered when process.env.NODE_ENV !== 'production'.
  */
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DevToolsMiddleware } from '../middleware/DevToolsMiddleware';
-import type { RecordedMessage, PerformanceMetrics } from '../types/index';
-import { MessageDirection, MessageStatus } from '../types/index';
+import { BroadcastChannelTransport } from '../transport/BroadcastChannelTransport';
+import type { DevToolsTransport } from '../transport/DevToolsTransport';
 
-// ---------- Types ----------
+declare const process: { env: { NODE_ENV?: string } };
 
 export interface TsBridgeDevtoolsProps {
-  /** BridgeManager instance (must have .use() method) */
-  bridge: { use(middleware: any): void };
-  /** Initial open state */
-  initialOpen?: boolean;
-  /** Panel position */
+  /** BridgeManager instance */
+  bridge: { use(middleware: unknown): void; prepend?(middleware: unknown): void };
+  /** Button position */
   position?: 'bottom-left' | 'bottom-right';
-  /** Panel height when open (px) */
-  panelHeight?: number;
   /** Toggle button label */
   buttonLabel?: string;
+  /** Custom transport (defaults to BroadcastChannelTransport) */
+  transport?: DevToolsTransport;
 }
-
-// ---------- Main Component ----------
 
 export function TsBridgeDevtools({
   bridge,
-  initialOpen = false,
   position = 'bottom-left',
-  panelHeight = 420,
   buttonLabel = 'ts-bridge',
+  transport: customTransport,
 }: TsBridgeDevtoolsProps) {
-  const [isOpen, setIsOpen] = useState(initialOpen);
-  const [messages, setMessages] = useState<RecordedMessage[]>([]);
-  const [selectedMsg, setSelectedMsg] = useState<RecordedMessage | null>(null);
-  const [filter, setFilter] = useState<'all' | 'request' | 'response' | 'error'>('all');
-  const [search, setSearch] = useState('');
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const middlewareRef = useRef<DevToolsMiddleware | null>(null);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const transportRef = useRef<DevToolsTransport | null>(null);
+  const windowRef = useRef<Window | null>(null);
 
-  // Attach middleware — StrictMode safe
+  // Dev-only guard
+  if (process.env.NODE_ENV === 'production') return null;
+
+  // Attach middleware with transport
   useEffect(() => {
+    const transport = customTransport ?? new BroadcastChannelTransport();
+    transportRef.current = transport;
+
     const mw = new DevToolsMiddleware({
+      transport,
       onMessage: () => {
-        const store = mw.getStore();
-        setMessages(store.getMessages());
-        setMetrics(store.getMetrics());
+        setMessageCount(mw.getStore().getMessages().length);
       },
     });
-    middlewareRef.current = mw;
-    bridge.use(mw);
+
+    if (bridge.prepend) {
+      bridge.prepend(mw);
+    } else {
+      bridge.use(mw);
+    }
 
     return () => {
       mw.setEnabled(false);
+      transport.disconnect();
     };
-  }, [bridge]);
+  }, [bridge, customTransport]);
 
-  const handleClear = useCallback(() => {
-    middlewareRef.current?.clear();
-    setMessages([]);
-    setSelectedMsg(null);
-    setMetrics(null);
-  }, []);
+  // Poll for window close
+  useEffect(() => {
+    if (!dashboardOpen) return;
+    const interval = setInterval(() => {
+      if (windowRef.current?.closed) {
+        setDashboardOpen(false);
+        windowRef.current = null;
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [dashboardOpen]);
 
-  const handleExport = useCallback(() => {
-    const store = middlewareRef.current?.getStore();
-    if (!store) return;
-    const json = store.export();
-    const blob = new Blob([json], { type: 'application/json' });
+  const openDashboard = useCallback(() => {
+    if (windowRef.current && !windowRef.current.closed) {
+      windowRef.current.focus();
+      return;
+    }
+
+    const html = buildDashboardHTML();
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ts-bridge-devtools-${Date.now()}.json`;
-    a.click();
+    const win = window.open(url, 'ts-bridge-devtools', 'width=1200,height=700');
     URL.revokeObjectURL(url);
-  }, []);
 
-  const filtered = useMemo(() => {
-    let result = messages;
-    if (filter === 'request') {
-      result = result.filter((m) => m.direction === MessageDirection.REQUEST);
-    } else if (filter === 'response') {
-      result = result.filter(
-        (m) => m.direction === MessageDirection.RESPONSE && m.status !== MessageStatus.ERROR
-      );
-    } else if (filter === 'error') {
-      result = result.filter((m) => m.status === MessageStatus.ERROR);
+    if (win) {
+      windowRef.current = win;
+      setDashboardOpen(true);
     }
-    if (search) {
-      const term = search.toLowerCase();
-      result = result.filter((m) =>
-        'action' in m.message ? m.message.action.toLowerCase().includes(term) : false
-      );
-    }
-    return result.slice().reverse(); // newest first
-  }, [messages, filter, search]);
+  }, []);
 
   const isRight = position === 'bottom-right';
 
-  // ---------- Floating Button (closed) ----------
-
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        style={{
-          ...S.toggleBtn,
-          [isRight ? 'right' : 'left']: 16,
-        }}
-        title="Open ts-bridge DevTools"
-      >
-        <span style={S.logo}>{'{ }'}</span> <span>{buttonLabel}</span>
-        {messages.length > 0 && <span style={S.badge}>{messages.length}</span>}
-      </button>
-    );
-  }
-
-  // ---------- Panel (open) ----------
-
   return (
-    <div style={{ ...S.panel, height: panelHeight, [isRight ? 'right' : 'left']: 0 }}>
-      {/* Toolbar */}
-      <div style={S.toolbar}>
-        <div style={S.toolbarLeft}>
-          <span style={S.toolbarTitle}>ts-bridge DevTools</span>
-          {metrics && (
-            <div style={S.statsRow}>
-              <Stat label="Total" value={metrics.totalMessages} />
-              <Stat
-                label="OK"
-                value={Math.round(metrics.successRate * 100) + '%'}
-                color="#22c55e"
-              />
-              <Stat label="Err" value={metrics.errorCount} color="#ef4444" />
-              <Stat label="Avg" value={metrics.averageResponseTime.toFixed(1) + 'ms'} />
-            </div>
-          )}
-        </div>
-        <div style={S.toolbarRight}>
-          <button style={S.iconBtn} onClick={handleClear} title="Clear">
-            Clear
-          </button>
-          <button style={S.iconBtn} onClick={handleExport} title="Export JSON">
-            Export
-          </button>
-          <button style={S.closeBtn} onClick={() => setIsOpen(false)} title="Close">
-            X
-          </button>
-        </div>
-      </div>
-
-      {/* Filter bar */}
-      <div style={S.filterBar}>
-        {(['all', 'request', 'response', 'error'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              ...S.filterBtn,
-              ...(filter === f ? S.filterBtnActive : {}),
-            }}
-          >
-            {f === 'all' ? `All (${messages.length})` : f}
-          </button>
-        ))}
-        <input
-          type="text"
-          placeholder="Filter actions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={S.searchInput}
-        />
-      </div>
-
-      {/* Body: timeline + inspector */}
-      <div style={S.body}>
-        {/* Timeline (left) */}
-        <div style={S.timeline}>
-          {filtered.length === 0 ? (
-            <div style={S.empty}>
-              {messages.length === 0
-                ? 'Waiting for bridge messages...'
-                : 'No messages match filter'}
-            </div>
-          ) : (
-            filtered.map((msg) => (
-              <MessageRow
-                key={msg.recordId}
-                msg={msg}
-                selected={selectedMsg?.recordId === msg.recordId}
-                onClick={() => setSelectedMsg(msg)}
-              />
-            ))
-          )}
-        </div>
-
-        {/* Inspector (right) */}
-        <div style={S.inspector}>
-          {selectedMsg ? (
-            <Inspector msg={selectedMsg} />
-          ) : (
-            <div style={S.empty}>Select a message to inspect</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- Sub-components ----------
-
-function MessageRow({
-  msg,
-  selected,
-  onClick,
-}: {
-  msg: RecordedMessage;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const action =
-    'action' in msg.message ? msg.message.action : `response #${msg.message.id.slice(-6)}`;
-  const color = statusColor(msg.status);
-  const icon = directionIcon(msg.direction);
-  const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour12: false });
-
-  return (
-    <div
-      onClick={onClick}
+    <button
+      onClick={openDashboard}
       style={{
-        ...S.row,
-        borderLeftColor: color,
-        backgroundColor: selected ? '#1e293b' : 'transparent',
+        ...S.toggleBtn,
+        [isRight ? 'right' : 'left']: 16,
+        ...(dashboardOpen ? S.toggleBtnActive : {}),
       }}
+      title={dashboardOpen ? 'Focus ts-bridge DevTools' : 'Open ts-bridge DevTools'}
     >
-      <span style={{ ...S.rowIcon, color }}>{icon}</span>
-      <span style={S.rowAction}>{action}</span>
-      {msg.duration != null && <span style={S.rowDuration}>{msg.duration.toFixed(0)}ms</span>}
-      <span style={S.rowTime}>{time}</span>
-    </div>
+      <span style={S.logo}>{'{ }'}</span>
+      <span>{buttonLabel}</span>
+      {messageCount > 0 && <span style={S.badge}>{messageCount}</span>}
+      {dashboardOpen && <span style={S.liveDot} />}
+    </button>
   );
 }
 
-function Inspector({ msg }: { msg: RecordedMessage }) {
-  const [tab, setTab] = useState<'payload' | 'raw'>('payload');
-  const isReq = msg.direction === MessageDirection.REQUEST;
-  const action = 'action' in msg.message ? msg.message.action : undefined;
+// ---------- Dashboard HTML builder ----------
 
-  return (
-    <div style={S.inspectorInner}>
-      {/* Header */}
-      <div style={S.inspectorHeader}>
-        <span style={{ ...S.inspectorBadge, backgroundColor: statusColor(msg.status) }}>
-          {msg.status}
-        </span>
-        {action && <span style={S.inspectorAction}>{action}</span>}
-        {msg.duration != null && (
-          <span style={S.inspectorDuration}>{msg.duration.toFixed(2)}ms</span>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div style={S.inspectorTabs}>
-        <button
-          style={{ ...S.inspectorTab, ...(tab === 'payload' ? S.inspectorTabActive : {}) }}
-          onClick={() => setTab('payload')}
-        >
-          {isReq ? 'Payload' : 'Data'}
-        </button>
-        <button
-          style={{ ...S.inspectorTab, ...(tab === 'raw' ? S.inspectorTabActive : {}) }}
-          onClick={() => setTab('raw')}
-        >
-          Raw
-        </button>
-      </div>
-
-      {/* Content */}
-      <pre style={S.codeBlock}>
-        {tab === 'payload'
-          ? JSON.stringify(
-              isReq
-                ? 'payload' in msg.message
-                  ? msg.message.payload
-                  : null
-                : 'data' in msg.message
-                  ? msg.message.data
-                  : 'error' in msg.message
-                    ? msg.message.error
-                    : null,
-              null,
-              2
-            )
-          : JSON.stringify(msg, null, 2)}
-      </pre>
-    </div>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
-  return (
-    <span style={S.stat}>
-      <span style={S.statLabel}>{label}</span>
-      <span style={{ ...S.statValue, color: color ?? '#e2e8f0' }}>{value}</span>
-    </span>
-  );
-}
-
-// ---------- Helpers ----------
-
-function statusColor(status: MessageStatus): string {
-  switch (status) {
-    case MessageStatus.SUCCESS:
-      return '#22c55e';
-    case MessageStatus.ERROR:
-      return '#ef4444';
-    case MessageStatus.TIMEOUT:
-      return '#f97316';
-    case MessageStatus.PENDING:
-      return '#3b82f6';
-    default:
-      return '#64748b';
+function buildDashboardHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ts-bridge DevTools</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f172a; color: #e2e8f0; font-size: 13px;
+    display: flex; flex-direction: column; height: 100vh;
   }
-}
+  #toolbar { display:flex; align-items:center; justify-content:space-between;
+    padding:8px 16px; background:#1e293b; border-bottom:1px solid #334155; }
+  #toolbar h1 { font-size:14px; color:#3b82f6; font-weight:600; }
+  #stats { display:flex; gap:16px; font-size:12px; color:#94a3b8; font-family:monospace; }
+  .stat-val { color:#e2e8f0; font-weight:600; }
+  #filter-bar { display:flex; align-items:center; gap:6px; padding:6px 16px;
+    border-bottom:1px solid #1e293b; }
+  .filter-btn { padding:3px 10px; background:transparent; color:#94a3b8;
+    border:1px solid transparent; border-radius:4px; font-size:12px; cursor:pointer; }
+  .filter-btn.active { background:#1e293b; color:#e2e8f0; border-color:#334155; }
+  #search { margin-left:auto; padding:3px 8px; width:200px; background:#1e293b;
+    color:#e2e8f0; border:1px solid #334155; border-radius:4px; font-size:12px; outline:none; }
+  #body { display:flex; flex:1; overflow:hidden; }
+  #timeline { flex:1; overflow-y:auto; border-right:1px solid #1e293b; }
+  #inspector { width:40%; overflow-y:auto; padding:12px; }
+  .msg-row { display:flex; align-items:center; gap:8px; padding:6px 12px;
+    border-left:3px solid transparent; cursor:pointer; border-bottom:1px solid #1e293b; }
+  .msg-row:hover { background:#1e293b; }
+  .msg-row.selected { background:#1e293b; }
+  .msg-icon { font-size:14px; font-weight:700; width:16px; text-align:center; flex-shrink:0; }
+  .msg-action { flex:1; font-family:monospace; font-size:12px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; }
+  .msg-dur { font-size:11px; color:#64748b; font-family:monospace; flex-shrink:0; }
+  .msg-time { font-size:11px; color:#475569; flex-shrink:0; }
+  .empty { display:flex; align-items:center; justify-content:center;
+    height:100%; color:#475569; }
+  pre.code { margin:0; padding:12px; background:#020617; color:#a5f3fc;
+    font-size:12px; font-family:monospace; overflow:auto; line-height:1.5; border-radius:4px; }
+  .badge { font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px;
+    color:#fff; text-transform:uppercase; }
+  .tab-bar { display:flex; border-bottom:1px solid #1e293b; margin-bottom:8px; }
+  .tab { padding:6px 16px; background:transparent; color:#94a3b8; border:none;
+    border-bottom:2px solid transparent; font-size:12px; cursor:pointer; }
+  .tab.active { color:#3b82f6; border-bottom-color:#3b82f6; }
+  #toolbar button { padding:4px 10px; background:transparent; color:#94a3b8;
+    border:1px solid #334155; border-radius:4px; font-size:12px; cursor:pointer; }
+  .status-success { color:#22c55e; }
+  .status-error { color:#ef4444; }
+  .status-pending { color:#3b82f6; }
+  .status-timeout { color:#f97316; }
+</style>
+</head>
+<body>
+  <div id="toolbar">
+    <h1>ts-bridge DevTools</h1>
+    <div id="stats"></div>
+    <div><button onclick="clearAll()">Clear</button></div>
+  </div>
+  <div id="filter-bar">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All (0)</button>
+    <button class="filter-btn" data-filter="success" onclick="setFilter('success',this)">success</button>
+    <button class="filter-btn" data-filter="error" onclick="setFilter('error',this)">error</button>
+    <button class="filter-btn" data-filter="pending" onclick="setFilter('pending',this)">pending</button>
+    <input id="search" type="text" placeholder="Filter actions..." oninput="renderTimeline()" />
+  </div>
+  <div id="body">
+    <div id="timeline"><div class="empty">Waiting for bridge messages...</div></div>
+    <div id="inspector"><div class="empty">Select a message to inspect</div></div>
+  </div>
+<script>
+const records = new Map();
+let currentFilter = 'all';
+let selectedId = null;
 
-function directionIcon(direction: MessageDirection): string {
-  switch (direction) {
-    case MessageDirection.REQUEST:
-      return '\u2192';
-    case MessageDirection.RESPONSE:
-      return '\u2190';
-    case MessageDirection.EVENT:
-      return '\u2605';
-    default:
-      return '\u2022';
+const ch = new BroadcastChannel('__ts-bridge-devtools__');
+ch.onmessage = (e) => {
+  const msg = e.data;
+  if (msg.type === 'record') {
+    records.set(msg.record.recordId, msg.record);
+    renderTimeline();
+    renderStats();
+    if (selectedId === msg.record.recordId) renderInspector(msg.record);
+  } else if (msg.type === 'clear') {
+    records.clear();
+    selectedId = null;
+    renderTimeline();
+    renderStats();
+    document.getElementById('inspector').innerHTML = '<div class="empty">Select a message to inspect</div>';
   }
+};
+
+function getFiltered() {
+  const search = document.getElementById('search').value.toLowerCase();
+  let arr = Array.from(records.values());
+  if (currentFilter !== 'all') arr = arr.filter(m => m.status === currentFilter);
+  if (search) arr = arr.filter(m => m.action.toLowerCase().includes(search));
+  return arr.reverse();
 }
 
-// ---------- Styles (dark theme, inline) ----------
+function renderTimeline() {
+  const el = document.getElementById('timeline');
+  const filtered = getFiltered();
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty">' + (records.size ? 'No messages match filter' : 'Waiting for bridge messages...') + '</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(m => {
+    const color = statusColor(m.status);
+    const icon = statusIcon(m.status);
+    const time = new Date(m.timestamp).toLocaleTimeString('en-US', { hour12: false });
+    const sel = selectedId === m.recordId ? ' selected' : '';
+    return '<div class="msg-row' + sel + '" style="border-left-color:' + color + '" onclick="selectMsg(\\'' + m.recordId + '\\')">'
+      + '<span class="msg-icon" style="color:' + color + '">' + icon + '</span>'
+      + '<span class="msg-action">' + esc(m.action) + '</span>'
+      + (m.duration != null ? '<span class="msg-dur">' + m.duration.toFixed(0) + 'ms</span>' : '')
+      + '<span class="msg-time">' + time + '</span>'
+      + '</div>';
+  }).join('');
+  // update all count
+  document.querySelector('[data-filter="all"]').textContent = 'All (' + records.size + ')';
+}
+
+function renderStats() {
+  const arr = Array.from(records.values());
+  const total = arr.length;
+  const errs = arr.filter(m => m.status === 'error').length;
+  const successes = arr.filter(m => m.status === 'success').length;
+  const rate = total ? Math.round(successes / total * 100) : 0;
+  const durations = arr.filter(m => m.duration != null).map(m => m.duration);
+  const avg = durations.length ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1) : '-';
+  document.getElementById('stats').innerHTML =
+    '<span>Total: <span class="stat-val">' + total + '</span></span>' +
+    '<span>OK: <span class="stat-val" style="color:#22c55e">' + rate + '%</span></span>' +
+    '<span>Err: <span class="stat-val" style="color:#ef4444">' + errs + '</span></span>' +
+    '<span>Avg: <span class="stat-val">' + avg + 'ms</span></span>';
+}
+
+function selectMsg(id) {
+  selectedId = id;
+  renderTimeline();
+  const rec = records.get(id);
+  if (rec) renderInspector(rec);
+}
+
+function renderInspector(msg) {
+  const el = document.getElementById('inspector');
+  const color = statusColor(msg.status);
+  let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+    + '<span class="badge" style="background:' + color + '">' + msg.status + '</span>'
+    + '<span style="font-family:monospace;font-size:13px">' + esc(msg.action) + '</span>'
+    + (msg.duration != null ? '<span style="margin-left:auto;font-family:monospace;font-size:12px;color:#64748b">' + msg.duration.toFixed(2) + 'ms</span>' : '')
+    + '</div>';
+  html += '<div class="tab-bar">'
+    + '<button class="tab active" onclick="switchTab(this,\\'payload\\')">Payload</button>'
+    + '<button class="tab" onclick="switchTab(this,\\'response\\')">Response</button>'
+    + '<button class="tab" onclick="switchTab(this,\\'raw\\')">Raw</button>'
+    + '</div>';
+  html += '<div id="tab-content"><pre class="code">' + esc(JSON.stringify(msg.payload ?? null, null, 2)) + '</pre></div>';
+  el.innerHTML = html;
+  el._msg = msg;
+}
+
+function switchTab(btn, tab) {
+  btn.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const msg = document.getElementById('inspector')._msg;
+  if (!msg) return;
+  let content;
+  if (tab === 'payload') content = JSON.stringify(msg.payload ?? null, null, 2);
+  else if (tab === 'response') content = JSON.stringify(msg.error ? { error: msg.error } : (msg.responseData ?? null), null, 2);
+  else content = JSON.stringify(msg, null, 2);
+  document.getElementById('tab-content').innerHTML = '<pre class="code">' + esc(content) + '</pre>';
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTimeline();
+}
+
+function clearAll() {
+  records.clear();
+  selectedId = null;
+  renderTimeline();
+  renderStats();
+  document.getElementById('inspector').innerHTML = '<div class="empty">Select a message to inspect</div>';
+}
+
+function statusColor(s) {
+  return s === 'success' ? '#22c55e' : s === 'error' ? '#ef4444' : s === 'pending' ? '#3b82f6' : s === 'timeout' ? '#f97316' : '#64748b';
+}
+function statusIcon(s) {
+  return s === 'success' ? '\\u2713' : s === 'error' ? '\\u2717' : s === 'pending' ? '\\u25CB' : s === 'timeout' ? '\\u23F1' : '\\u2022';
+}
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>`;
+}
+
+// ---------- Styles ----------
 
 const S: Record<string, React.CSSProperties> = {
-  // Toggle button
   toggleBtn: {
     position: 'fixed',
     bottom: 16,
@@ -365,6 +346,10 @@ const S: Record<string, React.CSSProperties> = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
     transition: 'transform 0.15s',
   },
+  toggleBtnActive: {
+    borderColor: '#3b82f6',
+    boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
+  },
   logo: {
     fontFamily: 'monospace',
     fontWeight: 700,
@@ -379,256 +364,11 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     marginLeft: 2,
   },
-
-  // Panel
-  panel: {
-    position: 'fixed',
-    bottom: 0,
-    width: '100%',
-    zIndex: 99999,
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: '#0f172a',
-    color: '#e2e8f0',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    fontSize: 13,
-    borderTop: '2px solid #3b82f6',
-    boxShadow: '0 -4px 24px rgba(0,0,0,0.4)',
-  },
-
-  // Toolbar
-  toolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '6px 12px',
-    backgroundColor: '#1e293b',
-    borderBottom: '1px solid #334155',
-    flexShrink: 0,
-  },
-  toolbarLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-  },
-  toolbarTitle: {
-    fontWeight: 600,
-    fontSize: 13,
-    color: '#3b82f6',
-  },
-  toolbarRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statsRow: {
-    display: 'flex',
-    gap: 12,
-  },
-  stat: {
-    display: 'flex',
-    gap: 4,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    fontSize: 12,
-    fontWeight: 600,
-    fontFamily: 'monospace',
-  },
-  iconBtn: {
-    padding: '4px 10px',
-    backgroundColor: 'transparent',
-    color: '#94a3b8',
-    border: '1px solid #334155',
-    borderRadius: 4,
-    fontSize: 12,
-    cursor: 'pointer',
-  },
-  closeBtn: {
-    padding: '4px 8px',
-    backgroundColor: 'transparent',
-    color: '#94a3b8',
-    border: '1px solid #334155',
-    borderRadius: 4,
-    fontSize: 12,
-    fontWeight: 700,
-    cursor: 'pointer',
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: '50%',
+    backgroundColor: '#22c55e',
     marginLeft: 4,
-  },
-
-  // Filter bar
-  filterBar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '4px 12px',
-    backgroundColor: '#0f172a',
-    borderBottom: '1px solid #1e293b',
-    flexShrink: 0,
-  },
-  filterBtn: {
-    padding: '3px 10px',
-    backgroundColor: 'transparent',
-    color: '#94a3b8',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: 'transparent',
-    borderRadius: 4,
-    fontSize: 12,
-    cursor: 'pointer',
-    textTransform: 'capitalize',
-  },
-  filterBtnActive: {
-    backgroundColor: '#1e293b',
-    color: '#e2e8f0',
-    borderColor: '#334155',
-  },
-  searchInput: {
-    marginLeft: 'auto',
-    padding: '3px 8px',
-    width: 180,
-    backgroundColor: '#1e293b',
-    color: '#e2e8f0',
-    border: '1px solid #334155',
-    borderRadius: 4,
-    fontSize: 12,
-    outline: 'none',
-  },
-
-  // Body
-  body: {
-    display: 'flex',
-    flex: 1,
-    overflow: 'hidden',
-  },
-
-  // Timeline (left pane)
-  timeline: {
-    flex: 1,
-    overflowY: 'auto',
-    borderRight: '1px solid #1e293b',
-  },
-
-  // Inspector (right pane)
-  inspector: {
-    width: '40%',
-    overflowY: 'auto',
-  },
-
-  empty: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: '#475569',
-    fontSize: 13,
-  },
-
-  // Message row
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '6px 12px',
-    borderLeft: '3px solid transparent',
-    cursor: 'pointer',
-    transition: 'background-color 0.1s',
-    borderBottom: '1px solid #1e293b',
-  },
-  rowIcon: {
-    fontSize: 14,
-    fontWeight: 700,
-    width: 16,
-    textAlign: 'center',
-    flexShrink: 0,
-  },
-  rowAction: {
-    flex: 1,
-    fontFamily: 'monospace',
-    fontSize: 12,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  rowDuration: {
-    fontSize: 11,
-    color: '#64748b',
-    fontFamily: 'monospace',
-    flexShrink: 0,
-  },
-  rowTime: {
-    fontSize: 11,
-    color: '#475569',
-    flexShrink: 0,
-  },
-
-  // Inspector inner
-  inspectorInner: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  inspectorHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '8px 12px',
-    borderBottom: '1px solid #1e293b',
-    flexShrink: 0,
-  },
-  inspectorBadge: {
-    padding: '2px 8px',
-    borderRadius: 4,
-    fontSize: 11,
-    fontWeight: 600,
-    color: '#fff',
-    textTransform: 'uppercase',
-  },
-  inspectorAction: {
-    fontFamily: 'monospace',
-    fontSize: 13,
-    fontWeight: 500,
-  },
-  inspectorDuration: {
-    marginLeft: 'auto',
-    fontFamily: 'monospace',
-    fontSize: 12,
-    color: '#64748b',
-  },
-  inspectorTabs: {
-    display: 'flex',
-    borderBottom: '1px solid #1e293b',
-    flexShrink: 0,
-  },
-  inspectorTab: {
-    padding: '6px 16px',
-    backgroundColor: 'transparent',
-    color: '#94a3b8',
-    borderWidth: 0,
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderBottomColor: 'transparent',
-    fontSize: 12,
-    cursor: 'pointer',
-  },
-  inspectorTabActive: {
-    color: '#3b82f6',
-    borderBottomColor: '#3b82f6',
-  },
-  codeBlock: {
-    flex: 1,
-    margin: 0,
-    padding: 12,
-    backgroundColor: '#020617',
-    color: '#a5f3fc',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    overflow: 'auto',
-    lineHeight: 1.5,
   },
 };
