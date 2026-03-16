@@ -10,9 +10,14 @@ import type { Middleware, MiddlewareContext } from '../types/middleware';
 export class MiddlewarePipeline {
   private middlewares: Middleware[] = [];
 
-  /** Add a named middleware */
+  /** Add a named middleware (appended — runs as inner layer) */
   use(middleware: Middleware): void {
     this.middlewares.push(middleware);
+  }
+
+  /** Add a named middleware at the front (runs as outermost layer) */
+  prepend(middleware: Middleware): void {
+    this.middlewares.unshift(middleware);
   }
 
   /** Remove middleware by name */

@@ -105,6 +105,14 @@ export interface ActionDefinition<TPayload = unknown, TResponse = unknown> {
 }
 
 /**
+ * Bridge connection mode.
+ * - 'native': connected to a real native host (RN WebView, iOS, Android)
+ * - 'fallback': using fallback handlers (web-only development)
+ * - 'disconnected': no native bridge, no fallback configured
+ */
+export type ConnectionMode = 'native' | 'fallback' | 'disconnected';
+
+/**
  * Bridge interface for web-side API
  */
 export interface Bridge {
@@ -126,6 +134,11 @@ export interface Bridge {
    * Unsubscribe from native events
    */
   off(event: string, handler?: (payload: unknown) => void): void;
+
+  /**
+   * Current connection mode
+   */
+  connectionMode: ConnectionMode;
 
   /**
    * Check if bridge is available
