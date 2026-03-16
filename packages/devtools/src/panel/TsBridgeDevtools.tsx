@@ -77,6 +77,12 @@ export function TsBridgeDevtools({
     return () => clearInterval(interval);
   }, [dashboardOpen]);
 
+  // Detect WebView — window.open is blocked or unsupported
+  const isWebView =
+    typeof navigator !== 'undefined' &&
+    (/wv|WebView/i.test(navigator.userAgent) ||
+      (/iPhone|iPad|iPod/.test(navigator.userAgent) && !/Safari/.test(navigator.userAgent)));
+
   const openDashboard = useCallback(() => {
     if (windowRef.current && !windowRef.current.closed) {
       windowRef.current.focus();
@@ -86,14 +92,22 @@ export function TsBridgeDevtools({
     const html = buildDashboardHTML();
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const win = window.open(url, 'ts-bridge-devtools', 'width=1200,height=700');
-    URL.revokeObjectURL(url);
 
-    if (win) {
-      windowRef.current = win;
-      setDashboardOpen(true);
+    try {
+      const win = window.open(url, 'ts-bridge-devtools', 'width=1200,height=700');
+      if (win) {
+        windowRef.current = win;
+        setDashboardOpen(true);
+      }
+    } catch {
+      // WebView environments may throw on window.open
+    } finally {
+      URL.revokeObjectURL(url);
     }
-  }, []);
+  }, [isWebView]);
+
+  // In WebView, don't render the button (dashboard needs CLI server for RN)
+  if (isWebView) return null;
 
   const isRight = position === 'bottom-right';
 
