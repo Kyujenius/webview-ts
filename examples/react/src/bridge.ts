@@ -1,34 +1,33 @@
 import { createBridgeReact } from '@webview-ts/react';
 import {
   camera,
-  storage,
   location,
   biometric,
   haptics,
-  clipboard,
+  phone,
+  calendar,
   device,
   share,
   cameraFallback,
-  storageFallback,
   locationFallback,
   biometricFallback,
   hapticsFallback,
-  clipboardFallback,
+  phoneFallback,
+  calendarFallback,
   deviceFallback,
   shareFallback,
 } from '@example/plugins';
 
 export const { BridgeProvider, useBridge, useAction, useEvent, usePlugin } = createBridgeReact({
-  plugins: [camera, storage, location, biometric, haptics, clipboard, device, share],
+  plugins: [camera, location, biometric, haptics, phone, calendar, device, share],
   config: {
-    timeout: 5000,
     fallback: {
       ...cameraFallback,
-      ...storageFallback,
       ...locationFallback,
       ...biometricFallback,
       ...hapticsFallback,
-      ...clipboardFallback,
+      ...phoneFallback,
+      ...calendarFallback,
       ...deviceFallback,
       ...shareFallback,
     },

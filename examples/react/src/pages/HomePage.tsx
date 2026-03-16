@@ -55,20 +55,20 @@ function HomePage() {
             <p>Get current position and watch location changes</p>
           </div>
           <div>
-            <h3>Storage</h3>
-            <p>Persistent key-value storage</p>
-          </div>
-          <div>
             <h3>Biometric</h3>
             <p>Fingerprint and Face ID authentication</p>
           </div>
           <div>
-            <h3>Haptics</h3>
-            <p>Tactile feedback for touch interactions</p>
+            <h3>Phone</h3>
+            <p>Make phone calls via native dialer</p>
           </div>
           <div>
-            <h3>Clipboard</h3>
-            <p>Read and write system clipboard</p>
+            <h3>Calendar</h3>
+            <p>Add and read native calendar events</p>
+          </div>
+          <div>
+            <h3>Haptics</h3>
+            <p>Tactile feedback for touch interactions</p>
           </div>
           <div>
             <h3>Device</h3>

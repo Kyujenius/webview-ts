@@ -8,15 +8,14 @@
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web",
-    "devtools": "node ../../packages/devtools/server/index.mjs"
+    "devtools": "node ../../packages/devtools/dist/cli.mjs"
   },
   "dependencies": {
     "@example/plugins": "workspace:*",
-    "@react-native-async-storage/async-storage": "1.23.1",
     "@webview-ts/native": "workspace:*",
     "@webview-ts/shared": "workspace:*",
     "expo": "~52.0.49",
-    "expo-clipboard": "~7.0.1",
+    "expo-calendar": "~14.0.5",
     "expo-device": "~7.0.3",
     "expo-haptics": "~14.0.1",
     "expo-image-picker": "~16.0.6",

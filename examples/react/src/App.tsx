@@ -1,54 +1,48 @@
 import { useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { TsBridgeDevtools } from '@webview-ts/devtools';
+import { createDevToolsMiddleware } from '@webview-ts/devtools';
+import { WebSocketTransport } from '@webview-ts/devtools/transport';
 import { useBridge } from './bridge';
 import HomePage from './pages/HomePage';
 import CameraPage from './pages/CameraPage';
 import LocationPage from './pages/LocationPage';
-import StoragePage from './pages/StoragePage';
 import BiometricPage from './pages/BiometricPage';
-import ClipboardPage from './pages/ClipboardPage';
+import PhonePage from './pages/PhonePage';
+import CalendarPage from './pages/CalendarPage';
 import DevicePage from './pages/DevicePage';
 import SharePage from './pages/SharePage';
 
 function App() {
   const location = useLocation();
   const { bridge } = useBridge();
+
   useEffect(() => {
-    // Demo middleware that logs actions for DevTools drill-down
-    bridge.use({
-      name: 'request-logger',
-      fn: async (ctx, next) => {
-        const logs: string[] = [];
-        logs.push(`Action: ${ctx.request.action}`);
-        logs.push(`Payload: ${JSON.stringify(ctx.request.payload ?? null)}`);
-        ctx.metadata.set('__mwLog:request-logger', logs);
-        ctx.metadata.set('requestedAt', new Date().toISOString());
-        await next();
-        if (ctx.response?.success) {
-          logs.push(`Response: success`);
-        }
-      },
-    });
-    bridge.use({
-      name: 'auth-check',
-      fn: async (ctx, next) => {
-        const logs: string[] = [];
-        logs.push('Checking auth token...');
-        logs.push('Token valid, proceeding');
-        ctx.metadata.set('__mwLog:auth-check', logs);
-        ctx.metadata.set('authUser', 'demo-user');
-        await next();
-      },
-    });
+    const transport = new WebSocketTransport({ port: 4000 });
+    const devtools = createDevToolsMiddleware({ transport });
+    bridge.use(devtools.toMiddleware());
+
+    return () => {
+      transport.disconnect();
+    };
   }, [bridge]);
 
-  const isActive = (path: string) => {
-    return location.pathname === path ? 'active' : '';
-  };
+  const isActive = (path: string) => (location.pathname === path ? 'active' : '');
 
   return (
     <>
+      <div className="container page-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/camera" element={<CameraPage />} />
+          <Route path="/location" element={<LocationPage />} />
+          <Route path="/biometric" element={<BiometricPage />} />
+          <Route path="/phone" element={<PhonePage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/device" element={<DevicePage />} />
+          <Route path="/share" element={<SharePage />} />
+        </Routes>
+      </div>
+
       <nav className="nav">
         <ul>
           <li>
@@ -67,18 +61,18 @@ function App() {
             </Link>
           </li>
           <li>
-            <Link to="/storage" className={isActive('/storage')}>
-              Storage
-            </Link>
-          </li>
-          <li>
             <Link to="/biometric" className={isActive('/biometric')}>
               Biometric
             </Link>
           </li>
           <li>
-            <Link to="/clipboard" className={isActive('/clipboard')}>
-              Clipboard
+            <Link to="/phone" className={isActive('/phone')}>
+              Phone
+            </Link>
+          </li>
+          <li>
+            <Link to="/calendar" className={isActive('/calendar')}>
+              Calendar
             </Link>
           </li>
           <li>
@@ -93,21 +87,6 @@ function App() {
           </li>
         </ul>
       </nav>
-
-      <div className="container">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/camera" element={<CameraPage />} />
-          <Route path="/location" element={<LocationPage />} />
-          <Route path="/storage" element={<StoragePage />} />
-          <Route path="/biometric" element={<BiometricPage />} />
-          <Route path="/clipboard" element={<ClipboardPage />} />
-          <Route path="/device" element={<DevicePage />} />
-          <Route path="/share" element={<SharePage />} />
-        </Routes>
-      </div>
-
-      <TsBridgeDevtools bridge={bridge} />
     </>
   );
 }
