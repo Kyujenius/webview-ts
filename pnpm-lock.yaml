@@ -93,9 +93,6 @@ importers:
       '@example/plugins':
         specifier: workspace:*
         version: link:../plugins
-      '@react-native-async-storage/async-storage':
-        specifier: 1.23.1
-        version: 1.23.1(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))
       '@webview-ts/native':
         specifier: workspace:*
         version: link:../../packages/hosts/react-native
@@ -105,9 +102,9 @@ importers:
       expo:
         specifier: ~52.0.49
         version: 52.0.49(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@expo/dom-webview@55.0.3)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1)
-      expo-clipboard:
-        specifier: ~7.0.1
-        version: 7.0.1(expo@52.0.49)(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1)
+      expo-calendar:
+        specifier: ~14.0.5
+        version: 14.0.6(expo@52.0.49)(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))
       expo-device:
         specifier: ~7.0.3
         version: 7.0.3(expo@52.0.49)
@@ -207,6 +204,9 @@ importers:
       '@webview-ts/shared':
         specifier: workspace:*
         version: link:../shared
+      ws:
+        specifier: ^8.17.0
+        version: 8.19.0
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
@@ -214,12 +214,21 @@ importers:
       '@testing-library/react':
         specifier: ^14.0.0
         version: 14.3.1(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.30
       '@types/react':
         specifier: ^18.2.0
         version: 18.3.27
       '@types/react-dom':
         specifier: ^18.2.0
         version: 18.3.7(@types/react@18.3.27)
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
+      '@vitejs/plugin-react':
+        specifier: ^4.2.0
+        version: 4.7.0(vite@5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0))
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -232,6 +241,12 @@ importers:
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
+      vite:
+        specifier: ^5.1.0
+        version: 5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0)
+      vite-plugin-singlefile:
+        specifier: ^2.3.2
+        version: 2.3.2(rollup@4.55.2)(vite@5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0))
       vitest:
         specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.30)(@vitest/ui@1.6.1)(happy-dom@14.12.3)(lightningcss@1.32.0)(terser@5.46.0)
@@ -1655,11 +1670,6 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@react-native-async-storage/async-storage@1.23.1':
-    resolution: {integrity: sha512-Qd2kQ3yi6Y3+AcUlrHxSLlnBvpdCEMVGFlVBneVOjaFaPU61g1huc38g339ysXspwY1QZA2aNhrk/KlHGO+ewA==}
-    peerDependencies:
-      react-native: ^0.0.0-0 || >=0.60 <1.0
-
   '@react-native-community/cli-clean@13.6.9':
     resolution: {integrity: sha512-7Dj5+4p9JggxuVNOjPbduZBAP1SUgNhLKVw5noBUzT/3ZpUZkDM+RCSwyoyg8xKWoE4OrdUAXwAFlMcFDPKykA==}
 
@@ -2050,6 +2060,9 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -3003,11 +3016,10 @@ packages:
       react: '*'
       react-native: '*'
 
-  expo-clipboard@7.0.1:
-    resolution: {integrity: sha512-rqYk0+WoqitPcPKxmMxSpLonX1E5Ije3LBYfnYMbH3xU5Gr8EAH9QnOWOi4BgahUPvcot6nbFEnx+DqARrmxKQ==}
+  expo-calendar@14.0.6:
+    resolution: {integrity: sha512-aOby7ueR8lB9sWTHXkECZiPDZNVRsGQYhJTe05puNZicMWCV4c53Z/LRiCTTq3LBXV4zpBOB5rXiCyA1f082yA==}
     peerDependencies:
       expo: '*'
-      react: '*'
       react-native: '*'
 
   expo-constants@17.0.8:
@@ -3557,10 +3569,6 @@ packages:
     resolution: {integrity: sha512-Fd4gABb+ycGAmKou8eMftCupSir5lRxqf4aD/vd0cD2qc4HL07OjCeuHMr8Ro4CoMaeCKDB0/ECBOVWjTwUvPQ==}
     engines: {node: '>=8'}
 
-  is-plain-obj@2.1.0:
-    resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
-    engines: {node: '>=8'}
-
   is-plain-object@2.0.4:
     resolution: {integrity: sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og==}
     engines: {node: '>=0.10.0'}
@@ -4016,10 +4024,6 @@ packages:
 
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
-
-  merge-options@3.0.4:
-    resolution: {integrity: sha512-2Sug1+knBjkaMsMgf1ctR1Ujx+Ayku4EdJN4Z+C2+JzoeF7A3OZ9KM2GY0CpQS51NR61LTurMJrRKPhSs3ZRTQ==}
-    engines: {node: '>=10'}
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -5517,6 +5521,13 @@ packages:
     resolution: {integrity: sha512-YAXkfvGtuTzwWbDSACdJSg4A4DZiAqckWe90Zapc/sEX3XvHcw1NdurM/6od8J207tSDqNbSsgdCacBgvJKFuA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
+
+  vite-plugin-singlefile@2.3.2:
+    resolution: {integrity: sha512-b8SxCi/gG7K298oJDcKOuZeU6gf6wIcCJAaEqUmmZXdjfuONlkyNyWZC3tEbN6QockRCNUd3it9eGTtpHGoYmg==}
+    engines: {node: '>18.0.0'}
+    peerDependencies:
+      rollup: ^4.59.0
+      vite: ^5.4.11 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
   vite@5.4.21:
     resolution: {integrity: sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==}
@@ -7534,11 +7545,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@react-native-async-storage/async-storage@1.23.1(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))':
-    dependencies:
-      merge-options: 3.0.4
-      react-native: 0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1)
-
   '@react-native-community/cli-clean@13.6.9':
     dependencies:
       '@react-native-community/cli-tools': 13.6.9
@@ -8179,6 +8185,10 @@ snapshots:
       csstype: 3.2.3
 
   '@types/stack-utils@2.0.3': {}
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.19.30
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -9307,10 +9317,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  expo-clipboard@7.0.1(expo@52.0.49)(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1):
+  expo-calendar@14.0.6(expo@52.0.49)(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1)):
     dependencies:
       expo: 52.0.49(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@expo/dom-webview@55.0.3)(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
       react-native: 0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1)
 
   expo-constants@17.0.8(expo@52.0.49)(react-native@0.76.9(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(@react-native-community/cli@13.6.9)(@types/react@18.3.27)(react@18.3.1)):
@@ -9877,8 +9886,6 @@ snapshots:
 
   is-path-inside@3.0.3: {}
 
-  is-plain-obj@2.1.0: {}
-
   is-plain-object@2.0.4:
     dependencies:
       isobject: 3.0.1
@@ -10344,10 +10351,6 @@ snapshots:
       is-buffer: 1.1.6
 
   memoize-one@5.2.1: {}
-
-  merge-options@3.0.4:
-    dependencies:
-      is-plain-obj: 2.1.0
 
   merge-stream@2.0.0: {}
 
@@ -12082,6 +12085,12 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-plugin-singlefile@2.3.2(rollup@4.55.2)(vite@5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0)):
+    dependencies:
+      micromatch: 4.0.8
+      rollup: 4.55.2
+      vite: 5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0)
 
   vite@5.4.21(@types/node@20.19.30)(lightningcss@1.32.0)(terser@5.46.0):
     dependencies:

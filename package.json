@@ -20,7 +20,7 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "devtools": "node packages/devtools/server/index.mjs",
+    "devtools": "node packages/devtools/dist/cli.mjs",
     "prepare": "husky"
   },
   "devDependencies": {
