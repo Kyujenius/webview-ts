@@ -87,26 +87,6 @@ export interface PerformanceMetrics {
   totalMessages: number;
 
   /**
-   * Average response time in ms
-   */
-  averageResponseTime: number;
-
-  /**
-   * Min response time in ms
-   */
-  minResponseTime: number;
-
-  /**
-   * Max response time in ms
-   */
-  maxResponseTime: number;
-
-  /**
-   * Success rate (0-1)
-   */
-  successRate: number;
-
-  /**
    * Error count
    */
   errorCount: number;

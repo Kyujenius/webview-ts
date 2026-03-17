@@ -84,18 +84,16 @@ describe('DevToolsStore', () => {
   });
 
   describe('metrics', () => {
-    it('should calculate performance metrics', () => {
-      store.addMessage(makeRecord({ recordId: 'r-1', status: 'success', duration: 100 }));
-      store.addMessage(makeRecord({ recordId: 'r-2', status: 'error', duration: 50 }));
+    it('should calculate store-level metrics', () => {
+      store.addMessage(makeRecord({ recordId: 'r-1', status: 'success' }));
+      store.addMessage(makeRecord({ recordId: 'r-2', status: 'error' }));
+      store.addMessage(makeRecord({ recordId: 'r-3', status: 'timeout' }));
 
       const metrics = store.getMetrics();
 
-      expect(metrics.totalMessages).toBe(2);
-      expect(metrics.averageResponseTime).toBe(75);
-      expect(metrics.minResponseTime).toBe(50);
-      expect(metrics.maxResponseTime).toBe(100);
-      expect(metrics.successRate).toBe(0.5);
+      expect(metrics.totalMessages).toBe(3);
       expect(metrics.errorCount).toBe(1);
+      expect(metrics.timeoutCount).toBe(1);
     });
   });
 

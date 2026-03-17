@@ -55,37 +55,19 @@ export class DevToolsStoreImpl implements DevToolsStore {
   }
 
   getMetrics(): PerformanceMetrics {
-    const responseTimes: number[] = [];
     let errorCount = 0;
     let timeoutCount = 0;
-    let successCount = 0;
 
     for (const record of this.messages) {
-      if (record.status === 'success') {
-        successCount++;
-      } else if (record.status === 'error') {
+      if (record.status === 'error') {
         errorCount++;
       } else if (record.status === 'timeout') {
         timeoutCount++;
       }
-
-      if (record.duration !== undefined) {
-        responseTimes.push(record.duration);
-      }
     }
 
-    const totalMessages = this.messages.length;
-    const totalCompleted = successCount + errorCount + timeoutCount;
-
     return {
-      totalMessages,
-      averageResponseTime:
-        responseTimes.length > 0
-          ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-          : 0,
-      minResponseTime: responseTimes.length > 0 ? Math.min(...responseTimes) : 0,
-      maxResponseTime: responseTimes.length > 0 ? Math.max(...responseTimes) : 0,
-      successRate: totalCompleted > 0 ? successCount / totalCompleted : 0,
+      totalMessages: this.messages.length,
       errorCount,
       timeoutCount,
     };
