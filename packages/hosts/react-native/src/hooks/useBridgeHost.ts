@@ -83,7 +83,7 @@ export function createSimpleBridgeHost<
   // Register direct handlers
   if (handlers) {
     for (const [action, handler] of Object.entries(handlers)) {
-      bridgeHost.registerHandler(action, handler as any);
+      bridgeHost.registerHandler(action, handler);
       registeredActions.add(action);
     }
   }
@@ -95,7 +95,7 @@ export function createSimpleBridgeHost<
         if (registeredActions.has(action)) {
           throw new Error(`Duplicate action name '${action}' from plugin '${plugin.pluginName}'`);
         }
-        bridgeHost.registerHandler(action, handler as any);
+        bridgeHost.registerHandler(action, handler);
         registeredActions.add(action);
       }
     }
