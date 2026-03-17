@@ -131,7 +131,7 @@ export function createBridgeReact<
     plugin: TPlugin
   ): ReturnType<TPlugin['methods']> {
     const { bridge } = useTypedContext();
-    const call: PluginCall<TPlugin['_actionMap']> = useCallback(
+    const call: PluginCall<TPlugin['_types']> = useCallback(
       (action: any, payload: any) => bridge.call(action, payload) as any,
       [bridge]
     );

@@ -90,7 +90,8 @@ export interface PluginInstance<
   TMarkers extends ActionMarkerMap = ActionMarkerMap,
 > {
   readonly name: TName;
-  readonly _actionMap: ExpandActions<TName, TMarkers>;
+  /** Type-only property. Empty at runtime. Used for TypeScript inference. */
+  readonly _types: ExpandActions<TName, TMarkers>;
   readonly actions: ActionNameMap<TName, TMarkers>;
   readonly interceptors: InterceptorMap;
   readonly timeouts: TimeoutMap;
@@ -125,7 +126,7 @@ export type MergePluginActions<T extends PluginInstance<any, any>[]> = T extends
   infer First extends PluginInstance<any, any>,
   ...infer Rest extends PluginInstance<any, any>[],
 ]
-  ? First['_actionMap'] & MergePluginActions<Rest>
+  ? First['_types'] & MergePluginActions<Rest>
   : Record<string, never>;
 
 /** Extract plugin from a plugins array by reference */

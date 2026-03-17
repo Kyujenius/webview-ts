@@ -44,7 +44,7 @@ export function definePlugin<TName extends string, const TMarkers extends Action
 
   return {
     name,
-    _actionMap: {} as ExpandActions<TName, TMarkers>,
+    _types: {} as ExpandActions<TName, TMarkers>,
     actions: actions as ActionNameMap<TName, TMarkers>,
     interceptors,
     timeouts,
