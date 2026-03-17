@@ -70,6 +70,16 @@ export class BridgeHost implements IBridgeHost {
     this.pipeline.use(middleware);
   }
 
+  /** Prepend middleware (runs as outermost layer) */
+  prepend(middleware: Middleware): void {
+    this.pipeline.prepend(middleware);
+  }
+
+  /** Remove middleware by name */
+  removeMiddleware(name: string): boolean {
+    return this.pipeline.remove(name);
+  }
+
   registerHandler<TPayload = unknown, TResponse = unknown>(
     action: string,
     handler: (payload: TPayload, context: RequestContext) => Promise<TResponse> | TResponse

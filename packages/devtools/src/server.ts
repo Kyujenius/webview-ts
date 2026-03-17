@@ -16,26 +16,51 @@ const http = createServer((_req, res) => {
   res.end(html);
 });
 
+type Role = 'host' | 'client' | 'dashboard';
+
 const wss = new WebSocketServer({ server: http });
-const clients = new Map<import('ws').WebSocket, string>();
+const connections = new Map<import('ws').WebSocket, Role>();
+
+function parseRole(url: string | undefined): Role {
+  const params = new URL(url ?? '/', 'http://localhost').searchParams;
+  const role = params.get('role');
+  if (role === 'dashboard') return 'dashboard';
+  if (role === 'host') return 'host';
+  return 'client';
+}
+
+function countByRole(): { hosts: number; clients: number; dashboards: number } {
+  let hosts = 0;
+  let clients = 0;
+  let dashboards = 0;
+  for (const role of connections.values()) {
+    if (role === 'host') hosts++;
+    else if (role === 'client') clients++;
+    else dashboards++;
+  }
+  return { hosts, clients, dashboards };
+}
+
+function statusLine(counts: { hosts: number; clients: number; dashboards: number }): string {
+  return `hosts: ${counts.hosts}, clients: ${counts.clients}, dashboards: ${counts.dashboards}`;
+}
 
 wss.on('connection', (ws, req) => {
-  const isDashboard = req.url?.includes('role=dashboard');
-  const role = isDashboard ? 'dashboard' : 'app';
-  clients.set(ws, role);
+  const role = parseRole(req.url);
+  connections.set(ws, role);
 
-  const apps = [...clients.values()].filter((r) => r === 'app').length;
-  const dashboards = [...clients.values()].filter((r) => r === 'dashboard').length;
-  console.log(`[devtools] ${role} connected (apps: ${apps}, dashboards: ${dashboards})`);
+  const counts = countByRole();
+  console.log(`[devtools] ${role} connected (${statusLine(counts)})`);
 
-  if (role === 'app') {
-    broadcastStatus();
+  if (role === 'dashboard') {
+    const appConnected = counts.hosts > 0 || counts.clients > 0;
+    ws.send(JSON.stringify({ type: 'status', appConnected }));
   } else {
-    ws.send(JSON.stringify({ type: 'status', appConnected: apps > 0 }));
+    broadcastStatus();
   }
 
   ws.on('message', (raw) => {
-    for (const [c] of clients) {
+    for (const [c] of connections) {
       if (c !== ws && c.readyState === 1) {
         c.send(raw.toString());
       }
@@ -43,18 +68,18 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {
-    clients.delete(ws);
-    const a = [...clients.values()].filter((r) => r === 'app').length;
-    const d = [...clients.values()].filter((r) => r === 'dashboard').length;
-    console.log(`[devtools] ${role} disconnected (apps: ${a}, dashboards: ${d})`);
-    if (role === 'app') broadcastStatus();
+    connections.delete(ws);
+    const counts = countByRole();
+    console.log(`[devtools] ${role} disconnected (${statusLine(counts)})`);
+    if (role !== 'dashboard') broadcastStatus();
   });
 });
 
 function broadcastStatus() {
-  const appCount = [...clients.values()].filter((r) => r === 'app').length;
-  const msg = JSON.stringify({ type: 'status', appConnected: appCount > 0 });
-  for (const [c, role] of clients) {
+  const counts = countByRole();
+  const appConnected = counts.hosts > 0 || counts.clients > 0;
+  const msg = JSON.stringify({ type: 'status', appConnected });
+  for (const [c, role] of connections) {
     if (role === 'dashboard' && c.readyState === 1) {
       c.send(msg);
     }

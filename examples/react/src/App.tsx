@@ -1,8 +1,4 @@
-import { useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { createDevToolsMiddleware } from '@webview-ts/devtools';
-import { WebSocketTransport } from '@webview-ts/devtools/transport';
-import { useBridge } from './bridge';
 import HomePage from './pages/HomePage';
 import CameraPage from './pages/CameraPage';
 import LocationPage from './pages/LocationPage';
@@ -14,19 +10,6 @@ import SharePage from './pages/SharePage';
 
 function App() {
   const location = useLocation();
-  const { bridge } = useBridge();
-
-  useEffect(() => {
-    const transport = new WebSocketTransport({ port: 4000 });
-    const devtools = createDevToolsMiddleware({ transport });
-    const mw = devtools.toMiddleware();
-    bridge.use(mw);
-
-    return () => {
-      bridge.removeMiddleware(mw.name);
-      transport.disconnect();
-    };
-  }, [bridge]);
 
   const isActive = (path: string) => (location.pathname === path ? 'active' : '');
 

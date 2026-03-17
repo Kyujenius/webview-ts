@@ -8,7 +8,7 @@ import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { generateMessageId } from '../utils/id-generator';
-import { BridgeCallError, METADATA_KEYS } from '@webview-ts/shared';
+import { BridgeCallError, METADATA_KEYS, tryAutoDevTools } from '@webview-ts/shared';
 import type {
   BridgeConfig,
   BridgeCallOptions,
@@ -59,6 +59,8 @@ export class BridgeManager<
   private actionTimeouts = new Map<string, number>();
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
+  /** Auto-devtools cleanup function */
+  private _devtoolsCleanup?: () => void;
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
@@ -89,6 +91,9 @@ export class BridgeManager<
 
     // Set up response handler
     this.setupResponseHandler();
+
+    // Auto-connect to DevTools in development
+    this._devtoolsCleanup = tryAutoDevTools(this);
   }
 
   /**
@@ -446,6 +451,8 @@ export class BridgeManager<
    * message listener.  Call only on true unmount.
    */
   dispose(): void {
+    this._devtoolsCleanup?.();
+    this._devtoolsCleanup = undefined;
     this.destroy();
     this.middleware.clear();
     this.eventHandlers.clear();

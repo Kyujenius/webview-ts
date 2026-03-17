@@ -11,3 +11,5 @@ export * from './schemas/index';
 export * from './middleware/index';
 export * from './plugins/index';
 export { METADATA_KEYS } from './constants/metadata-keys';
+export { tryAutoDevTools } from './devtools/auto-devtools';
+export type { AutoDevToolsTarget } from './devtools/auto-devtools';

@@ -75,6 +75,9 @@ export interface RecordedMessage {
 
   /** Whether handler was skipped (short-circuited) */
   handlerSkipped?: boolean;
+
+  /** Which side recorded this: 'host' (RN) or 'client' (web) */
+  source?: 'host' | 'client';
 }
 
 /**
