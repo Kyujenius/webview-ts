@@ -3,6 +3,7 @@
  */
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
+import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
 import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
@@ -17,7 +18,6 @@ import type {
   BridgeError,
   Middleware,
   MiddlewareContext,
-  MiddlewareFn,
   ActionDefinitionShape,
   ActionNames,
   InferPayload,
@@ -197,19 +197,8 @@ export class BridgeManager<
       };
 
       // Initialize trace collection
-      const traces: Array<{
-        name: string;
-        layer: string;
-        plugin?: string;
-        enterMs: number;
-        exitMs: number;
-        shortCircuit: boolean;
-        shortCircuitReason?: string;
-        error?: { message: string; stack?: string };
-        logs?: string[];
-        metadataChanges?: Record<string, unknown>;
-      }> = [];
-      ctx.metadata.set(METADATA_KEYS.MW_TRACES, traces);
+      const allTraces: PipelineTrace[] = [];
+      ctx.metadata.set(METADATA_KEYS.MW_TRACES, allTraces);
       const handlerStart = { value: 0 };
       const handlerEnd = { value: 0 };
 
@@ -222,12 +211,24 @@ export class BridgeManager<
         await coreFn();
         handlerEnd.value = performance.now();
       };
-      const innerFn = interceptors?.length
-        ? () => this.executeInterceptors(ctx, interceptors, trackedCore)
-        : trackedCore;
 
-      // Execute global middleware with trace wrapping
-      await this.executeWithTracing(ctx, innerFn, traces);
+      const pluginName = (action as string).split('.')[0];
+      const globalTraces = await executeOnionPipeline(
+        this.middleware.getAll(),
+        ctx,
+        interceptors?.length
+          ? async () => {
+              const interceptorTraces = await executeOnionPipeline(interceptors, ctx, trackedCore, {
+                tracing: true,
+                layer: 'plugin',
+                plugin: pluginName,
+              });
+              allTraces.push(...interceptorTraces);
+            }
+          : trackedCore,
+        { tracing: true }
+      );
+      allTraces.unshift(...globalTraces);
 
       // Store handler timing
       if (handlerStart.value > 0) {
@@ -341,206 +342,6 @@ export class BridgeManager<
     for (const [action, timeout] of Object.entries(timeoutMap)) {
       this.actionTimeouts.set(action, timeout);
     }
-  }
-
-  /**
-   * Execute global middleware pipeline with trace recording.
-   * Wraps each middleware to measure enter/exit timing.
-   */
-  private async executeWithTracing(
-    ctx: MiddlewareContext,
-    core: () => Promise<void>,
-    traces: Array<{
-      name: string;
-      layer: string;
-      plugin?: string;
-      enterMs: number;
-      exitMs: number;
-      shortCircuit: boolean;
-      shortCircuitReason?: string;
-      error?: { message: string; stack?: string };
-      logs?: string[];
-      metadataChanges?: Record<string, unknown>;
-    }>
-  ): Promise<void> {
-    const middlewares = this.middleware.getAll();
-    if (middlewares.length === 0) {
-      return core();
-    }
-
-    let index = -1;
-    let reachedCore = false;
-
-    const dispatch = (i: number): Promise<void> => {
-      if (i <= index) {
-        return Promise.reject(new Error('next() called multiple times'));
-      }
-      index = i;
-      if (i === middlewares.length) {
-        reachedCore = true;
-        return core();
-      }
-
-      const mw = middlewares[i];
-      // Skip tracing for middleware that opts out (e.g. devtools itself)
-      const skipTrace = mw.__skipTrace === true;
-
-      if (skipTrace) {
-        return mw.fn(ctx, () => dispatch(i + 1));
-      }
-
-      const enterStart = performance.now();
-      let enterEnd: number;
-
-      // Snapshot metadata keys before this MW runs
-      const keysBefore = new Set(ctx.metadata.keys());
-
-      const recordTrace = (error?: Error) => {
-        const exitEnd = performance.now();
-        enterEnd = enterEnd ?? exitEnd;
-        const didShortCircuit = !reachedCore && i === index;
-
-        // Collect MW logs
-        const logs = ctx.metadata.get(`${METADATA_KEYS.MW_LOG_PREFIX}${mw.name}`) as
-          | string[]
-          | undefined;
-
-        // Detect metadata changes (new or modified keys, excluding internal __ keys)
-        const metadataChanges: Record<string, unknown> = {};
-        for (const [key, value] of ctx.metadata.entries()) {
-          if (key.startsWith('__')) continue;
-          if (!keysBefore.has(key)) {
-            metadataChanges[key] = value;
-          }
-        }
-
-        traces.push({
-          name: mw.name,
-          layer: 'global',
-          enterMs: Math.round((enterEnd - enterStart) * 100) / 100,
-          exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
-          shortCircuit: didShortCircuit,
-          shortCircuitReason: didShortCircuit
-            ? (ctx.metadata.get(`${METADATA_KEYS.SHORT_CIRCUIT_PREFIX}${mw.name}`) as
-                | string
-                | undefined)
-            : undefined,
-          error: error ? { message: error.message, stack: error.stack } : undefined,
-          logs,
-          metadataChanges: Object.keys(metadataChanges).length > 0 ? metadataChanges : undefined,
-        });
-      };
-
-      return mw
-        .fn(ctx, () => {
-          enterEnd = performance.now();
-          return dispatch(i + 1);
-        })
-        .then(() => {
-          recordTrace();
-        })
-        .catch((err: Error) => {
-          recordTrace(err);
-          throw err;
-        });
-    };
-
-    await dispatch(0);
-  }
-
-  /**
-   * Execute per-action interceptors as an onion pipeline (same model as global middleware).
-   * Records timing traces in ctx.metadata for DevTools visualization.
-   */
-  private async executeInterceptors(
-    ctx: MiddlewareContext,
-    interceptors: Middleware[],
-    core: () => Promise<void>
-  ): Promise<void> {
-    const fns: MiddlewareFn[] = interceptors.map((m) => m.fn);
-    const traces = (ctx.metadata.get(METADATA_KEYS.MW_TRACES) ?? []) as Array<{
-      name: string;
-      layer: string;
-      plugin?: string;
-      enterMs: number;
-      exitMs: number;
-      shortCircuit: boolean;
-      shortCircuitReason?: string;
-      error?: { message: string; stack?: string };
-      logs?: string[];
-      metadataChanges?: Record<string, unknown>;
-    }>;
-    ctx.metadata.set(METADATA_KEYS.MW_TRACES, traces);
-
-    const pluginName = ctx.request.action.split('.')[0];
-
-    let index = -1;
-    let reachedCore = false;
-
-    const dispatch = (i: number): Promise<void> => {
-      if (i <= index) {
-        return Promise.reject(new Error('next() called multiple times'));
-      }
-      index = i;
-      if (i === fns.length) {
-        reachedCore = true;
-        return core();
-      }
-
-      const name = interceptors[i].name;
-      const enterStart = performance.now();
-      let enterEnd: number;
-      const keysBefore = new Set(ctx.metadata.keys());
-
-      const recordTrace = (error?: Error) => {
-        const exitEnd = performance.now();
-        enterEnd = enterEnd ?? exitEnd;
-        const didShortCircuit = !reachedCore && i === index;
-
-        const logs = ctx.metadata.get(`${METADATA_KEYS.MW_LOG_PREFIX}${name}`) as
-          | string[]
-          | undefined;
-
-        const metadataChanges: Record<string, unknown> = {};
-        for (const [key, value] of ctx.metadata.entries()) {
-          if (key.startsWith('__')) continue;
-          if (!keysBefore.has(key)) {
-            metadataChanges[key] = value;
-          }
-        }
-
-        traces.push({
-          name,
-          layer: 'plugin',
-          plugin: pluginName,
-          enterMs: Math.round((enterEnd - enterStart) * 100) / 100,
-          exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
-          shortCircuit: didShortCircuit,
-          shortCircuitReason: didShortCircuit
-            ? (ctx.metadata.get(`${METADATA_KEYS.SHORT_CIRCUIT_PREFIX}${name}`) as
-                | string
-                | undefined)
-            : undefined,
-          error: error ? { message: error.message, stack: error.stack } : undefined,
-          logs,
-          metadataChanges: Object.keys(metadataChanges).length > 0 ? metadataChanges : undefined,
-        });
-      };
-
-      return fns[i](ctx, () => {
-        enterEnd = performance.now();
-        return dispatch(i + 1);
-      })
-        .then(() => {
-          recordTrace();
-        })
-        .catch((err: Error) => {
-          recordTrace(err);
-          throw err;
-        });
-    };
-
-    await dispatch(0);
   }
 
   /**
