@@ -56,7 +56,7 @@ export function App() {
       ws = new WebSocket(`ws://${window.location.host}?role=dashboard`);
       wsRef.current = ws;
 
-      ws.onopen = () => setConnected(false);
+      ws.onopen = () => setConnected(true);
       ws.onclose = () => {
         setConnected(false);
         timer = setTimeout(connect, 1000);
