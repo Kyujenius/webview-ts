@@ -458,7 +458,7 @@ export class BridgeManager<
     core: () => Promise<void>
   ): Promise<void> {
     const fns: MiddlewareFn[] = interceptors.map((m) => m.fn);
-    const traces = (ctx.metadata.get('__mwTraces') ?? []) as Array<{
+    const traces = (ctx.metadata.get(METADATA_KEYS.MW_TRACES) ?? []) as Array<{
       name: string;
       layer: string;
       plugin?: string;
@@ -470,7 +470,7 @@ export class BridgeManager<
       logs?: string[];
       metadataChanges?: Record<string, unknown>;
     }>;
-    ctx.metadata.set('__mwTraces', traces);
+    ctx.metadata.set(METADATA_KEYS.MW_TRACES, traces);
 
     const pluginName = ctx.request.action.split('.')[0];
 
@@ -497,7 +497,9 @@ export class BridgeManager<
         enterEnd = enterEnd ?? exitEnd;
         const didShortCircuit = !reachedCore && i === index;
 
-        const logs = ctx.metadata.get(`__mwLog:${name}`) as string[] | undefined;
+        const logs = ctx.metadata.get(`${METADATA_KEYS.MW_LOG_PREFIX}${name}`) as
+          | string[]
+          | undefined;
 
         const metadataChanges: Record<string, unknown> = {};
         for (const [key, value] of ctx.metadata.entries()) {
@@ -515,7 +517,9 @@ export class BridgeManager<
           exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
           shortCircuit: didShortCircuit,
           shortCircuitReason: didShortCircuit
-            ? (ctx.metadata.get(`__shortCircuitReason:${name}`) as string | undefined)
+            ? (ctx.metadata.get(`${METADATA_KEYS.SHORT_CIRCUIT_PREFIX}${name}`) as
+                | string
+                | undefined)
             : undefined,
           error: error ? { message: error.message, stack: error.stack } : undefined,
           logs,
