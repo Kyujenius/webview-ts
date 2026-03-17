@@ -5,6 +5,8 @@ export const haptics = definePlugin('haptics', {
   impact: action<ImpactPayload, Record<string, never>>(),
   notification: action<NotificationPayload, Record<string, never>>(),
   selection: action<void, Record<string, never>>(),
+}).withFallback({
+  impact: async () => ({}),
+  notification: async () => ({}),
+  selection: async () => ({}),
 });
-
-export const HapticsActions = haptics.actions;

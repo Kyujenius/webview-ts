@@ -2,12 +2,6 @@ import * as Location from 'expo-location';
 import { location } from '@example/plugins';
 
 let watchSubscription: Location.LocationSubscription | null = null;
-let sendEventFn: ((event: string, payload: unknown) => void) | null = null;
-
-/** Call this from App.tsx to wire up sendEvent */
-export function setLocationSendEvent(fn: (event: string, payload: unknown) => void) {
-  sendEventFn = fn;
-}
 
 export const locationHost = location.host({
   getCurrentPosition: async () => {
@@ -27,7 +21,7 @@ export const locationHost = location.host({
     };
   },
 
-  watchPosition: async () => {
+  watchPosition: async (_payload, ctx) => {
     if (watchSubscription) return { watchId: 1 };
 
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -42,7 +36,7 @@ export const locationHost = location.host({
         distanceInterval: 5,
       },
       (loc) => {
-        sendEventFn?.('location.updated', {
+        ctx.emit('updated', {
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
           accuracy: loc.coords.accuracy ?? 0,

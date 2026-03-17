@@ -88,14 +88,25 @@ export function createSimpleBridgeHost<
     }
   }
 
-  // Register plugin handlers
+  // Register plugin handlers — inject ctx.emit for plugins with events
   if (plugins) {
     for (const plugin of plugins) {
+      const hasEvents = plugin.eventNames.length > 0;
       for (const [action, handler] of Object.entries(plugin.handlers)) {
         if (registeredActions.has(action)) {
           throw new Error(`Duplicate action name '${action}' from plugin '${plugin.pluginName}'`);
         }
-        bridgeHost.registerHandler(action, handler);
+        if (hasEvents) {
+          const prefix = plugin.pluginName;
+          bridgeHost.registerHandler(action, (payload: any, context: any) => {
+            const emit = (eventShortName: string, eventPayload: unknown) => {
+              bridgeHost.sendEvent(`${prefix}.${eventShortName}`, eventPayload);
+            };
+            return handler(payload, { ...context, emit });
+          });
+        } else {
+          bridgeHost.registerHandler(action, handler);
+        }
         registeredActions.add(action);
       }
     }

@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { usePlugin, useBridge, useEvent } from '../bridge';
+import { useState, useEffect } from 'react';
+import { usePlugin, useBridge } from '../bridge';
 import { location, type Position } from '@example/plugins';
 
 function LocationPage() {
-  const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
+  const { getCurrentPosition, watchPosition, clearWatch, on } = usePlugin(location);
   const { connectionMode } = useBridge();
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -12,11 +12,13 @@ function LocationPage() {
   const [livePosition, setLivePosition] = useState<Position | null>(null);
   const [eventCount, setEventCount] = useState(0);
 
-  // Native → Web push event: 위치가 바뀔 때마다 호스트가 보내주는 이벤트 수신
-  useEvent<Position>('location.updated', (pos) => {
-    setLivePosition(pos);
-    setEventCount((c) => c + 1);
-  });
+  // Native → Web push event via plugin event subscription
+  useEffect(() => {
+    return on('updated', (pos) => {
+      setLivePosition(pos);
+      setEventCount((c) => c + 1);
+    });
+  }, [on]);
 
   const handleGetCurrentPosition = async () => {
     setLoading(true);
@@ -139,14 +141,14 @@ function LocationPage() {
 
       <div className="card">
         <h2>Usage</h2>
-        <pre>{`// Request-Response: 한 번 요청, 한 번 응답
-const { getCurrentPosition } = usePlugin(location);
+        <pre>{`// Request-Response + Event — all from usePlugin
+const { getCurrentPosition, on } = usePlugin(location);
 const pos = await getCurrentPosition();
 
-// Event: 네이티브가 push할 때마다 수신
-useEvent<Position>('location.updated', (pos) => {
-  setPosition(pos);
-});`}</pre>
+// Event: typed subscription from plugin
+useEffect(() => {
+  return on('updated', (pos) => setPosition(pos));
+}, [on]);`}</pre>
       </div>
     </div>
   );

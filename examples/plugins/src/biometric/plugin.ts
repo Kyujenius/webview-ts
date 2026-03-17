@@ -4,6 +4,12 @@ import type { CheckAvailabilityResponse, AuthenticatePayload, AuthenticateRespon
 export const biometric = definePlugin('biometric', {
   checkAvailability: action<void, CheckAvailabilityResponse>(),
   authenticate: action<AuthenticatePayload, AuthenticateResponse>(),
+}).withFallback({
+  checkAvailability: async () => ({
+    available: true,
+    biometricTypes: ['fingerprint', 'face'],
+  }),
+  authenticate: async () => ({
+    success: true,
+  }),
 });
-
-export const BiometricActions = biometric.actions;

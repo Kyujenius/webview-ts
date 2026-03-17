@@ -11,12 +11,11 @@ import {
   deviceHost,
   shareHost,
 } from './hosts';
-import { setLocationSendEvent } from './hosts/location';
 
-const WEB_APP_URL = 'http://localhost:3001';
+const WEB_APP_URL = 'http://localhost:3003';
 
 export default function App() {
-  const { webViewProps, sendEvent } = useBridgeHost({
+  const { webViewProps } = useBridgeHost({
     plugins: [
       cameraHost,
       locationHost,
@@ -29,9 +28,6 @@ export default function App() {
     ],
     debug: true,
   });
-
-  // Wire up sendEvent so location host can push events to web
-  setLocationSendEvent(sendEvent);
 
   return (
     <SafeAreaView style={styles.safe}>

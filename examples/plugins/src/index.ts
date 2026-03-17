@@ -1,11 +1,13 @@
-export { camera, CameraActions, cameraFallback } from './camera';
-export { location, LocationActions, locationFallback } from './location';
-export { biometric, BiometricActions, biometricFallback } from './biometric';
-export { haptics, HapticsActions, hapticsFallback } from './haptics';
-export { phone, PhoneActions, phoneFallback } from './phone';
-export { calendar, CalendarActions, calendarFallback } from './calendar';
-export { device, DeviceActions, deviceFallback } from './device';
-export { share, ShareActions, shareFallback } from './share';
+export { camera } from './camera/plugin';
+export { location } from './location/plugin';
+export { biometric } from './biometric/plugin';
+export { haptics } from './haptics/plugin';
+export { phone } from './phone/plugin';
+export { calendar } from './calendar/plugin';
+export { device } from './device/plugin';
+export { share } from './share/plugin';
+export { clipboard } from './clipboard/plugin';
+export { storage } from './storage/plugin';
 
 // Plugin types
 export type {
@@ -15,19 +17,19 @@ export type {
   PickImageResponse,
   RecordVideoPayload,
   RecordVideoResponse,
-} from './camera';
+} from './camera/types';
 
-export type { Position, WatchPositionResponse, ClearWatchPayload } from './location';
+export type { Position, WatchPositionResponse, ClearWatchPayload } from './location/types';
 
 export type {
   CheckAvailabilityResponse,
   AuthenticatePayload,
   AuthenticateResponse,
-} from './biometric';
+} from './biometric/types';
 
-export type { ImpactPayload, NotificationPayload } from './haptics';
+export type { ImpactPayload, NotificationPayload } from './haptics/types';
 
-export type { CallPayload, CallResponse } from './phone';
+export type { CallPayload, CallResponse } from './phone/types';
 
 export type {
   AddEventPayload,
@@ -35,8 +37,8 @@ export type {
   GetEventsPayload,
   GetEventsResponse,
   CalendarEvent,
-} from './calendar';
+} from './calendar/types';
 
-export type { DeviceInfoResponse } from './device';
+export type { DeviceInfoResponse } from './device/types';
 
-export type { SharePayload, ShareResponse } from './share';
+export type { SharePayload, ShareResponse } from './share/types';
