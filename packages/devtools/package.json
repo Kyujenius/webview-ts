@@ -36,7 +36,7 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint src",
     "clean": "rm -rf dist",
     "serve": "node dist/cli.mjs"
