@@ -23,6 +23,8 @@ import type {
   InferPayload,
   InferResponse,
   ConnectionMode,
+  FallbackMap,
+  FallbackConfig,
 } from '@webview-ts/shared';
 /**
  * Event handler type
@@ -71,10 +73,10 @@ export class BridgeManager<
 
     this.adapter = createNativeAdapter();
 
-    if (!this.adapter.isAvailable() && this.config.fallback) {
-      this.adapter = new FallbackAdapter(
-        this.config.fallback as true | import('@webview-ts/shared').FallbackMap,
-        (response) => this.handleResponse(response)
+    const normalized = this.normalizeFallback(this.config.fallback);
+    if (!this.adapter.isAvailable() && normalized.enabled) {
+      this.adapter = new FallbackAdapter(normalized.handlers ?? true, (response) =>
+        this.handleResponse(response)
       );
     }
 
@@ -342,6 +344,21 @@ export class BridgeManager<
     for (const [action, timeout] of Object.entries(timeoutMap)) {
       this.actionTimeouts.set(action, timeout);
     }
+  }
+
+  /**
+   * Normalize the various fallback config forms into a simple { enabled, handlers? } shape.
+   */
+  private normalizeFallback(raw: BridgeConfig['fallback']): {
+    enabled: boolean;
+    handlers?: FallbackMap;
+  } {
+    if (raw === true) return { enabled: true };
+    if (raw === false || raw === undefined) return { enabled: false };
+    if (typeof raw === 'object' && 'mode' in raw) {
+      return { enabled: true, handlers: (raw as FallbackConfig).handlers };
+    }
+    return { enabled: true, handlers: raw as FallbackMap };
   }
 
   /**

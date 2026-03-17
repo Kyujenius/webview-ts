@@ -83,6 +83,42 @@ describe('BridgeManager', () => {
     });
   });
 
+  describe('fallback normalization', () => {
+    it('should treat true as enabled with no handlers', () => {
+      const b = new BridgeManager({ fallback: true });
+      expect(b.connectionMode).toBe('fallback');
+    });
+
+    it('should treat false as disabled', () => {
+      const b = new BridgeManager({ fallback: false });
+      expect(b.connectionMode).toBe('disconnected');
+    });
+
+    it('should treat undefined as disabled', () => {
+      const b = new BridgeManager({});
+      expect(b.connectionMode).toBe('disconnected');
+    });
+
+    it('should accept FallbackMap directly', () => {
+      const b = new BridgeManager({
+        fallback: { 'test.action': async () => 'ok' },
+      });
+      expect(b.connectionMode).toBe('fallback');
+    });
+
+    it('should accept explicit mode object with reject', () => {
+      const b = new BridgeManager({ fallback: { mode: 'reject' } });
+      expect(b.connectionMode).toBe('fallback');
+    });
+
+    it('should accept explicit mode object with mock and handlers', () => {
+      const b = new BridgeManager({
+        fallback: { mode: 'mock', handlers: { 'test.action': async () => 42 } },
+      });
+      expect(b.connectionMode).toBe('fallback');
+    });
+  });
+
   describe('destroy', () => {
     it('should clean up resources', () => {
       const handler = vi.fn();

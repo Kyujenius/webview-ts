@@ -59,9 +59,11 @@ export interface BridgeConfig {
   /**
    * Fallback mode for browser development without native bridge.
    * - `true`: log warnings and reject calls
+   * - `false`: disable fallback
    * - `FallbackMap`: use provided handlers as mock responses
+   * - `{ mode, handlers? }`: explicit form with mode selection
    */
-  fallback?: boolean | FallbackMap;
+  fallback?: boolean | FallbackMap | FallbackConfig;
 }
 
 export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
@@ -69,6 +71,11 @@ export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
 ) => Promise<TResponse> | TResponse;
 
 export type FallbackMap = Record<string, FallbackHandler>;
+
+export interface FallbackConfig {
+  mode: 'reject' | 'mock';
+  handlers?: FallbackMap;
+}
 
 /**
  * Bridge call options
