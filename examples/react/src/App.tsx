@@ -19,9 +19,11 @@ function App() {
   useEffect(() => {
     const transport = new WebSocketTransport({ port: 4000 });
     const devtools = createDevToolsMiddleware({ transport });
-    bridge.use(devtools.toMiddleware());
+    const mw = devtools.toMiddleware();
+    bridge.use(mw);
 
     return () => {
+      bridge.removeMiddleware(mw.name);
       transport.disconnect();
     };
   }, [bridge]);
