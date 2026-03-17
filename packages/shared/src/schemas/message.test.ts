@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBridgeMessage, isBridgeResponse } from './message';
+import { isBridgeEvent, isBridgeMessage, isBridgeResponse } from './message';
 
 describe('isBridgeMessage', () => {
   it('should return true for valid message', () => {
@@ -51,5 +51,33 @@ describe('isBridgeResponse', () => {
 
   it('should return false for non-boolean success', () => {
     expect(isBridgeResponse({ id: '1', success: 'yes', timestamp: 123 })).toBe(false);
+  });
+});
+
+describe('isBridgeEvent', () => {
+  it('should return true for valid event', () => {
+    expect(isBridgeEvent({ event: 'location.updated', payload: {}, timestamp: 1 })).toBe(true);
+  });
+
+  it('should return true for event with any payload', () => {
+    expect(isBridgeEvent({ event: 'data.changed', payload: [1, 2, 3], timestamp: 100 })).toBe(true);
+  });
+
+  it('should return false for missing event field', () => {
+    expect(isBridgeEvent({ payload: {}, timestamp: 1 })).toBe(false);
+  });
+
+  it('should return false for missing payload field', () => {
+    expect(isBridgeEvent({ event: 'test', timestamp: 1 })).toBe(false);
+  });
+
+  it('should return false for missing timestamp', () => {
+    expect(isBridgeEvent({ event: 'test', payload: {} })).toBe(false);
+  });
+
+  it('should return false for non-object values', () => {
+    expect(isBridgeEvent(null)).toBe(false);
+    expect(isBridgeEvent('string')).toBe(false);
+    expect(isBridgeEvent(42)).toBe(false);
   });
 });
