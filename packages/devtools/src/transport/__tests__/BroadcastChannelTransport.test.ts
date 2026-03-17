@@ -39,9 +39,15 @@ describe('BroadcastChannelTransport', () => {
     expect(handler).toHaveBeenCalledWith({ type: 'clear' });
   });
 
-  it('connected is always true', () => {
+  it('connected is true initially', () => {
     const t = new BroadcastChannelTransport();
     expect(t.connected).toBe(true);
+  });
+
+  it('should return false after disconnect', () => {
+    const transport = new BroadcastChannelTransport('test');
+    transport.disconnect();
+    expect(transport.connected).toBe(false);
   });
 
   it('stops receiving after disconnect', () => {

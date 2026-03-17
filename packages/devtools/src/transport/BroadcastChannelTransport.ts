@@ -6,6 +6,7 @@ export class BroadcastChannelTransport implements DevToolsTransport {
   private channel: BroadcastChannel;
   private handlers: Array<(data: TransportMessage) => void> = [];
   private disconnectHandlers: Array<() => void> = [];
+  private disposed = false;
 
   constructor(channelName: string = CHANNEL_NAME) {
     this.channel = new BroadcastChannel(channelName);
@@ -29,10 +30,11 @@ export class BroadcastChannelTransport implements DevToolsTransport {
   }
 
   get connected(): boolean {
-    return true;
+    return !this.disposed;
   }
 
   disconnect(): void {
+    this.disposed = true;
     this.channel.close();
     this.handlers = [];
     for (const h of this.disconnectHandlers) h();
