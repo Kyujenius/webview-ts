@@ -150,3 +150,61 @@ describe('createBridgeReact with plugins', () => {
     expect(result.current.data).toEqual({ echoed: 'test' });
   });
 });
+
+describe('Strict Mode compatibility', () => {
+  const {
+    BridgeProvider: StrictProvider,
+    usePlugin: useStrictPlugin,
+    useBridge: useStrictBridge,
+  } = createBridgeReact({
+    plugins: [mockPlugin],
+    config: {
+      timeout: 5000,
+      fallback: {
+        'mock.echo': async (payload: any) => ({ echoed: payload.msg }),
+      },
+    },
+  });
+
+  const strictWrapper = ({ children }: { children: React.ReactNode }) => (
+    <StrictProvider>{children}</StrictProvider>
+  );
+
+  it('should preserve plugin interceptors after remount', async () => {
+    // First mount — then unmount (simulates Strict Mode's unmount/remount cycle)
+    const { unmount } = renderHook(() => useStrictPlugin(mockPlugin), {
+      wrapper: strictWrapper,
+    });
+    unmount();
+
+    // Re-mount — bridge.destroy() was called on unmount, but interceptors should survive
+    const { result: result2 } = renderHook(() => useStrictPlugin(mockPlugin), {
+      wrapper: strictWrapper,
+    });
+
+    expect(typeof result2.current.echo).toBe('function');
+
+    let response: any;
+    await act(async () => {
+      response = await result2.current.echo({ msg: 'after-remount' });
+    });
+    expect(response).toEqual({ echoed: 'after-remount' });
+  });
+
+  it('should preserve bridge call functionality after remount', async () => {
+    const { unmount } = renderHook(() => useStrictBridge(), {
+      wrapper: strictWrapper,
+    });
+    unmount();
+
+    const { result } = renderHook(() => useStrictBridge(), {
+      wrapper: strictWrapper,
+    });
+
+    let response: any;
+    await act(async () => {
+      response = await result.current.call('mock.echo', { msg: 'survived' });
+    });
+    expect(response).toEqual({ echoed: 'survived' });
+  });
+});
