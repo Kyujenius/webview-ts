@@ -1,12 +1,18 @@
 export { definePlugin } from './define';
-export { action } from './types';
+export { action, event } from './types';
 export type {
   ActionMarker,
   ActionMarkerMap,
   ActionOptions,
+  EventMarker,
+  EventMarkerMap,
+  ExtractEventPayload,
   AutoMethods,
+  TypedEventSubscriber,
   ExpandActions,
   ShortHostHandlers,
+  ShortFallbackHandlers,
+  HostHandlerContext,
   PluginCall,
   InterceptorMap,
   TimeoutMap,
@@ -15,4 +21,6 @@ export type {
   RequestContext,
   MergePluginActions,
   PluginFromArray,
+  DefinePluginOptions,
+  EventNameMap,
 } from './types';

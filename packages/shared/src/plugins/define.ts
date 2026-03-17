@@ -1,5 +1,7 @@
 import type {
   ActionMarkerMap,
+  EventMarkerMap,
+  DefinePluginOptions,
   InterceptorMap,
   TimeoutMap,
   PluginInstance,
@@ -7,21 +9,40 @@ import type {
   HostPluginResult,
   AutoMethods,
   ActionNameMap,
+  EventNameMap,
   ExpandActions,
   PluginCall,
+  ShortFallbackHandlers,
 } from './types';
 import type { Middleware } from '../types/middleware';
+import type { FallbackMap } from '../types/bridge';
 
-export function definePlugin<TName extends string, const TMarkers extends ActionMarkerMap>(
+export function definePlugin<
+  TName extends string,
+  const TMarkers extends ActionMarkerMap,
+  TEvents extends EventMarkerMap = Record<string, never>,
+>(
   name: TName,
-  markers: TMarkers
-): PluginInstance<TName, TMarkers> {
+  markers: TMarkers,
+  options?: DefinePluginOptions<TEvents>
+): PluginInstance<TName, TMarkers, TEvents> {
   const shortNames = Object.keys(markers);
 
   // Build runtime action name map: { takePhoto: 'camera.takePhoto' }
   const actions = {} as Record<string, string>;
   for (const short of shortNames) {
     actions[short] = `${name}.${short}`;
+  }
+
+  // Build runtime event name map: { updated: 'location.updated' }
+  const eventNames = {} as Record<string, string>;
+  const eventFullNames: string[] = [];
+  if (options?.events) {
+    for (const key of Object.keys(options.events)) {
+      const fullName = `${name}.${key}`;
+      eventNames[key] = fullName;
+      eventFullNames.push(fullName);
+    }
   }
 
   // Extract per-action interceptors from markers
@@ -42,12 +63,15 @@ export function definePlugin<TName extends string, const TMarkers extends Action
     }
   }
 
-  return {
+  const instance: PluginInstance<TName, TMarkers, TEvents> = {
     name,
     _types: {} as ExpandActions<TName, TMarkers>,
+    _eventTypes: {} as TEvents,
     actions: actions as ActionNameMap<TName, TMarkers>,
+    events: eventNames as EventNameMap<TName, TEvents>,
     interceptors,
     timeouts,
+    fallback: undefined,
 
     methods(call: PluginCall<ExpandActions<TName, TMarkers>>) {
       const methods: Record<string, (payload: any) => Promise<any>> = {};
@@ -58,14 +82,25 @@ export function definePlugin<TName extends string, const TMarkers extends Action
       return methods as AutoMethods<TMarkers>;
     },
 
-    host(handlers: ShortHostHandlers<TMarkers>): HostPluginResult {
+    host(handlers: ShortHostHandlers<TMarkers, TEvents>): HostPluginResult {
       const wrappedHandlers: Record<string, (payload: any, context: any) => Promise<any>> = {};
       for (const short of shortNames) {
         const fullName = `${name}.${short}`;
         const handler = (handlers as any)[short];
         wrappedHandlers[fullName] = async (payload, context) => handler(payload, context);
       }
-      return { handlers: wrappedHandlers, pluginName: name };
+      return { handlers: wrappedHandlers, pluginName: name, eventNames: eventFullNames };
+    },
+
+    withFallback(handlers: ShortFallbackHandlers<TMarkers>) {
+      const mapped: FallbackMap = {};
+      for (const [short, fn] of Object.entries(handlers)) {
+        mapped[`${name}.${short}`] = fn as any;
+      }
+      (instance as any).fallback = mapped;
+      return instance;
     },
   };
+
+  return instance;
 }

@@ -1,5 +1,6 @@
 import type { ActionDefinitionShape } from '../types/action-map';
 import type { Middleware } from '../types/middleware';
+import type { FallbackMap } from '../types/bridge';
 
 // ─── action() type marker ───
 
@@ -40,6 +41,24 @@ export function action<TPayload = void, TResponse = void>(
 /** A record of short-name action markers */
 export type ActionMarkerMap = Record<string, ActionMarker<any, any>>;
 
+// ─── event() type marker ───
+
+/** Branded type marker — carries event payload type at type level */
+export interface EventMarker<TPayload = void> {
+  readonly __eventPayload: TPayload;
+}
+
+/** Zero-runtime type marker for defining plugin events */
+export function event<TPayload = void>(): EventMarker<TPayload> {
+  return {} as EventMarker<TPayload>;
+}
+
+/** A record of short-name event markers */
+export type EventMarkerMap = Record<string, EventMarker<any>>;
+
+/** Extract event payload type from an EventMarker */
+export type ExtractEventPayload<T> = T extends EventMarker<infer P> ? P : never;
+
 // ─── Type extraction utilities ───
 
 export type ExtractPayload<T> = T extends ActionMarker<infer P, any> ? P : never;
@@ -59,6 +78,11 @@ export type ActionNameMap<TName extends string, TMarkers extends ActionMarkerMap
   readonly [K in keyof TMarkers & string]: `${TName}.${K}`;
 };
 
+/** Runtime event name map: { updated: 'location.updated' } */
+export type EventNameMap<TName extends string, TEvents extends EventMarkerMap> = {
+  readonly [K in keyof TEvents & string]: `${TName}.${K}`;
+};
+
 /** Auto-generated client methods from markers */
 export type AutoMethods<TMarkers extends ActionMarkerMap> = {
   [K in keyof TMarkers & string]: ExtractPayload<TMarkers[K]> extends void
@@ -68,13 +92,37 @@ export type AutoMethods<TMarkers extends ActionMarkerMap> = {
       : (payload: ExtractPayload<TMarkers[K]>) => Promise<ExtractResponse<TMarkers[K]>>;
 };
 
-/** Host handlers with short names */
-export type ShortHostHandlers<TMarkers extends ActionMarkerMap> = {
+/** Typed event subscriber from usePlugin().on */
+export type TypedEventSubscriber<TEvents extends EventMarkerMap> = <
+  K extends keyof TEvents & string,
+>(
+  event: K,
+  handler: (payload: ExtractEventPayload<TEvents[K]>) => void
+) => () => void;
+
+/** Host handlers with short names — ctx includes emit when plugin has events */
+export type ShortHostHandlers<
+  TMarkers extends ActionMarkerMap,
+  TEvents extends EventMarkerMap = Record<string, never>,
+> = {
   [K in keyof TMarkers & string]: (
     payload: ExtractPayload<TMarkers[K]>,
-    context: RequestContext
+    context: HostHandlerContext<TEvents>
   ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
 };
+
+/** Context passed to host handlers — includes emit when plugin defines events */
+export type HostHandlerContext<TEvents extends EventMarkerMap = Record<string, never>> =
+  RequestContext &
+    ([keyof TEvents & string] extends [never]
+      ? // eslint-disable-next-line @typescript-eslint/ban-types
+        {}
+      : {
+          emit: <K extends keyof TEvents & string>(
+            event: K,
+            payload: ExtractEventPayload<TEvents[K]>
+          ) => void;
+        });
 
 // ─── Plugin instance ───
 
@@ -84,20 +132,39 @@ export type InterceptorMap = Record<string, Middleware[]>;
 /** Per-action timeout map: { 'camera.takePhoto': 5000 } */
 export type TimeoutMap = Record<string, number>;
 
+/** Options for definePlugin */
+export interface DefinePluginOptions<TEvents extends EventMarkerMap = Record<string, never>> {
+  events?: TEvents;
+}
+
 /** Plugin instance returned by definePlugin */
 export interface PluginInstance<
   TName extends string = string,
   TMarkers extends ActionMarkerMap = ActionMarkerMap,
+  TEvents extends EventMarkerMap = Record<string, never>,
 > {
   readonly name: TName;
   /** Type-only property. Empty at runtime. Used for TypeScript inference. */
   readonly _types: ExpandActions<TName, TMarkers>;
+  /** Type-only property for event type inference */
+  readonly _eventTypes: TEvents;
   readonly actions: ActionNameMap<TName, TMarkers>;
+  readonly events: EventNameMap<TName, TEvents>;
   readonly interceptors: InterceptorMap;
   readonly timeouts: TimeoutMap;
+  readonly fallback?: FallbackMap;
   readonly methods: (call: PluginCall<ExpandActions<TName, TMarkers>>) => AutoMethods<TMarkers>;
-  readonly host: (handlers: ShortHostHandlers<TMarkers>) => HostPluginResult;
+  readonly host: (handlers: ShortHostHandlers<TMarkers, TEvents>) => HostPluginResult;
+  /** Attach fallback handlers to this plugin (chainable) */
+  withFallback(handlers: ShortFallbackHandlers<TMarkers>): PluginInstance<TName, TMarkers, TEvents>;
 }
+
+/** Fallback handlers using short names — typed from action markers */
+export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
+  [K in keyof TMarkers & string]: (
+    payload: ExtractPayload<TMarkers[K]>
+  ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
+};
 
 // ─── Shared types ───
 
@@ -119,18 +186,19 @@ export interface RequestContext {
 export interface HostPluginResult {
   handlers: Record<string, (payload: any, context: any) => Promise<any>>;
   pluginName: string;
+  eventNames: string[];
 }
 
 /** Merge ActionMaps from multiple plugins into an intersection */
-export type MergePluginActions<T extends PluginInstance<any, any>[]> = T extends [
-  infer First extends PluginInstance<any, any>,
-  ...infer Rest extends PluginInstance<any, any>[],
+export type MergePluginActions<T extends PluginInstance<any, any, any>[]> = T extends [
+  infer First extends PluginInstance<any, any, any>,
+  ...infer Rest extends PluginInstance<any, any, any>[],
 ]
   ? First['_types'] & MergePluginActions<Rest>
   : Record<string, never>;
 
 /** Extract plugin from a plugins array by reference */
 export type PluginFromArray<
-  TPlugins extends PluginInstance<any, any>[],
-  TPlugin extends PluginInstance<any, any>,
+  TPlugins extends PluginInstance<any, any, any>[],
+  TPlugin extends PluginInstance<any, any, any>,
 > = TPlugin extends TPlugins[number] ? TPlugin : never;
