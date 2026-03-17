@@ -14,12 +14,15 @@ import { BridgeManager } from './bridge/BridgeManager';
 import type { BridgeConfig, ActionDefinitionShape } from '@webview-ts/shared';
 
 /**
- * Create and initialize a new bridge instance
+ * Create and initialize a new bridge instance.
+ * Calls connect() automatically so it's ready to use immediately.
  */
 export function createBridge<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(config?: BridgeConfig): BridgeManager<TActions> {
-  return new BridgeManager<TActions>(config);
+  const bridge = new BridgeManager<TActions>(config);
+  bridge.connect();
+  return bridge;
 }
 
 /**

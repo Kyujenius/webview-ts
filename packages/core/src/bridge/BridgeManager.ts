@@ -51,6 +51,8 @@ export class BridgeManager<
   private queue: MessageQueue;
   private middleware: MiddlewarePipeline;
   private eventHandlers = new Map<string, Set<EventHandler>>();
+  /** Global event interceptors (for devtools, logging, etc.) */
+  private eventInterceptors = new Set<(event: string, payload: unknown) => void>();
   /** Stores context per message id so the response phase can access it */
   private pendingContexts = new Map<string, MiddlewareContext>();
   /** Per-action interceptors: { 'camera.takePhoto': Middleware[] } */
@@ -88,12 +90,30 @@ export class BridgeManager<
       maxSize: this.config.maxConcurrentRequests,
     });
     this.middleware = new MiddlewarePipeline();
+  }
 
-    // Set up response handler
+  /**
+   * Start listening for messages and connect to DevTools.
+   * Must be called from useEffect (not useMemo/constructor) to avoid
+   * Strict Mode double-invocation leaking event listeners.
+   */
+  connect(): void {
+    if (this.messageListener) return; // already connected
     this.setupResponseHandler();
-
-    // Auto-connect to DevTools in development
     this._devtoolsCleanup = tryAutoDevTools(this);
+  }
+
+  /**
+   * Stop listening and disconnect DevTools, but preserve configuration
+   * (middleware, handlers, interceptors). Safe to call connect() again after.
+   */
+  disconnect(): void {
+    this._devtoolsCleanup?.();
+    this._devtoolsCleanup = undefined;
+    if (typeof window !== 'undefined' && this.messageListener) {
+      window.removeEventListener('message', this.messageListener);
+      this.messageListener = undefined;
+    }
   }
 
   /**
@@ -419,9 +439,28 @@ export class BridgeManager<
   }
 
   /**
+   * Subscribe to all events (wildcard). Useful for devtools, logging, etc.
+   * Returns an unsubscribe function.
+   */
+  onAnyEvent(handler: (event: string, payload: unknown) => void): () => void {
+    this.eventInterceptors.add(handler);
+    return () => {
+      this.eventInterceptors.delete(handler);
+    };
+  }
+
+  /**
    * Handle event from native
    */
   private handleEvent(event: BridgeEvent): void {
+    for (const interceptor of this.eventInterceptors) {
+      try {
+        interceptor(event.event, event.payload);
+      } catch {
+        // devtools/logging interceptors should not break event handling
+      }
+    }
+
     const handlers = this.eventHandlers.get(event.event);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -435,32 +474,28 @@ export class BridgeManager<
   }
 
   /**
-   * Clear runtime state only — pending callbacks, queued messages, and
-   * in-flight contexts.  Configuration (middleware, event handlers,
-   * interceptors, timeouts) is preserved so the instance can be reused
-   * after a React Strict Mode cleanup→remount cycle.
+   * Disconnect listeners and clear runtime state (pending callbacks,
+   * queued messages, in-flight contexts). Configuration (middleware,
+   * event handlers, interceptors, timeouts) is preserved so the instance
+   * can be reused after a React Strict Mode cleanup→remount cycle.
    */
   destroy(): void {
+    this.disconnect();
     this.callbacks.clear();
     this.queue.clear();
     this.pendingContexts.clear();
   }
 
   /**
-   * Full disposal — clears everything including configuration and the
-   * message listener.  Call only on true unmount.
+   * Full disposal — clears everything including configuration.
+   * Call only on true unmount.
    */
   dispose(): void {
-    this._devtoolsCleanup?.();
-    this._devtoolsCleanup = undefined;
     this.destroy();
     this.middleware.clear();
     this.eventHandlers.clear();
+    this.eventInterceptors.clear();
     this.actionInterceptors.clear();
     this.actionTimeouts.clear();
-    if (typeof window !== 'undefined' && this.messageListener) {
-      window.removeEventListener('message', this.messageListener);
-      this.messageListener = undefined;
-    }
   }
 }

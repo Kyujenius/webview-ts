@@ -24,11 +24,13 @@ const DEVTOOLS_MW_NAME = '__auto_devtools';
 export interface AutoDevToolsTarget {
   prepend(middleware: Middleware): void;
   removeMiddleware(name: string): boolean;
+  /** Subscribe to all events (optional — only BridgeManager has this) */
+  onAnyEvent?(handler: (event: string, payload: unknown) => void): () => void;
 }
 
 interface RecordPayload {
   recordId: string;
-  status: 'pending' | 'success' | 'error';
+  status: 'pending' | 'success' | 'error' | 'event';
   action: string;
   payload?: unknown;
   responseData?: unknown;
@@ -45,8 +47,8 @@ function generateRecordId(): string {
   return `record-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-function sendRecord(ws: WebSocket, record: RecordPayload): void {
-  if (ws.readyState === WebSocket.OPEN) {
+function sendRecord(ws: WebSocket | null, record: RecordPayload): void {
+  if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: 'record', record }));
   }
 }
@@ -124,6 +126,37 @@ let sharedRole: DevToolsRole = 'client';
 let targets = new Set<AutoDevToolsTarget>();
 let wsReady = false;
 
+/** Per-target event unsubscribe functions */
+const eventUnsubs = new Map<AutoDevToolsTarget, () => void>();
+
+function subscribeEvents(target: AutoDevToolsTarget, ws: WebSocket, role: DevToolsRole): void {
+  if (!target.onAnyEvent) return;
+  if (eventUnsubs.has(target)) return; // prevent duplicate subscription
+
+  // Events always flow host → client, so invert the source
+  const eventSource = role === 'client' ? 'host' : 'client';
+  const unsub = target.onAnyEvent((event: string, payload: unknown) => {
+    sendRecord(ws, {
+      recordId: generateRecordId(),
+      status: 'event',
+      action: event,
+      payload,
+      timestamp: Date.now(),
+      source: eventSource,
+    });
+  });
+
+  eventUnsubs.set(target, unsub);
+}
+
+function unsubscribeEvents(target: AutoDevToolsTarget): void {
+  const unsub = eventUnsubs.get(target);
+  if (unsub) {
+    unsub();
+    eventUnsubs.delete(target);
+  }
+}
+
 function getOrCreateWs(role: DevToolsRole): WebSocket | null {
   if (sharedWs && sharedWs.readyState !== WebSocket.CLOSED) {
     return sharedWs;
@@ -137,11 +170,15 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
     return null;
   }
 
+  const thisWs = sharedWs;
+
   sharedWs.onopen = () => {
+    // Guard: ignore if a newer WS has already replaced this one
+    if (sharedWs !== thisWs) return;
     wsReady = true;
-    // Register middleware on all pending targets
     for (const t of targets) {
       t.prepend(createRecordingMiddleware(sharedWs!, sharedRole));
+      subscribeEvents(t, sharedWs!, sharedRole);
     }
   };
 
@@ -150,10 +187,12 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
   };
 
   sharedWs.onclose = () => {
+    // Guard: ignore if a newer WS has already replaced this one
+    if (sharedWs !== thisWs) return;
     wsReady = false;
-    // Remove middleware from all active targets
     for (const t of targets) {
       t.removeMiddleware(DEVTOOLS_MW_NAME);
+      unsubscribeEvents(t);
     }
     sharedWs = null;
   };
@@ -184,14 +223,16 @@ export function tryAutoDevTools(
 
   targets.add(target);
 
-  // If WS is already open, register middleware immediately
+  // If WS is already open, register immediately
   if (wsReady) {
     target.prepend(createRecordingMiddleware(ws, role));
+    subscribeEvents(target, ws, role);
   }
 
   return () => {
     targets.delete(target);
     target.removeMiddleware(DEVTOOLS_MW_NAME);
+    unsubscribeEvents(target);
 
     // Close WS when no more targets
     if (targets.size === 0 && sharedWs) {
@@ -211,5 +252,6 @@ export function _resetAutoDevTools(): void {
   }
   sharedWs = null;
   targets = new Set();
+  eventUnsubs.clear();
   wsReady = false;
 }
