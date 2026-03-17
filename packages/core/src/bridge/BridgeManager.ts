@@ -7,6 +7,7 @@ import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { generateMessageId } from '../utils/id-generator';
+import { BridgeCallError, METADATA_KEYS } from '@webview-ts/shared';
 import type {
   BridgeConfig,
   BridgeCallOptions,
@@ -106,9 +107,9 @@ export class BridgeManager<
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         const bridgeError: BridgeError = {
-          code: (error as any)?.code ?? 'BRIDGE_ERROR',
+          code: error instanceof BridgeCallError ? error.code : 'BRIDGE_ERROR',
           message: lastError.message,
-          details: (error as any)?.details,
+          details: error instanceof BridgeCallError ? error.details : undefined,
         };
         this.config.onError?.(bridgeError, {
           action: action as string,
@@ -184,10 +185,11 @@ export class BridgeManager<
         const response = await responsePromise;
 
         if (!response.success) {
-          const error = new Error(response.error?.message || 'Bridge call failed');
-          (error as any).code = response.error?.code;
-          (error as any).details = response.error?.details;
-          throw error;
+          throw new BridgeCallError(
+            response.error?.message || 'Bridge call failed',
+            response.error?.code || 'BRIDGE_ERROR',
+            response.error?.details
+          );
         }
 
         ctx.response = response;
@@ -207,7 +209,7 @@ export class BridgeManager<
         logs?: string[];
         metadataChanges?: Record<string, unknown>;
       }> = [];
-      ctx.metadata.set('__mwTraces', traces);
+      ctx.metadata.set(METADATA_KEYS.MW_TRACES, traces);
       const handlerStart = { value: 0 };
       const handlerEnd = { value: 0 };
 
@@ -230,12 +232,12 @@ export class BridgeManager<
       // Store handler timing
       if (handlerStart.value > 0) {
         ctx.metadata.set(
-          '__handlerMs',
+          METADATA_KEYS.HANDLER_MS,
           Math.round((handlerEnd.value - handlerStart.value) * 100) / 100
         );
-        ctx.metadata.set('__handlerSkipped', false);
+        ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, false);
       } else {
-        ctx.metadata.set('__handlerSkipped', true);
+        ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, true);
       }
 
       return ctx.response?.data as InferResponse<TActions, TAction>;
@@ -381,7 +383,7 @@ export class BridgeManager<
 
       const mw = middlewares[i];
       // Skip tracing for middleware that opts out (e.g. devtools itself)
-      const skipTrace = (mw as any).__skipTrace === true;
+      const skipTrace = mw.__skipTrace === true;
 
       if (skipTrace) {
         return mw.fn(ctx, () => dispatch(i + 1));
@@ -399,7 +401,9 @@ export class BridgeManager<
         const didShortCircuit = !reachedCore && i === index;
 
         // Collect MW logs
-        const logs = ctx.metadata.get(`__mwLog:${mw.name}`) as string[] | undefined;
+        const logs = ctx.metadata.get(`${METADATA_KEYS.MW_LOG_PREFIX}${mw.name}`) as
+          | string[]
+          | undefined;
 
         // Detect metadata changes (new or modified keys, excluding internal __ keys)
         const metadataChanges: Record<string, unknown> = {};
@@ -417,7 +421,9 @@ export class BridgeManager<
           exitMs: Math.round((exitEnd - enterEnd) * 100) / 100,
           shortCircuit: didShortCircuit,
           shortCircuitReason: didShortCircuit
-            ? (ctx.metadata.get(`__shortCircuitReason:${mw.name}`) as string | undefined)
+            ? (ctx.metadata.get(`${METADATA_KEYS.SHORT_CIRCUIT_PREFIX}${mw.name}`) as
+                | string
+                | undefined)
             : undefined,
           error: error ? { message: error.message, stack: error.stack } : undefined,
           logs,

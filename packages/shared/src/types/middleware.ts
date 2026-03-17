@@ -40,6 +40,7 @@ export type MiddlewareFn = (ctx: MiddlewareContext, next: () => Promise<void>) =
 export interface Middleware {
   name: string;
   fn: MiddlewareFn;
+  __skipTrace?: boolean;
 }
 
 /**
