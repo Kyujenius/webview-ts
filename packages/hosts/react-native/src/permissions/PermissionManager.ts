@@ -1,5 +1,6 @@
 import { PermissionStatus } from '@webview-ts/shared';
 import { Platform } from 'react-native';
+import { createDebugLogger } from '../utils/debug-log';
 
 /**
  * Configuration for PermissionManager
@@ -49,6 +50,7 @@ export class PermissionManager {
   private config: Required<PermissionManagerConfig>;
   private handlers: Map<string, PermissionHandler>;
   private cache: Map<string, PermissionResult>;
+  private log: (message: string, data?: unknown) => void;
 
   constructor(config: PermissionManagerConfig = {}) {
     this.config = {
@@ -57,6 +59,7 @@ export class PermissionManager {
     };
     this.handlers = new Map();
     this.cache = new Map();
+    this.log = createDebugLogger('PermissionManager', this.config.debug);
   }
 
   /**
@@ -210,22 +213,6 @@ export class PermissionManager {
    */
   getPlatform(): string {
     return Platform.OS;
-  }
-
-  /**
-   * Internal logging
-   */
-  private log(message: string, data?: unknown): void {
-    if (!this.config.debug) {
-      return;
-    }
-
-    const prefix = '[PermissionManager]';
-    if (data !== undefined) {
-      console.log(prefix, message, data);
-    } else {
-      console.log(prefix, message);
-    }
   }
 }
 

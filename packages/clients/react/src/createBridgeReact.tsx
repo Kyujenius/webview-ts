@@ -1,12 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
 import { createBridge } from '@webview-ts/core';
 import type { BridgeManager } from '@webview-ts/core';
 import type {
@@ -15,10 +7,11 @@ import type {
   ConnectionMode,
   ActionDefinitionShape,
   ActionNames,
-  InferPayload,
-  InferResponse,
 } from '@webview-ts/shared';
 import type { PluginInstance, PluginCall, MergePluginActions } from '@webview-ts/shared';
+import { useBridgeCore } from './internal/useBridgeCore';
+import { useActionCore } from './internal/useActionCore';
+import { useEventCore } from './internal/useEventCore';
 
 interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
   bridge: BridgeManager<TActions>;
@@ -111,23 +104,7 @@ export function createBridgeReact<
 
   function useBridge() {
     const { bridge, isAvailable, connectionMode } = useTypedContext();
-    const call = useCallback(
-      <TAction extends ActionNames<TAllActions>>(
-        action: TAction,
-        payload: InferPayload<TAllActions, TAction>,
-        options?: BridgeCallOptions
-      ) => bridge.call(action, payload, options),
-      [bridge]
-    );
-    const on = useCallback(
-      <TPayload = unknown,>(event: string, handler: (payload: TPayload) => void) =>
-        bridge.on(event, handler),
-      [bridge]
-    );
-    const off = useCallback(
-      (event: string, handler?: (payload: unknown) => void) => bridge.off(event, handler),
-      [bridge]
-    );
+    const { call, on, off } = useBridgeCore(bridge);
     return { call, on, off, isAvailable, connectionMode, bridge };
   }
 
@@ -137,54 +114,15 @@ export function createBridgeReact<
     action: TAction,
     defaultOptions?: BridgeCallOptions
   ) {
-    type TResponse = InferResponse<TAllActions, TAction>;
     const { bridge } = useTypedContext();
-    const [data, setData] = useState<TResponse | null>(null);
-    const [error, setError] = useState<Error | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const execute = useCallback(
-      async (
-        payload: InferPayload<TAllActions, TAction>,
-        options?: BridgeCallOptions
-      ): Promise<TResponse> => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const result = await bridge.call(action, payload, options ?? defaultOptions);
-          setData(result);
-          return result;
-        } catch (err) {
-          const e = err instanceof Error ? err : new Error(String(err));
-          setError(e);
-          throw e;
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      [bridge, action, defaultOptions]
-    );
-
-    const reset = useCallback(() => {
-      setData(null);
-      setError(null);
-      setIsLoading(false);
-    }, []);
-    return { execute, data, error, isLoading, reset };
+    return useActionCore(bridge, action, defaultOptions);
   }
 
   // ---- useEvent ----
 
   function useEvent<TPayload = unknown>(event: string, handler: (payload: TPayload) => void): void {
     const { bridge } = useTypedContext();
-    const handlerRef = useRef(handler);
-    handlerRef.current = handler;
-    useEffect(() => {
-      const unsubscribe = bridge.on(event, (payload: unknown) => {
-        handlerRef.current(payload as TPayload);
-      });
-      return unsubscribe;
-    }, [bridge, event]);
+    useEventCore(bridge, event, handler);
   }
 
   // ---- usePlugin ----

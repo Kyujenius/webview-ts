@@ -1,5 +1,6 @@
 import type { WebView } from 'react-native-webview';
 import type { BridgeHost } from './BridgeHost';
+import { createDebugLogger } from '../utils/debug-log';
 
 export interface MessageHandlerConfig {
   debug?: boolean;
@@ -22,6 +23,7 @@ export class MessageHandler {
   private config: Required<MessageHandlerConfig>;
   private bridgeHost: BridgeHost;
   private webViewRef?: WebView;
+  private log: (message: string, data?: unknown) => void;
 
   constructor(bridgeHost: BridgeHost, config: MessageHandlerConfig = {}) {
     this.config = {
@@ -29,6 +31,7 @@ export class MessageHandler {
       onError: config.onError ?? ((error) => console.error('[MessageHandler]', error)),
     };
     this.bridgeHost = bridgeHost;
+    this.log = createDebugLogger('MessageHandler', this.config.debug);
 
     this.bridgeHost.setMessageCallback((message) => {
       this.sendToWebView(message);
@@ -82,16 +85,6 @@ export class MessageHandler {
 
   getOnMessageHandler(): (event: WebViewMessageEvent) => void {
     return this.handleWebViewMessage;
-  }
-
-  private log(message: string, data?: unknown): void {
-    if (!this.config.debug) return;
-    const prefix = '[MessageHandler]';
-    if (data !== undefined) {
-      console.log(prefix, message, data);
-    } else {
-      console.log(prefix, message);
-    }
   }
 }
 

@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import type {
   ActionDefinitionShape,
   ActionNames,
@@ -7,6 +6,7 @@ import type {
   BridgeCallOptions,
 } from '@webview-ts/shared';
 import { useBridgeContext } from './BridgeContext';
+import { useBridgeCore } from './internal/useBridgeCore';
 
 export interface UseBridgeReturn<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
@@ -25,22 +25,6 @@ export function useBridge<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(): UseBridgeReturn<TActions> {
   const { bridge, isAvailable } = useBridgeContext<TActions>();
-  const call = useCallback(
-    <TAction extends ActionNames<TActions>>(
-      action: TAction,
-      payload: InferPayload<TActions, TAction>,
-      options?: BridgeCallOptions
-    ) => bridge.call(action, payload, options),
-    [bridge]
-  );
-  const on = useCallback(
-    <TPayload = unknown>(event: string, handler: (payload: TPayload) => void) =>
-      bridge.on(event, handler),
-    [bridge]
-  );
-  const off = useCallback(
-    (event: string, handler?: (payload: unknown) => void) => bridge.off(event, handler),
-    [bridge]
-  );
+  const { call, on, off } = useBridgeCore(bridge);
   return { call, on, off, isAvailable };
 }
