@@ -72,7 +72,7 @@ export class BridgeHost implements IBridgeHost {
 
   registerHandler<TPayload = unknown, TResponse = unknown>(
     action: string,
-    handler: (payload: TPayload, context?: RequestContext) => Promise<TResponse> | TResponse
+    handler: (payload: TPayload, context: RequestContext) => Promise<TResponse> | TResponse
   ): void {
     if (this.handlers.has(action)) {
       throw new Error(`Action '${action}' is already registered`);

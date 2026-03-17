@@ -111,7 +111,10 @@ export class BridgeManager<
         const bridgeError: BridgeError = {
           code: error instanceof BridgeCallError ? error.code : 'BRIDGE_ERROR',
           message: lastError.message,
-          details: error instanceof BridgeCallError ? error.details : undefined,
+          details:
+            error instanceof BridgeCallError
+              ? (error.details as Record<string, unknown> | undefined)
+              : undefined,
         };
         this.config.onError?.(bridgeError, {
           action: action as string,
