@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RecordedMessage } from '../types';
 import './app.css';
-
-interface BridgeRecord {
-  recordId: string;
-  action: string;
-  status: 'pending' | 'success' | 'error' | 'timeout';
-  payload?: unknown;
-  responseData?: unknown;
-  error?: string;
-  duration?: number;
-  timestamp: number;
-}
 
 type Filter = 'all' | 'success' | 'error' | 'pending';
 type InspectorTab = 'payload' | 'response' | 'raw';
@@ -40,7 +30,7 @@ function statusIcon(s: string) {
 }
 
 export function App() {
-  const [records, setRecords] = useState<Map<string, BridgeRecord>>(new Map());
+  const [records, setRecords] = useState<Map<string, RecordedMessage>>(new Map());
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -63,7 +53,7 @@ export function App() {
       };
 
       ws.onmessage = (e) => {
-        let msg: { type: string; record?: BridgeRecord; appConnected?: boolean };
+        let msg: { type: string; record?: RecordedMessage; appConnected?: boolean };
         try {
           msg = JSON.parse(e.data);
         } catch {
