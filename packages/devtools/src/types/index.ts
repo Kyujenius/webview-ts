@@ -7,7 +7,7 @@ import type { DevToolsTransport } from '../transport/DevToolsTransport';
 /**
  * Call status lifecycle: PENDING → SUCCESS | ERROR | TIMEOUT
  */
-export type MessageStatus = 'pending' | 'success' | 'error' | 'timeout';
+export type MessageStatus = 'pending' | 'success' | 'error' | 'timeout' | 'event';
 
 /**
  * Trace entry for a single middleware or interceptor execution
