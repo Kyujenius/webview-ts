@@ -63,8 +63,9 @@ describe('BridgeManager', () => {
 
       unsubscribe();
 
-      // Verify handler was removed (internal state check would be needed)
-      expect(true).toBe(true);
+      // Simulate event dispatch and verify handler is NOT called
+      bridge['eventHandlers'].get('testEvent')?.forEach((h) => h({}));
+      expect(handler).not.toHaveBeenCalled();
     });
 
     it('should handle multiple handlers for same event', () => {
@@ -74,8 +75,11 @@ describe('BridgeManager', () => {
       bridge.on('testEvent', handler1);
       bridge.on('testEvent', handler2);
 
-      // Both handlers should be registered
-      expect(true).toBe(true);
+      // Simulate event dispatch and verify both handlers are called
+      const payload = { data: 'test' };
+      bridge['eventHandlers'].get('testEvent')?.forEach((h) => h(payload));
+      expect(handler1).toHaveBeenCalledWith(payload);
+      expect(handler2).toHaveBeenCalledWith(payload);
     });
   });
 
@@ -86,8 +90,8 @@ describe('BridgeManager', () => {
 
       bridge.destroy();
 
-      // After destroy, bridge should be cleaned up
-      expect(true).toBe(true);
+      // After destroy, event handlers should be cleared
+      expect(bridge['eventHandlers'].size).toBe(0);
     });
   });
 });
