@@ -5,18 +5,102 @@ describe('BridgeManager - Cleanup', () => {
   let bridge: BridgeManager;
 
   afterEach(() => {
-    bridge?.destroy();
+    bridge?.dispose();
   });
 
   describe('destroy()', () => {
-    it('should clean up all resources', () => {
+    it('should preserve middleware after destroy', () => {
+      bridge = new BridgeManager({ fallback: true });
+      const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
+      bridge.use(mw);
+      bridge.destroy();
+
+      // Middleware survives destroy — accessible via the private pipeline
+      expect(bridge['middleware'].getAll()).toHaveLength(1);
+      expect(bridge['middleware'].getAll()[0].name).toBe('test');
+    });
+
+    it('should preserve event handlers after destroy', () => {
       bridge = new BridgeManager({ fallback: true });
       const handler = vi.fn();
       bridge.on('testEvent', handler);
       bridge.destroy();
 
-      // Idempotent
+      expect(bridge['eventHandlers'].size).toBe(1);
+    });
+
+    it('should preserve action interceptors after destroy', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.registerInterceptors({
+        'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
+      });
+      bridge.destroy();
+
+      expect(bridge['actionInterceptors'].size).toBe(1);
+    });
+
+    it('should preserve action timeouts after destroy', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.registerTimeouts({ 'camera.getInfo': 5000 });
+      bridge.destroy();
+
+      expect(bridge['actionTimeouts'].size).toBe(1);
+    });
+
+    it('should clear pending contexts after destroy', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge['pendingContexts'].set('test-id', {} as any);
+      bridge.destroy();
+
+      expect(bridge['pendingContexts'].size).toBe(0);
+    });
+
+    it('should be idempotent', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.destroy();
       expect(() => bridge.destroy()).not.toThrow();
+    });
+  });
+
+  describe('dispose()', () => {
+    it('should clear middleware after dispose', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.use({ name: 'test', fn: async (_ctx: any, next: any) => next() });
+      bridge.dispose();
+
+      expect(bridge['middleware'].getAll()).toHaveLength(0);
+    });
+
+    it('should clear event handlers after dispose', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.on('testEvent', vi.fn());
+      bridge.dispose();
+
+      expect(bridge['eventHandlers'].size).toBe(0);
+    });
+
+    it('should clear action interceptors after dispose', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.registerInterceptors({
+        'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
+      });
+      bridge.dispose();
+
+      expect(bridge['actionInterceptors'].size).toBe(0);
+    });
+
+    it('should clear action timeouts after dispose', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.registerTimeouts({ 'camera.getInfo': 5000 });
+      bridge.dispose();
+
+      expect(bridge['actionTimeouts'].size).toBe(0);
+    });
+
+    it('should be idempotent', () => {
+      bridge = new BridgeManager({ fallback: true });
+      bridge.dispose();
+      expect(() => bridge.dispose()).not.toThrow();
     });
   });
 

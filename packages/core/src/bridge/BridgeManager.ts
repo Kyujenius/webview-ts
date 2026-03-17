@@ -427,23 +427,27 @@ export class BridgeManager<
   }
 
   /**
-   * Destroy bridge and clean up resources
+   * Clear runtime state only — pending callbacks, queued messages, and
+   * in-flight contexts.  Configuration (middleware, event handlers,
+   * interceptors, timeouts) is preserved so the instance can be reused
+   * after a React Strict Mode cleanup→remount cycle.
    */
   destroy(): void {
     this.callbacks.clear();
     this.queue.clear();
-    this.middleware.clear();
-    this.eventHandlers.clear();
     this.pendingContexts.clear();
-    this.actionInterceptors.clear();
-    this.actionTimeouts.clear();
   }
 
   /**
-   * Full disposal — removes message listener. Call only on true unmount.
+   * Full disposal — clears everything including configuration and the
+   * message listener.  Call only on true unmount.
    */
   dispose(): void {
     this.destroy();
+    this.middleware.clear();
+    this.eventHandlers.clear();
+    this.actionInterceptors.clear();
+    this.actionTimeouts.clear();
     if (typeof window !== 'undefined' && this.messageListener) {
       window.removeEventListener('message', this.messageListener);
       this.messageListener = undefined;

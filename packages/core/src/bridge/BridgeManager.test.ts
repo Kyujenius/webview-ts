@@ -120,14 +120,14 @@ describe('BridgeManager', () => {
   });
 
   describe('destroy', () => {
-    it('should clean up resources', () => {
+    it('should preserve event handlers (only clears runtime state)', () => {
       const handler = vi.fn();
       bridge.on('testEvent', handler);
 
       bridge.destroy();
 
-      // After destroy, event handlers should be cleared
-      expect(bridge['eventHandlers'].size).toBe(0);
+      // After destroy, event handlers should be preserved
+      expect(bridge['eventHandlers'].size).toBe(1);
     });
   });
 });
