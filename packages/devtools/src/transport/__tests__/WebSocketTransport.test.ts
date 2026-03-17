@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WebSocketTransport } from '../WebSocketTransport';
 
 class MockWebSocket {
@@ -14,6 +14,7 @@ class MockWebSocket {
 
   constructor(url: string) {
     this.url = url;
+    // Use setTimeout so the transport can assign handlers before onopen fires
     setTimeout(() => this.onopen?.(), 0);
   }
   send(data: string) {
@@ -26,12 +27,24 @@ class MockWebSocket {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.stubGlobal('WebSocket', MockWebSocket);
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** Create a transport and flush the initial onopen timer */
+function createTransport(config?: ConstructorParameters<typeof WebSocketTransport>[0]) {
+  const t = new WebSocketTransport({ port: 4000, ...config });
+  vi.runAllTimers(); // flush setTimeout(onopen, 0)
+  return t;
+}
+
 describe('WebSocketTransport', () => {
   it('sends serialized messages', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     t.send({ type: 'clear' });
 
     const ws = (t as any).ws as MockWebSocket;
@@ -39,7 +52,7 @@ describe('WebSocketTransport', () => {
   });
 
   it('receives and deserializes messages', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     const handler = vi.fn();
     t.onMessage(handler);
 
@@ -50,7 +63,7 @@ describe('WebSocketTransport', () => {
   });
 
   it('fires onDisconnect when socket closes', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     const handler = vi.fn();
     t.onDisconnect(handler);
 
@@ -61,7 +74,7 @@ describe('WebSocketTransport', () => {
   });
 
   it('connected reflects ws readyState', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     expect(t.connected).toBe(true);
 
     const ws = (t as any).ws as MockWebSocket;
@@ -70,7 +83,7 @@ describe('WebSocketTransport', () => {
   });
 
   it('ignores malformed messages', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     const handler = vi.fn();
     t.onMessage(handler);
 
@@ -81,11 +94,39 @@ describe('WebSocketTransport', () => {
   });
 
   it('does not send when socket is closed', () => {
-    const t = new WebSocketTransport({ port: 4000 });
+    const t = createTransport();
     const ws = (t as any).ws as MockWebSocket;
     ws.readyState = MockWebSocket.CLOSED;
 
     t.send({ type: 'clear' });
     expect(ws.sent).toHaveLength(0);
+  });
+
+  it('should fire disconnect handler only once during reconnection attempts', () => {
+    const t = createTransport({ reconnectInterval: 100 });
+
+    const handler = vi.fn();
+    t.onDisconnect(handler);
+
+    // Capture the connected ws before closing
+    const ws1 = (t as any).ws as MockWebSocket;
+
+    // First close: connected → disconnected, should fire handler
+    ws1.onclose?.();
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    // Trigger reconnect timer → creates new WebSocket, but DON'T flush onopen timer
+    vi.advanceTimersByTime(100);
+
+    // The new socket failed to connect (onclose fires without onopen ever firing)
+    // Get reference to the new socket created by connect()
+    // Since onopen hasn't fired, (t as any).ws is null, but connect() created a local ws
+    // Simulate: calling onclose again (e.g. from the old socket or a failed reconnect)
+    // This is the bug: onclose fires disconnect handlers even when not connected
+    ws1.onclose?.();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    t.disconnect();
   });
 });

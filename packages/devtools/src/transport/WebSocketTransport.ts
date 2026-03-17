@@ -14,6 +14,7 @@ export class WebSocketTransport implements DevToolsTransport {
   private reconnectInterval: number;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
+  private isConnected = false;
 
   constructor(config: WebSocketTransportConfig = {}) {
     const host = config.host ?? 'localhost';
@@ -30,6 +31,7 @@ export class WebSocketTransport implements DevToolsTransport {
 
     ws.onopen = () => {
       this.ws = ws;
+      this.isConnected = true;
     };
 
     ws.onmessage = (event: MessageEvent) => {
@@ -42,8 +44,12 @@ export class WebSocketTransport implements DevToolsTransport {
     };
 
     ws.onclose = () => {
+      const wasConnected = this.isConnected;
+      this.isConnected = false;
       this.ws = null;
-      for (const h of this.disconnectHandlers) h();
+      if (wasConnected) {
+        for (const h of this.disconnectHandlers) h();
+      }
       if (!this.disposed) {
         this.timer = setTimeout(() => this.connect(), this.reconnectInterval);
       }
