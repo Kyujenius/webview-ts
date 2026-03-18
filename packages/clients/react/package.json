@@ -45,7 +45,7 @@
     "use-sync-external-store": "^1.6.0"
   },
   "peerDependencies": {
-    "react": ">=17.0.0"
+    "react": ">=16.8.0"
   },
   "devDependencies": {
     "@testing-library/react": "^14.0.0",
