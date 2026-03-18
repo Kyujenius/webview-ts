@@ -1,5 +1,9 @@
-import type { ActionDefinitionShape, ActionNames, BridgeCallOptions } from '@webview-ts/shared';
-import type { ActionStatus } from '@webview-ts/core';
+import type {
+  ActionDefinitionShape,
+  ActionNames,
+  BridgeCallOptions,
+  ActionStatus,
+} from '@webview-ts/shared';
 import { useBridgeContext } from './BridgeContext';
 import { useActionCore } from './internal/useActionCore';
 
