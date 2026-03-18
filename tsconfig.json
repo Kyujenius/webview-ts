@@ -16,7 +16,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "jsx": "react-jsx"
   },
-  "exclude": ["node_modules", "dist", "build", ".turbo"]
+  "exclude": ["node_modules", "dist", "build", ".turbo", "tests", "examples/react-native"]
 }

@@ -3,3 +3,53 @@ packages:
   - "packages/clients/*"
   - "packages/hosts/*"
   - "examples/*"
+
+# ──────────────────────────────────────────────
+# Version Catalog
+# Centralized external dependency version management across the workspace.
+# Usage: reference via "catalog:" protocol in package.json
+#   e.g. "react": "catalog:"  →  resolves to the version below
+# ──────────────────────────────────────────────
+
+catalog:
+  # ── Runtime ──
+  react: ^18.3.0
+  react-dom: ^18.3.0
+  react-native: ^0.76.0
+  react-native-webview: ^13.12.0
+  react-router-dom: ^6.22.0
+  use-sync-external-store: ^1.6.0
+  ws: ^8.17.0
+
+  # ── Build ──
+  typescript: ^5.4.5
+  tsup: ^8.1.0
+  turbo: ^2.0.0
+  vite: ^5.1.0
+  "@vitejs/plugin-react": ^4.2.0
+  vite-plugin-singlefile: ^2.3.2
+
+  # ── Types ──
+  "@types/node": ^20.14.0
+  "@types/react": ^18.3.0
+  "@types/react-dom": ^18.3.0
+  "@types/use-sync-external-store": ^1.5.0
+  "@types/ws": ^8.18.1
+
+  # ── Lint / Format ──
+  eslint: ^8.56.0
+  prettier: ^3.2.5
+  "@typescript-eslint/eslint-plugin": ^7.0.0
+  "@typescript-eslint/parser": ^7.0.0
+
+  # ── Test ──
+  vitest: ^1.6.0
+  "@vitest/ui": ^1.6.0
+  happy-dom: ^14.12.0
+  "@testing-library/react": ^14.0.0
+  "@testing-library/jest-dom": ^6.9.1
+
+  # ── Release ──
+  "@changesets/cli": ^2.27.1
+  husky: ^9.1.7
+  lint-staged: ^16.4.0

@@ -2,7 +2,9 @@
   "name": "@webview-ts/react",
   "version": "0.0.0",
   "type": "module",
+  "sideEffects": false,
   "description": "React hooks and provider for webview-ts",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Kyujenius/webview-ts",
@@ -42,24 +44,23 @@
   "dependencies": {
     "@webview-ts/core": "workspace:*",
     "@webview-ts/shared": "workspace:*",
-    "use-sync-external-store": "^1.6.0"
+    "use-sync-external-store": "catalog:"
   },
   "peerDependencies": {
     "react": ">=16.8.0"
   },
   "devDependencies": {
-    "@testing-library/react": "^14.0.0",
-    "@types/react": "^18.2.0",
-    "@types/use-sync-external-store": "^1.5.0",
-    "happy-dom": "^14.12.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tsup": "^8.1.0",
-    "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/use-sync-external-store": "catalog:",
+    "happy-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "files": [
     "dist"
-  ],
-  "license": "MIT"
+  ]
 }

@@ -1,0 +1,89 @@
+import { BridgeHost } from '@webview-ts/native';
+import { BridgeManager } from '@webview-ts/core';
+import type { BridgeMessage, Middleware } from '@webview-ts/shared';
+
+export interface LoopbackPairOptions {
+  clientMiddleware?: Middleware[];
+  hostMiddleware?: Middleware[];
+  hostConfig?: { timeout?: number; debug?: boolean };
+  clientConfig?: { timeout?: number; debug?: boolean; maxConcurrentRequests?: number };
+}
+
+/**
+ * Create a BridgeManager <-> BridgeHost pair connected via FallbackAdapter loopback.
+ *
+ * Message flow (call/response):
+ *   BridgeManager.call()
+ *     -> FallbackAdapter invokes handler
+ *       -> handler calls host.handleMessage(message) -- object-level
+ *         -> host middleware pipeline -> handler executes -> BridgeResponse
+ *           -> FallbackAdapter resolves promise -> BridgeManager receives data
+ *
+ * Message flow (events):
+ *   host.sendEvent() -> messageCallback -> BridgeManager.handleEvent()
+ *
+ * Note: JSON serialization boundary is tested separately in serialization-boundary.test.ts
+ * via BridgeHost.handleMessageString() directly.
+ */
+export function createLoopbackPair(options: LoopbackPairOptions = {}) {
+  const host = new BridgeHost(options.hostConfig);
+
+  // Capture messages sent from host -> client
+  const clientInbox: string[] = [];
+  const clientMessageHandler: ((event: MessageEvent) => void) | null = null;
+
+  host.setMessageCallback((json: string) => {
+    clientInbox.push(json);
+    // Simulate postMessage dispatch to client
+    if (clientMessageHandler) {
+      const event = new MessageEvent('message', { data: json });
+      clientMessageHandler(event);
+    }
+  });
+
+  // Build fallback that routes through BridgeHost (object-level)
+  const fallbackHandlers: Record<string, (payload: any) => Promise<any>> = {};
+
+  function registerHostHandler(action: string, handler: (payload: any, ctx?: any) => Promise<any>) {
+    host.registerHandler(action, handler);
+    // Also register a fallback that routes through the host's full pipeline
+    fallbackHandlers[action] = async (payload: any) => {
+      const message: BridgeMessage = {
+        id: `lb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        action,
+        payload,
+        timestamp: Date.now(),
+      };
+      const response = await host.handleMessage(message);
+      if (!response.success) {
+        throw new Error(response.error?.message ?? 'Host handler failed');
+      }
+      return response.data;
+    };
+  }
+
+  const bridge = new BridgeManager({
+    ...options.clientConfig,
+    fallback: { mode: 'always', handlers: fallbackHandlers },
+  });
+
+  // Apply middleware
+  for (const mw of options.clientMiddleware ?? []) bridge.use(mw);
+  for (const mw of options.hostMiddleware ?? []) host.use(mw);
+
+  bridge.connect();
+
+  return {
+    bridge,
+    host,
+    registerHostHandler,
+    /** Send an event from host -> client */
+    sendEvent: (event: string, payload: unknown) => host.sendEvent(event, payload),
+    /** Get all raw JSON messages sent from host */
+    getClientInbox: () => [...clientInbox],
+    destroy: () => {
+      bridge.destroy();
+      host.destroy();
+    },
+  };
+}
