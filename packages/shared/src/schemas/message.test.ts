@@ -30,8 +30,8 @@ describe('isBridgeMessage', () => {
 });
 
 describe('isBridgeResponse', () => {
-  it('should return true for success response', () => {
-    expect(isBridgeResponse({ id: '1', success: true, timestamp: 123 })).toBe(true);
+  it('should return true for success response with data', () => {
+    expect(isBridgeResponse({ id: '1', success: true, data: 42, timestamp: 123 })).toBe(true);
   });
 
   it('should return true for error response', () => {
@@ -51,6 +51,29 @@ describe('isBridgeResponse', () => {
 
   it('should return false for non-boolean success', () => {
     expect(isBridgeResponse({ id: '1', success: 'yes', timestamp: 123 })).toBe(false);
+  });
+
+  it('validates success response (data required)', () => {
+    expect(isBridgeResponse({ id: '1', success: true, data: 42, timestamp: 1 })).toBe(true);
+  });
+
+  it('validates error response (error required)', () => {
+    expect(
+      isBridgeResponse({
+        id: '1',
+        success: false,
+        error: { code: 'TIMEOUT', message: 'x' },
+        timestamp: 1,
+      })
+    ).toBe(true);
+  });
+
+  it('rejects success response without data', () => {
+    expect(isBridgeResponse({ id: '1', success: true, timestamp: 1 })).toBe(false);
+  });
+
+  it('rejects error response without error', () => {
+    expect(isBridgeResponse({ id: '1', success: false, timestamp: 1 })).toBe(false);
   });
 });
 

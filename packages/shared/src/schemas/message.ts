@@ -25,12 +25,19 @@ export function isBridgeMessage(value: unknown): value is BridgeMessage {
  * Type guard for BridgeResponse
  */
 export function isBridgeResponse(value: unknown): value is BridgeResponse {
-  return (
-    isObject(value) &&
-    typeof value.id === 'string' &&
-    typeof value.success === 'boolean' &&
-    typeof value.timestamp === 'number'
-  );
+  if (!isObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.timestamp !== 'number') return false;
+  if (value.success === true) {
+    return 'data' in value;
+  }
+  if (value.success === false) {
+    return (
+      isObject(value.error) &&
+      typeof value.error.code === 'string' &&
+      typeof value.error.message === 'string'
+    );
+  }
+  return false;
 }
 
 /**
