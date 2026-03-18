@@ -128,18 +128,18 @@ describe('createBridgeReact with plugins', () => {
     <PluginProvider>{children}</PluginProvider>
   );
 
-  it('usePlugin should return typed methods', () => {
+  it('usePlugin should return typed action state objects', () => {
     const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
-    expect(typeof result.current.echo).toBe('function');
+    expect(typeof result.current.echo).toBe('object');
+    expect(typeof result.current.echo.execute).toBe('function');
   });
 
   it('usePlugin methods should call through bridge', async () => {
     const { result } = renderHook(() => usePlugin(mockPlugin), { wrapper: pluginWrapper });
-    let response: any;
     await act(async () => {
-      response = await result.current.echo({ msg: 'hello' });
+      await result.current.echo.execute({ msg: 'hello' });
     });
-    expect(response).toEqual({ echoed: 'hello' });
+    expect(result.current.echo.data).toEqual({ echoed: 'hello' });
   });
 
   it('useAction should work with plugin actions', async () => {
@@ -182,13 +182,12 @@ describe('Strict Mode compatibility', () => {
       wrapper: strictWrapper,
     });
 
-    expect(typeof result2.current.echo).toBe('function');
+    expect(typeof result2.current.echo.execute).toBe('function');
 
-    let response: any;
     await act(async () => {
-      response = await result2.current.echo({ msg: 'after-remount' });
+      await result2.current.echo.execute({ msg: 'after-remount' });
     });
-    expect(response).toEqual({ echoed: 'after-remount' });
+    expect(result2.current.echo.data).toEqual({ echoed: 'after-remount' });
   });
 
   it('should preserve bridge call functionality after remount', async () => {

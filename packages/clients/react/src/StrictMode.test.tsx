@@ -69,20 +69,21 @@ describe('React.StrictMode integration', () => {
   });
 
   describe('usePlugin', () => {
-    it('returns typed methods in StrictMode', () => {
+    it('returns typed action state objects in StrictMode', () => {
       const { result } = renderHook(() => usePlugin(testPlugin), { wrapper: strictWrapper });
-      expect(typeof result.current.echo).toBe('function');
-      expect(typeof result.current.greet).toBe('function');
+      expect(typeof result.current.echo).toBe('object');
+      expect(typeof result.current.echo.execute).toBe('function');
+      expect(typeof result.current.greet).toBe('object');
+      expect(typeof result.current.greet.execute).toBe('function');
       expect(typeof result.current.on).toBe('function');
     });
 
     it('plugin methods work via fallback in StrictMode', async () => {
       const { result } = renderHook(() => usePlugin(testPlugin), { wrapper: strictWrapper });
-      let response: any;
       await act(async () => {
-        response = await result.current.echo({ msg: 'plugin-strict' });
+        await result.current.echo.execute({ msg: 'plugin-strict' });
       });
-      expect(response).toEqual({ echoed: 'plugin-strict' });
+      expect(result.current.echo.data).toEqual({ echoed: 'plugin-strict' });
     });
 
     it('on() returns an unsubscribe function', () => {
@@ -135,11 +136,10 @@ describe('React.StrictMode integration', () => {
       unmount();
 
       const { result } = renderHook(() => usePlugin(testPlugin), { wrapper: normalWrapper });
-      let response: any;
       await act(async () => {
-        response = await result.current.greet({ name: 'Remount' });
+        await result.current.greet.execute({ name: 'Remount' });
       });
-      expect(response).toEqual({ greeting: 'Hello Remount' });
+      expect(result.current.greet.data).toEqual({ greeting: 'Hello Remount' });
     });
 
     it('event subscription works after remount', () => {

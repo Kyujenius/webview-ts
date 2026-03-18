@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
-import { BridgeManager } from '@webview-ts/core';
+import { BridgeManager, ActionStateManager } from '@webview-ts/core';
+import type { ActionState } from '@webview-ts/core';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
   BridgeConfig,
   BridgeCallOptions,
@@ -8,13 +10,7 @@ import type {
   ActionNames,
   FallbackMap,
 } from '@webview-ts/shared';
-import type {
-  PluginInstance,
-  PluginCall,
-  MergePluginActions,
-  AutoMethods,
-  TypedEventSubscriber,
-} from '@webview-ts/shared';
+import type { PluginInstance, MergePluginActions } from '@webview-ts/shared';
 import { useBridgeCore } from './internal/useBridgeCore';
 import { useActionCore } from './internal/useActionCore';
 import { useEventCore } from './internal/useEventCore';
@@ -145,17 +141,44 @@ export function createBridgeReact<
 
   // ---- usePlugin ----
 
-  function usePlugin<TPlugin extends TPlugins[number]>(
-    plugin: TPlugin
-  ): AutoMethods<TPlugin extends PluginInstance<any, infer M, any> ? M : never> & {
-    on: TypedEventSubscriber<TPlugin extends PluginInstance<any, any, infer E> ? E : never>;
-  } {
+  function usePlugin<TPlugin extends TPlugins[number]>(plugin: TPlugin) {
     const { bridge } = useTypedContext();
-    const call: PluginCall<TPlugin['_types']> = useCallback(
-      (action: any, payload: any) => bridge.call(action, payload) as any,
-      [bridge]
-    );
-    const methods = useMemo(() => plugin.methods(call), [call, plugin]);
+
+    // Create one ActionStateManager per action
+    const managers = useMemo(() => {
+      const result: Record<string, ActionStateManager<any, any>> = {};
+      for (const [shortName, fullName] of Object.entries(plugin.actions)) {
+        result[shortName] = bridge.createActionState(fullName as ActionNames<TAllActions>);
+      }
+      return result;
+    }, [bridge, plugin]);
+
+    // Combined store: aggregate all managers into one useSyncExternalStore call
+    // (hooks cannot be called in a loop per React rules)
+    const store = useMemo(() => {
+      let cache: Record<string, ActionState<any>> | null = null;
+      return {
+        subscribe(listener: () => void) {
+          const unsubs = Object.values(managers).map((m) =>
+            m.subscribe(() => {
+              cache = null;
+              listener();
+            })
+          );
+          return () => unsubs.forEach((fn) => fn());
+        },
+        getSnapshot() {
+          if (!cache) {
+            cache = Object.fromEntries(
+              Object.entries(managers).map(([k, m]) => [k, m.getSnapshot()])
+            );
+          }
+          return cache;
+        },
+      };
+    }, [managers]);
+
+    const snapshots = useSyncExternalStore(store.subscribe, store.getSnapshot);
 
     const on = useCallback(
       (eventShortName: string, handler: (payload: any) => void) => {
@@ -165,7 +188,17 @@ export function createBridgeReact<
       [bridge, plugin]
     );
 
-    return useMemo(() => ({ ...methods, on }), [methods, on]) as any;
+    return useMemo(() => {
+      const result: Record<string, any> = { on };
+      for (const [shortName, manager] of Object.entries(managers)) {
+        result[shortName] = {
+          ...snapshots[shortName],
+          execute: manager.execute,
+          reset: manager.reset,
+        };
+      }
+      return result;
+    }, [snapshots, managers, on]) as any;
   }
 
   return { BridgeProvider, useBridge, useAction, useEvent, usePlugin };
