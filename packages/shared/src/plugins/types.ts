@@ -2,6 +2,8 @@ import type { ActionDefinitionShape } from '../types/action-map';
 import type { Middleware } from '../types/middleware';
 import type { FallbackMap } from '../types/bridge';
 
+export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
+
 // ─── action() type marker ───
 
 /** Options for action() marker */

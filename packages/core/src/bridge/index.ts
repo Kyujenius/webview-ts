@@ -4,4 +4,5 @@
 
 export * from './BridgeManager';
 export { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
-export { ActionStateManager, type ActionState, type ActionStatus } from './ActionStateManager';
+export { ActionStateManager, type ActionState } from './ActionStateManager';
+export type { ActionStatus } from '@webview-ts/shared';

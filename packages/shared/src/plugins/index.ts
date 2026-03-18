@@ -1,6 +1,7 @@
 export { definePlugin } from './define';
 export { action, event } from './types';
 export type {
+  ActionStatus,
   ActionMarker,
   ActionMarkerMap,
   ActionOptions,
