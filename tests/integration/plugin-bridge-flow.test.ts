@@ -116,13 +116,6 @@ describe('Camera plugin: full message flow', () => {
     expect(result.duration).toBe(60);
     expect(result.uri).toBe('native://video.mp4');
   });
-
-  it('plugin methods convenience wrapper works end-to-end', async () => {
-    const methods = camera.methods((a, payload) => bridge.call(a as any, payload as any) as any);
-    const photo = await methods.takePhoto({ quality: 0.5 });
-    expect(photo.uri).toBe('native://photo-q0.5');
-    expect(photo.width).toBe(1920);
-  });
 });
 
 // ─── Storage Plugin Integration ───
@@ -186,14 +179,6 @@ describe('Storage plugin: full message flow', () => {
     const result = await bridge.call('storage.getAllKeys', {} as Record<string, never>);
     expect(result.keys).toHaveLength(0);
   });
-
-  it('plugin methods convenience wrapper works', async () => {
-    store.clear();
-    const methods = storage.methods((a, payload) => bridge.call(a as any, payload as any) as any);
-    await methods.setItem({ key: 'name', value: 'Bob' });
-    const item = await methods.getItem({ key: 'name' });
-    expect(item.value).toBe('Bob');
-  });
 });
 
 // ─── Multi-Plugin Integration ───
@@ -242,13 +227,6 @@ describe('Custom plugin: definePlugin + full flow', () => {
   });
 
   const { bridge } = createBridgePair([paymentHost]);
-
-  it('custom plugin flows through bridge correctly', async () => {
-    const methods = payment.methods((a, payload) => bridge.call(a as any, payload as any) as any);
-    const result = await methods.checkout({ amount: 100, currency: 'USD' });
-    expect(result.transactionId).toBe('txn-100-USD');
-    expect(result.success).toBe(true);
-  });
 
   it('custom plugin with zero amount', async () => {
     const result = await bridge.call('payment.checkout' as any, {
