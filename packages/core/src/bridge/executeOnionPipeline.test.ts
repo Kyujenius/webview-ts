@@ -7,7 +7,7 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'a',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           order.push('a-in');
           await next();
           order.push('a-out');
@@ -15,7 +15,7 @@ describe('executeOnionPipeline', () => {
       },
       {
         name: 'b',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           order.push('b-in');
           await next();
           order.push('b-out');
@@ -33,7 +33,7 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'slow',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
       },
@@ -69,13 +69,13 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'traced',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
       },
       {
         name: 'skipped',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
         __skipTrace: true,
@@ -93,13 +93,13 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'traced',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
       },
       {
         name: 'skipped',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
       },
@@ -138,7 +138,7 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'interceptor',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
         },
       },
@@ -157,7 +157,7 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'setter',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           ctx.metadata.set('custom', 42);
           await next();
         },
@@ -174,7 +174,7 @@ describe('executeOnionPipeline', () => {
     const middlewares = [
       {
         name: 'bad',
-        fn: async (ctx: any, next: any) => {
+        fn: async (_ctx: any, next: any) => {
           await next();
           await next();
         },

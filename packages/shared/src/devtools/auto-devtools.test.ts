@@ -98,7 +98,7 @@ describe('tryAutoDevTools', () => {
     expect(MockWebSocket.instances[0].url).toBe('ws://localhost:4000?role=client');
 
     // Wait for onopen microtask
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     expect(target.prepended).toHaveLength(1);
     expect(target.prepended[0].name).toBe('__auto_devtools');
@@ -115,7 +115,7 @@ describe('tryAutoDevTools', () => {
     // Only one WebSocket should be created
     expect(MockWebSocket.instances).toHaveLength(1);
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     // Both targets should get middleware
     expect(target1.prepended).toHaveLength(1);
@@ -129,7 +129,7 @@ describe('tryAutoDevTools', () => {
     const cleanup1 = tryAutoDevTools(target1)!;
     const cleanup2 = tryAutoDevTools(target2)!;
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     // Remove first target — WS stays open
     cleanup1();
@@ -149,7 +149,7 @@ describe('tryAutoDevTools', () => {
     tryAutoDevTools(target1);
     tryAutoDevTools(target2);
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     // Simulate unexpected close
     const ws = MockWebSocket.instances[0];
@@ -164,7 +164,7 @@ describe('tryAutoDevTools', () => {
     const target1 = createTarget();
     tryAutoDevTools(target1);
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
     expect(target1.prepended).toHaveLength(1);
 
     // Join after WS is already open
@@ -179,7 +179,7 @@ describe('tryAutoDevTools', () => {
     const target = createTarget();
     tryAutoDevTools(target);
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     const mw = target.prepended[0];
     const ws = MockWebSocket.instances[0];
@@ -214,7 +214,7 @@ describe('tryAutoDevTools', () => {
     const target = createTarget();
     tryAutoDevTools(target);
 
-    await new Promise((r) => queueMicrotask(r));
+    await new Promise<void>((r) => queueMicrotask(r));
 
     const mw = target.prepended[0];
     const ws = MockWebSocket.instances[0];

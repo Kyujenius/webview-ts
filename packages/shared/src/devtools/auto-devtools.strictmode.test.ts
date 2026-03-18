@@ -88,18 +88,18 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       // Mount
       const cleanup1 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       expect(target.prepended).toHaveLength(1);
 
       // Strict Mode cleanup — removes target, closes WS
       cleanup1();
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // Re-mount — should create a new WS
       const cleanup2 = tryAutoDevTools(target)!;
       expect(MockWebSocket.instances).toHaveLength(2);
 
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       // Should get middleware again from the new WS onopen
       expect(target.prepended).toHaveLength(2);
       expect(cleanup2).toBeTypeOf('function');
@@ -113,7 +113,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       // Mount — WS1 created
       const cleanup1 = tryAutoDevTools(target)!;
       const ws1 = MockWebSocket.instances[0];
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // Strict Mode cleanup — closes WS1
       cleanup1();
@@ -125,10 +125,10 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       expect(ws2).not.toBe(ws1);
 
       // Now WS1.onclose fires (stale)
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // WS2.onopen should still fire and middleware should be added
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       // The last prepend should be from WS2
       const lastPrepended = target.prepended[target.prepended.length - 1];
       expect(lastPrepended.name).toBe('__auto_devtools');
@@ -153,7 +153,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       _resetAutoDevTools();
       const cleanup2 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // Now flush WS1's pending onopen — it should be a no-op
       const prependedBefore = target.prepended.length;
@@ -170,7 +170,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       const target = createTarget();
 
       const cleanup1 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       expect(target.eventHandlers).toHaveLength(1);
 
       // Strict Mode cleanup
@@ -179,7 +179,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       // Re-mount
       const cleanup2 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       // Should have exactly 1 handler, not 2
       expect(target.eventHandlers).toHaveLength(1);
 
@@ -190,12 +190,12 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       const target = createTarget();
 
       const cleanup1 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
       cleanup1();
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       const cleanup2 = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1];
       ws.sent = []; // clear any setup messages
@@ -214,7 +214,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
     it('event source is correctly inverted (client records host events)', async () => {
       const target = createTarget();
       tryAutoDevTools(target, 'client');
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       const ws = MockWebSocket.instances[0];
       ws.sent = [];
@@ -233,7 +233,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       const cleanup1 = tryAutoDevTools(target1)!;
       const cleanup2 = tryAutoDevTools(target2)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       expect(target1.prepended).toHaveLength(1);
       expect(target2.prepended).toHaveLength(1);
@@ -259,7 +259,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       const cleanup1 = tryAutoDevTools(target1)!;
       tryAutoDevTools(target2);
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // Cleanup target1 (WS stays because target2 is still active)
       cleanup1();
@@ -279,13 +279,13 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
     it('sendRecord does not throw when ws is null', async () => {
       const target = createTarget();
       const cleanup = tryAutoDevTools(target)!;
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       const mw = target.prepended[0];
 
       // Close WS so it becomes null
       cleanup();
-      await new Promise((r) => queueMicrotask(r));
+      await new Promise<void>((r) => queueMicrotask(r));
 
       // The middleware closure still references the old ws,
       // but sendRecord should handle null safely

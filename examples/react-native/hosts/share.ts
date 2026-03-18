@@ -6,7 +6,7 @@ export const shareHost = share.host({
     try {
       const result = await RNShare.share({
         title: payload.title,
-        message: payload.message,
+        message: payload.message ?? '',
         url: payload.url,
       });
 

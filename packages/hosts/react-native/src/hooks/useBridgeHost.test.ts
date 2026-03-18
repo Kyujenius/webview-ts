@@ -15,6 +15,11 @@ vi.mock('react-native-webview', () => ({}));
 import { createSimpleBridgeHost } from './useBridgeHost';
 import { definePlugin, action } from '@webview-ts/shared';
 
+type TestActions = {
+  'test.echo': { payload: { message: string }; response: { echoed: string } };
+  'action.one': { payload: { key: string }; response: { result: string } };
+};
+
 describe('createSimpleBridgeHost', () => {
   it('should create bridgeHost with webViewProps', () => {
     const result = createSimpleBridgeHost<TestActions>({

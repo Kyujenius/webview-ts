@@ -93,7 +93,7 @@ function CalendarPage() {
         </button>
         {events.length > 0 && (
           <div style={{ marginTop: '8px' }}>
-            {events.map((evt) => (
+            {events.map((evt: { id: string; title: string; startDate: string }) => (
               <div key={evt.id} className="result" style={{ marginBottom: '4px' }}>
                 <strong>{evt.title}</strong>
                 <br />

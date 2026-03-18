@@ -15,7 +15,7 @@ function LocationPage() {
 
   // Native → Web push event via plugin event subscription
   useEffect(() => {
-    return on('updated', (pos) => {
+    return on('updated', (pos: { latitude: number; longitude: number; accuracy: number }) => {
       setLivePosition(pos);
       setEventCount((c) => c + 1);
     });

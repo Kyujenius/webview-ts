@@ -1,5 +1,6 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import type { BridgeConfig, RetryConfig, ErrorContext, BridgeError } from './bridge';
+import type { BridgeConfig, RetryConfig, ErrorContext } from './bridge';
+import type { BridgeError } from './message';
 
 describe('Extended BridgeConfig', () => {
   it('should accept onError handler with BridgeError and ErrorContext', () => {
