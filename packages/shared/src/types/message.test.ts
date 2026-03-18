@@ -35,7 +35,7 @@ describe('Message Types', () => {
 
     it('should support error response', () => {
       const error: BridgeError = {
-        code: 'TEST_ERROR',
+        code: 'UNKNOWN_ERROR',
         message: 'Test error message',
         details: { info: 'extra' },
       };
@@ -64,6 +64,22 @@ describe('Message Types', () => {
       expect(event.event).toBe('test-event');
       expect(event.payload).toEqual({ value: 'test' });
       expect(typeof event.timestamp).toBe('number');
+    });
+  });
+
+  describe('BridgeError', () => {
+    it('BridgeError code should be a valid BridgeErrorCode', () => {
+      const error: BridgeError = {
+        code: 'TIMEOUT',
+        message: 'timed out',
+      };
+      expect(error.code).toBe('TIMEOUT');
+
+      const error2: BridgeError = {
+        code: 'HANDLER_NOT_FOUND',
+        message: 'no handler',
+      };
+      expect(error2.code).toBe('HANDLER_NOT_FOUND');
     });
   });
 

@@ -2,6 +2,8 @@
  * Core message types for WebView-Native communication
  */
 
+import type { BridgeErrorCode } from './errors';
+
 /**
  * Base message structure sent between web and native
  */
@@ -64,7 +66,7 @@ export interface BridgeError {
   /**
    * Error code for categorization
    */
-  code: string;
+  code: BridgeErrorCode;
 
   /**
    * Human-readable error message
