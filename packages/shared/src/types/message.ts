@@ -30,32 +30,21 @@ export interface BridgeMessage<T = unknown> {
 }
 
 /**
- * Response message structure from native to web
+ * Response message structure from native to web (discriminated union)
  */
-export interface BridgeResponse<T = unknown> {
-  /**
-   * ID of the original request message
-   */
+export type BridgeResponse<T = unknown> = BridgeSuccessResponse<T> | BridgeErrorResponse;
+
+export interface BridgeSuccessResponse<T = unknown> {
   id: string;
+  success: true;
+  data: T;
+  timestamp: number;
+}
 
-  /**
-   * Whether the operation succeeded
-   */
-  success: boolean;
-
-  /**
-   * Response data if successful
-   */
-  data?: T;
-
-  /**
-   * Error information if failed
-   */
-  error?: BridgeError;
-
-  /**
-   * Timestamp when response was created
-   */
+export interface BridgeErrorResponse {
+  id: string;
+  success: false;
+  error: BridgeError;
   timestamp: number;
 }
 

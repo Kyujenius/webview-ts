@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { BridgeMessage, BridgeResponse, BridgeError, BridgeEvent } from './message';
+import type { BridgeErrorCode } from './errors';
 import { MessageType } from './message';
 
 describe('Message Types', () => {
@@ -29,8 +30,9 @@ describe('Message Types', () => {
       };
 
       expect(response.success).toBe(true);
-      expect(response.data).toEqual({ result: 42 });
-      expect(response.error).toBeUndefined();
+      if (response.success) {
+        expect(response.data).toEqual({ result: 42 });
+      }
     });
 
     it('should support error response', () => {
@@ -48,8 +50,37 @@ describe('Message Types', () => {
       };
 
       expect(response.success).toBe(false);
-      expect(response.error).toEqual(error);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(error);
+      }
+    });
+  });
+
+  describe('BridgeResponse discriminated union', () => {
+    it('narrows to success variant with data: T', () => {
+      const res: BridgeResponse<number> = {
+        id: '1',
+        success: true,
+        data: 42,
+        timestamp: Date.now(),
+      };
+      if (res.success) {
+        const val: number = res.data;
+        expect(val).toBe(42);
+      }
+    });
+
+    it('narrows to error variant with error: BridgeError', () => {
+      const res: BridgeResponse = {
+        id: '1',
+        success: false,
+        error: { code: 'TIMEOUT', message: 'timed out' },
+        timestamp: Date.now(),
+      };
+      if (!res.success) {
+        const code: BridgeErrorCode = res.error.code;
+        expect(code).toBe('TIMEOUT');
+      }
     });
   });
 
