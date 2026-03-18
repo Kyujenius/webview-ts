@@ -15,7 +15,7 @@ interface ToolbarProps {
 export function Toolbar({ stats, connected, onClear }: ToolbarProps) {
   return (
     <div id="toolbar">
-      <h1>ts-bridge DevTools</h1>
+      <h1>webview-ts DevTools</h1>
       <div id="stats">
         <span>
           Total: <span className="stat-val">{stats.total}</span>

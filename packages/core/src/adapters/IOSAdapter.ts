@@ -46,7 +46,7 @@ export class IOSAdapter implements NativeAdapter {
     try {
       this.handler.postMessage(message);
     } catch (error) {
-      console.error('[ts-bridge] Failed to send message to iOS:', error);
+      console.error('[webview-ts] Failed to send message to iOS:', error);
       throw error;
     }
   }

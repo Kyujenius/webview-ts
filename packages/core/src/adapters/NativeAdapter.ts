@@ -66,7 +66,7 @@ export function createNativeAdapter(): NativeAdapter {
  */
 class MockAdapter implements NativeAdapter {
   send(_message: BridgeMessage): void {
-    console.warn('[ts-bridge] Mock adapter: message not sent (no native bridge available)');
+    console.warn('[webview-ts] Mock adapter: message not sent (no native bridge available)');
   }
 
   isAvailable(): boolean {

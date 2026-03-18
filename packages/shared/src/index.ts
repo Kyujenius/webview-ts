@@ -1,7 +1,7 @@
 /**
  * @webview-ts/shared
  *
- * Shared types and schemas for ts-bridge library.
+ * Shared types and schemas for webview-ts library.
  * This package provides the single source of truth for all type definitions
  * used across web and native bridge implementations.
  */

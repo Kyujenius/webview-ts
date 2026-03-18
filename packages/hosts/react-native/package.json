@@ -1,7 +1,7 @@
 {
   "name": "@webview-ts/native",
   "version": "0.0.0",
-  "description": "React Native host implementation for ts-bridge",
+  "description": "React Native host implementation for webview-ts",
   "license": "MIT",
   "repository": {
     "type": "git",

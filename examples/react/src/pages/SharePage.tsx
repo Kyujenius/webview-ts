@@ -6,7 +6,7 @@ function SharePage() {
   const { connectionMode } = useBridge();
   const { share: doShare } = usePlugin(share);
   const [title, setTitle] = useState('Check this out!');
-  const [message, setMessage] = useState('Hello from ts-bridge');
+  const [message, setMessage] = useState('Hello from webview-ts');
   const [url, setUrl] = useState('https://github.com');
   const [result, setResult] = useState<{ shared: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);

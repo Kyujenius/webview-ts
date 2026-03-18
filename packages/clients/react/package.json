@@ -2,7 +2,7 @@
   "name": "@webview-ts/react",
   "version": "0.0.0",
   "type": "module",
-  "description": "React hooks and provider for ts-bridge",
+  "description": "React hooks and provider for webview-ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/Kyujenius/webview-ts",

@@ -449,7 +449,7 @@ export class BridgeManager<
   private async handleResponse(response: BridgeResponse): Promise<void> {
     const callback = this.callbacks.has(response.id);
     if (!callback) {
-      console.warn(`[ts-bridge] Received response for unknown message: ${response.id}`);
+      console.warn(`[webview-ts] Received response for unknown message: ${response.id}`);
       return;
     }
 
@@ -485,7 +485,7 @@ export class BridgeManager<
         try {
           handler(event.payload);
         } catch (error) {
-          console.error(`[ts-bridge] Error in event handler for '${event.event}':`, error);
+          console.error(`[webview-ts] Error in event handler for '${event.event}':`, error);
         }
       });
     }

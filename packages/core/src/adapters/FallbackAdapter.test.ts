@@ -26,7 +26,7 @@ describe('Fallback mode', () => {
     const bridge = createBridge({ fallback: true, timeout: 50 });
     await expect(bridge.call('any.action', {})).rejects.toThrow();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[ts-bridge fallback]'),
+      expect.stringContaining('[webview-ts fallback]'),
       expect.anything()
     );
     consoleSpy.mockRestore();

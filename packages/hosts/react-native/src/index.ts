@@ -1,6 +1,6 @@
 /**
  * @webview-ts/native
- * React Native host implementation for ts-bridge
+ * React Native host implementation for webview-ts
  */
 
 // Bridge

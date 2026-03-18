@@ -88,7 +88,7 @@ function broadcastStatus() {
 
 http.listen(PORT, () => {
   console.log();
-  console.log(`  \x1b[36m┌─ ts-bridge DevTools ─────────────────┐\x1b[0m`);
+  console.log(`  \x1b[36m┌─ webview-ts DevTools ─────────────────┐\x1b[0m`);
   console.log(`  \x1b[36m│\x1b[0m                                      \x1b[36m│\x1b[0m`);
   console.log(
     `  \x1b[36m│\x1b[0m  Dashboard: \x1b[1mhttp://localhost:${PORT}/\x1b[0m   \x1b[36m│\x1b[0m`

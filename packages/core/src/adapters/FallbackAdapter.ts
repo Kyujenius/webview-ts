@@ -21,7 +21,7 @@ export class FallbackAdapter implements NativeAdapter {
   send(message: BridgeMessage): void {
     const { id, action, payload } = message;
     if (this.logOnly) {
-      console.warn('[ts-bridge fallback]', { action, payload });
+      console.warn('[webview-ts fallback]', { action, payload });
       this.respondWithError(id, action);
       return;
     }

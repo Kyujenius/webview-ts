@@ -37,7 +37,7 @@ export class ReactNativeWebViewAdapter implements NativeAdapter {
     try {
       this.bridge.postMessage(JSON.stringify(message));
     } catch (error) {
-      console.error('[ts-bridge] Failed to send message via ReactNativeWebView:', error);
+      console.error('[webview-ts] Failed to send message via ReactNativeWebView:', error);
       throw error;
     }
   }

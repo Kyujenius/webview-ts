@@ -28,7 +28,7 @@ function HomePage() {
           </span>
         </p>
         <p style={{ marginTop: '1rem' }}>
-          This example app demonstrates the usage of all ts-bridge packages:
+          This example app demonstrates the usage of all webview-ts packages:
         </p>
         <ul style={{ marginLeft: '2rem', marginTop: '0.5rem' }}>
           <li>

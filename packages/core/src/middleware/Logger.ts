@@ -7,7 +7,7 @@ import type { Middleware, MiddlewareFn, LoggerMiddlewareOptions } from '@webview
 type LoggerFn = (level: string, message: string, data?: unknown) => void;
 
 const defaultLogger: LoggerFn = (level, message, data) => {
-  const prefix = '[ts-bridge]';
+  const prefix = '[webview-ts]';
   const logData = data ? [message, data] : [message];
 
   switch (level) {

@@ -1,6 +1,6 @@
 import type { DevToolsTransport, TransportMessage } from './DevToolsTransport';
 
-const CHANNEL_NAME = '__ts-bridge-devtools__';
+const CHANNEL_NAME = '__webview-ts-devtools__';
 
 export class BroadcastChannelTransport implements DevToolsTransport {
   private channel: BroadcastChannel;

@@ -2,7 +2,7 @@
   "name": "@example/react",
   "version": "0.0.0",
   "private": true,
-  "description": "React example app demonstrating ts-bridge usage",
+  "description": "React example app demonstrating webview-ts usage",
   "type": "module",
   "scripts": {
     "dev": "vite",

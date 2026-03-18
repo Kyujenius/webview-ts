@@ -44,7 +44,7 @@ export class AndroidAdapter implements NativeAdapter {
       const messageJson = JSON.stringify(message);
       this.bridge.postMessage(messageJson);
     } catch (error) {
-      console.error('[ts-bridge] Failed to send message to Android:', error);
+      console.error('[webview-ts] Failed to send message to Android:', error);
       throw error;
     }
   }

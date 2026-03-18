@@ -1,7 +1,7 @@
 {
   "name": "@webview-ts/devtools",
   "version": "0.0.0",
-  "description": "Visual debugging tools for ts-bridge communication",
+  "description": "Visual debugging tools for webview-ts communication",
   "repository": {
     "type": "git",
     "url": "https://github.com/Kyujenius/webview-ts",
