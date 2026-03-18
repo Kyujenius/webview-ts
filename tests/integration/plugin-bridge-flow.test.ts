@@ -13,7 +13,7 @@
  * a real BridgeHost instance, testing actual handler dispatch.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { BridgeHost } from '@webview-ts/native';
+import { BridgeHost } from '@webview-ts/react-native';
 import { createBridge } from '@webview-ts/core';
 import { definePlugin, action } from '@webview-ts/shared';
 import type { BridgeMessage } from '@webview-ts/shared';

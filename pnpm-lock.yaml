@@ -186,7 +186,7 @@ importers:
       '@example/plugins':
         specifier: workspace:*
         version: link:../plugins
-      '@webview-ts/native':
+      '@webview-ts/react-native':
         specifier: workspace:*
         version: link:../../packages/hosts/react-native
       '@webview-ts/shared':

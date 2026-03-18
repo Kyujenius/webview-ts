@@ -92,7 +92,7 @@ function HomePage() {
             <strong>Note:</strong> You are currently in{' '}
             {connectionMode === 'fallback' ? 'fallback' : 'disconnected'} mode. To test native
             features, run this app inside a React Native WebView with the{' '}
-            <code>@webview-ts/native</code> package configured.
+            <code>@webview-ts/react-native</code> package configured.
           </div>
         )}
       </div>

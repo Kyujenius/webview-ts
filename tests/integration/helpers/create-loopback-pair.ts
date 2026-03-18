@@ -1,4 +1,4 @@
-import { BridgeHost } from '@webview-ts/native';
+import { BridgeHost } from '@webview-ts/react-native';
 import { BridgeManager } from '@webview-ts/core';
 import type { BridgeMessage, Middleware } from '@webview-ts/shared';
 

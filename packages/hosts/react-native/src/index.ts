@@ -1,5 +1,5 @@
 /**
- * @webview-ts/native
+ * @webview-ts/react-native
  * React Native host implementation for webview-ts
  */
 

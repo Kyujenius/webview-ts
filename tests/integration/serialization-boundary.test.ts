@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { BridgeHost } from '@webview-ts/native';
+import { BridgeHost } from '@webview-ts/react-native';
 
 describe('Serialization boundary', () => {
   let host: BridgeHost;

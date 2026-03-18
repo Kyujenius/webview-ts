@@ -8,7 +8,7 @@
       "@webview-ts/core",
       "@webview-ts/devtools",
       "@webview-ts/react",
-      "@webview-ts/native"
+      "@webview-ts/react-native"
     ]
   ],
   "linked": [],

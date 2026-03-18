@@ -1,6 +1,6 @@
 import { StyleSheet, SafeAreaView, View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useBridgeHost } from '@webview-ts/native';
+import { useBridgeHost } from '@webview-ts/react-native';
 import {
   cameraHost,
   locationHost,

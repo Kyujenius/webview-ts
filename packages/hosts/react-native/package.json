@@ -1,5 +1,5 @@
 {
-  "name": "@webview-ts/native",
+  "name": "@webview-ts/react-native",
   "version": "0.0.0",
   "description": "React Native host implementation for webview-ts",
   "license": "MIT",
