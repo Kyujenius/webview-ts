@@ -7,6 +7,7 @@ import PhonePage from './pages/PhonePage';
 import CalendarPage from './pages/CalendarPage';
 import DevicePage from './pages/DevicePage';
 import SharePage from './pages/SharePage';
+import ActionsPage from './pages/ActionsPage';
 
 function App() {
   const location = useLocation();
@@ -25,6 +26,7 @@ function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/device" element={<DevicePage />} />
           <Route path="/share" element={<SharePage />} />
+          <Route path="/actions" element={<ActionsPage />} />
         </Routes>
       </div>
 
@@ -68,6 +70,11 @@ function App() {
           <li>
             <Link to="/share" className={isActive('/share')}>
               Share
+            </Link>
+          </li>
+          <li>
+            <Link to="/actions" className={isActive('/actions')}>
+              useAction
             </Link>
           </li>
         </ul>
