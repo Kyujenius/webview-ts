@@ -1,48 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useMemo } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type { BridgeManager } from '@webview-ts/core';
-import type {
-  ActionDefinitionShape,
-  ActionNames,
-  InferPayload,
-  InferResponse,
-  BridgeCallOptions,
-} from '@webview-ts/shared';
+import type { ActionDefinitionShape, ActionNames, BridgeCallOptions } from '@webview-ts/shared';
 
 export function useActionCore<
   TActions extends Record<string, ActionDefinitionShape>,
   TAction extends ActionNames<TActions>,
 >(bridge: BridgeManager<TActions>, action: TAction, defaultOptions?: BridgeCallOptions) {
-  type TResponse = InferResponse<TActions, TAction>;
-  const [data, setData] = useState<TResponse | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const execute = useCallback(
-    async (
-      payload: InferPayload<TActions, TAction>,
-      options?: BridgeCallOptions
-    ): Promise<TResponse> => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await bridge.call(action, payload, options ?? defaultOptions);
-        setData(result);
-        return result;
-      } catch (err) {
-        const e = err instanceof Error ? err : new Error(String(err));
-        setError(e);
-        throw e;
-      } finally {
-        setIsLoading(false);
-      }
-    },
+  const manager = useMemo(
+    () => bridge.createActionState(action, defaultOptions),
     [bridge, action, defaultOptions]
   );
 
-  const reset = useCallback(() => {
-    setData(null);
-    setError(null);
-    setIsLoading(false);
-  }, []);
-  return { execute, data, error, isLoading, reset };
+  // useSyncExternalStore: pull model — Concurrent Mode safe
+  const state = useSyncExternalStore(manager.subscribe, manager.getSnapshot);
+
+  return {
+    status: state.status,
+    data: state.data,
+    error: state.error,
+    isLoading: state.isLoading,
+    execute: manager.execute,
+    reset: manager.reset,
+  };
 }

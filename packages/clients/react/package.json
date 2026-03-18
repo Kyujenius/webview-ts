@@ -41,7 +41,8 @@
   },
   "dependencies": {
     "@webview-ts/core": "workspace:*",
-    "@webview-ts/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*",
+    "use-sync-external-store": "^1.6.0"
   },
   "peerDependencies": {
     "react": ">=17.0.0"
@@ -49,6 +50,7 @@
   "devDependencies": {
     "@testing-library/react": "^14.0.0",
     "@types/react": "^18.2.0",
+    "@types/use-sync-external-store": "^1.5.0",
     "happy-dom": "^14.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
