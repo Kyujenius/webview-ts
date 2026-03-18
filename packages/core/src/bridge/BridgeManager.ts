@@ -217,9 +217,9 @@ export class BridgeManager<
 
         if (!response.success) {
           throw new BridgeCallError(
-            response.error?.message || 'Bridge call failed',
-            response.error?.code || 'UNKNOWN_ERROR',
-            response.error?.details
+            response.error.message,
+            response.error.code,
+            response.error.details
           );
         }
 
@@ -272,7 +272,9 @@ export class BridgeManager<
         ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, true);
       }
 
-      return ctx.response?.data as InferResponse<TActions, TAction>;
+      return (
+        ctx.response && ctx.response.success ? ctx.response.data : undefined
+      ) as InferResponse<TActions, TAction>;
     } finally {
       this.pendingContexts.delete(message.id);
     }

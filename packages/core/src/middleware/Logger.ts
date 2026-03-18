@@ -57,11 +57,11 @@ export function createLogger(options: LoggerMiddlewareOptions = {}): Middleware 
           duration: `${duration}ms`,
         };
 
-        if (includeResponse && ctx.response.data) {
-          resData.data = ctx.response.data;
-        }
-
-        if (!ctx.response.success && ctx.response.error) {
+        if (ctx.response.success) {
+          if (includeResponse && ctx.response.data) {
+            resData.data = ctx.response.data;
+          }
+        } else {
           resData.error = ctx.response.error;
         }
 

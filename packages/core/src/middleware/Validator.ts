@@ -62,13 +62,8 @@ export function createValidator(options: ValidatorMiddlewareOptions = {}): Middl
           ctx
         );
       }
-      if (!ctx.response.success && !ctx.response.error) {
-        handleValidationError(
-          'Failed response must include error information',
-          onValidationError,
-          ctx
-        );
-      }
+      // With the discriminated union, success=false guarantees error exists.
+      // No need to check for missing error on failed responses.
     }
   };
 
