@@ -7,7 +7,7 @@ import type {
   Middleware,
   MiddlewareContext,
 } from '@webview-ts/shared';
-import { MiddlewarePipeline } from '@webview-ts/shared';
+import { MiddlewarePipeline, toBridgeErrorCode } from '@webview-ts/shared';
 import { createDebugLogger } from '../utils/debug-log';
 
 /**
@@ -163,7 +163,7 @@ export class BridgeHost implements IBridgeHost {
       return ctx.response!;
     } catch (error) {
       const bridgeError: BridgeError = {
-        code: error instanceof Error && 'code' in error ? String(error.code) : 'UNKNOWN_ERROR',
+        code: toBridgeErrorCode(error instanceof Error && 'code' in error ? error.code : undefined),
         message: error instanceof Error ? error.message : String(error),
         details: error instanceof Error ? { stack: error.stack } : undefined,
       };

@@ -135,7 +135,7 @@ export class BridgeManager<
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         const bridgeError: BridgeError = {
-          code: error instanceof BridgeCallError ? error.code : 'BRIDGE_ERROR',
+          code: error instanceof BridgeCallError ? error.code : 'UNKNOWN_ERROR',
           message: lastError.message,
           details:
             error instanceof BridgeCallError
@@ -218,7 +218,7 @@ export class BridgeManager<
         if (!response.success) {
           throw new BridgeCallError(
             response.error?.message || 'Bridge call failed',
-            response.error?.code || 'BRIDGE_ERROR',
+            response.error?.code || 'UNKNOWN_ERROR',
             response.error?.details
           );
         }

@@ -2,6 +2,7 @@
  * Registry for managing callbacks and matching requests to responses
  */
 
+import { BridgeCallError } from '@webview-ts/shared';
 import type { BridgeResponse } from '@webview-ts/shared';
 
 /**
@@ -39,7 +40,7 @@ export class CallbackRegistry {
     if (timeout && timeout > 0) {
       entry.timeoutId = setTimeout(() => {
         this.remove(messageId);
-        reject(new Error(`Bridge call timeout after ${timeout}ms`));
+        reject(new BridgeCallError(`Bridge call timeout after ${timeout}ms`, 'TIMEOUT'));
       }, timeout);
     }
 
