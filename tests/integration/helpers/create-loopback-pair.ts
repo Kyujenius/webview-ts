@@ -30,15 +30,12 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
 
   // Capture messages sent from host -> client
   const clientInbox: string[] = [];
-  const clientMessageHandler: ((event: MessageEvent) => void) | null = null;
 
   host.setMessageCallback((json: string) => {
     clientInbox.push(json);
-    // Simulate postMessage dispatch to client
-    if (clientMessageHandler) {
-      const event = new MessageEvent('message', { data: json });
-      clientMessageHandler(event);
-    }
+    // Dispatch to window so BridgeManager's message listener picks it up
+    // (requires happy-dom environment for window/MessageEvent to exist)
+    window.dispatchEvent(new MessageEvent('message', { data: json }));
   });
 
   // Build fallback that routes through BridgeHost (object-level)
