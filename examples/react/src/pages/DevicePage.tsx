@@ -1,22 +1,13 @@
-import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
 import { device } from '@example/plugins';
 
 function DevicePage() {
   const { connectionMode } = useBridge();
   const { getInfo } = usePlugin(device);
-  const [info, setInfo] = useState<Record<string, unknown> | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleGetInfo = async () => {
-    try {
-      setError(null);
-      const result = await getInfo();
-      setInfo(result as unknown as Record<string, unknown>);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
+  const handleGetInfo = () => getInfo.execute();
+
+  const info = getInfo.data ? (getInfo.data as unknown as Record<string, unknown>) : null;
 
   return (
     <div>
@@ -51,7 +42,7 @@ function DevicePage() {
         )}
       </div>
 
-      {error && <div className="result error">{error}</div>}
+      {getInfo.error && <div className="result error">{getInfo.error.message}</div>}
     </div>
   );
 }

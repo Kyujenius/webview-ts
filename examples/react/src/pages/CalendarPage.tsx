@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
 import { calendar } from '@example/plugins';
-import type { CalendarEvent } from '@example/plugins';
 
 function CalendarPage() {
   const { connectionMode } = useBridge();
@@ -10,39 +9,29 @@ function CalendarPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [notes, setNotes] = useState('');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleAdd = async () => {
-    try {
-      setError(null);
-      const res = await addEvent({
-        title,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
-        notes: notes || undefined,
-      });
-      setResult(`Event created (id: ${res.id})`);
+    const res = await addEvent.execute({
+      title,
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      notes: notes || undefined,
+    });
+    if (res) {
       setTitle('');
       setNotes('');
-    } catch (e) {
-      setError((e as Error).message);
     }
   };
 
-  const handleGetEvents = async () => {
-    try {
-      setError(null);
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-      const res = await getEvents({ startDate: start, endDate: end });
-      setEvents(res.events);
-    } catch (e) {
-      setError((e as Error).message);
-    }
+  const handleGetEvents = () => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    getEvents.execute({ startDate: start, endDate: end });
   };
+
+  const events = getEvents.data?.events ?? [];
+  const error = addEvent.error ?? getEvents.error;
 
   return (
     <div>
@@ -92,7 +81,9 @@ function CalendarPage() {
             Add to Calendar
           </button>
         </div>
-        {result && <div className="result success">{result}</div>}
+        {addEvent.data && (
+          <div className="result success">Event created (id: {addEvent.data.id})</div>
+        )}
       </div>
 
       <div className="card">
@@ -115,7 +106,7 @@ function CalendarPage() {
         )}
       </div>
 
-      {error && <div className="result error">{error}</div>}
+      {error && <div className="result error">{error.message}</div>}
     </div>
   );
 }

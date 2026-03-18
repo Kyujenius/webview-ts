@@ -1,46 +1,19 @@
-import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
-import { camera, type TakePhotoResponse } from '@example/plugins';
+import { camera } from '@example/plugins';
 
 function CameraPage() {
   const { takePhoto, pickImage } = usePlugin(camera);
   const { connectionMode } = useBridge();
 
-  const [result, setResult] = useState<TakePhotoResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const handleTakePhoto = () => takePhoto.execute({ quality: 0.8 });
 
-  const handleTakePhoto = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
+  const handlePickImage = () => pickImage.execute({ multiple: false });
 
-    try {
-      const photo = await takePhoto({ quality: 0.8 });
-      setResult(photo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to take photo');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePickImage = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const res = await pickImage({ multiple: false });
-      if (res.images.length > 0) {
-        setResult({ uri: res.images[0].uri, width: 0, height: 0 });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to pick image');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isLoading = takePhoto.isLoading || pickImage.isLoading;
+  const error = takePhoto.error ?? pickImage.error;
+  const result =
+    takePhoto.data ??
+    (pickImage.data?.images[0] ? { uri: pickImage.data.images[0].uri, width: 0, height: 0 } : null);
 
   return (
     <div>
@@ -61,18 +34,22 @@ function CameraPage() {
       <div className="card">
         <h2>Camera Actions</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleTakePhoto} disabled={loading}>
-            {loading ? 'Loading...' : 'Take Photo'}
+          <button className="button" onClick={handleTakePhoto} disabled={isLoading}>
+            {takePhoto.isLoading ? 'Loading...' : 'Take Photo'}
           </button>
-          <button className="button button-secondary" onClick={handlePickImage} disabled={loading}>
-            {loading ? 'Loading...' : 'Pick Image'}
+          <button
+            className="button button-secondary"
+            onClick={handlePickImage}
+            disabled={isLoading}
+          >
+            {pickImage.isLoading ? 'Loading...' : 'Pick Image'}
           </button>
         </div>
       </div>
 
       {error && (
         <div className="result error">
-          <strong>Error:</strong> {error}
+          <strong>Error:</strong> {error.message}
         </div>
       )}
 

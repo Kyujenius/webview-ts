@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { usePlugin, useBridge } from '../bridge';
-import { location, type Position } from '@example/plugins';
+import { location } from '@example/plugins';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch, on } = usePlugin(location);
   const { connectionMode } = useBridge();
-  const [position, setPosition] = useState<Position | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
-  const [livePosition, setLivePosition] = useState<Position | null>(null);
+  const [livePosition, setLivePosition] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
   const [eventCount, setEventCount] = useState(0);
 
   // Native → Web push event via plugin event subscription
@@ -20,40 +21,22 @@ function LocationPage() {
     });
   }, [on]);
 
-  const handleGetCurrentPosition = async () => {
-    setLoading(true);
-    setError(null);
-    setPosition(null);
-    try {
-      const pos = await getCurrentPosition();
-      setPosition(pos);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get location');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleGetCurrentPosition = () => getCurrentPosition.execute();
 
   const handleWatchPosition = async () => {
     if (watchId !== null) return;
-    setError(null);
-    try {
-      const res = await watchPosition();
-      setWatchId(res.watchId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to watch position');
-    }
+    const res = await watchPosition.execute();
+    if (res) setWatchId(res.watchId);
   };
 
   const handleClearWatch = async () => {
     if (watchId === null) return;
-    try {
-      await clearWatch({ watchId });
-      setWatchId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear watch');
-    }
+    await clearWatch.execute({ watchId });
+    setWatchId(null);
   };
+
+  const position = getCurrentPosition.data;
+  const error = getCurrentPosition.error ?? watchPosition.error ?? clearWatch.error;
 
   return (
     <div>
@@ -74,8 +57,12 @@ function LocationPage() {
       <div className="card">
         <h2>Location Actions</h2>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleGetCurrentPosition} disabled={loading}>
-            {loading ? 'Loading...' : 'Get Current Position'}
+          <button
+            className="button"
+            onClick={handleGetCurrentPosition}
+            disabled={getCurrentPosition.isLoading}
+          >
+            {getCurrentPosition.isLoading ? 'Loading...' : 'Get Current Position'}
           </button>
           <button
             className="button button-secondary"
@@ -96,7 +83,7 @@ function LocationPage() {
 
       {error && (
         <div className="result error">
-          <strong>Error:</strong> {error}
+          <strong>Error:</strong> {error.message}
         </div>
       )}
 

@@ -6,19 +6,8 @@ function PhonePage() {
   const { connectionMode } = useBridge();
   const { call } = usePlugin(phone);
   const [number, setNumber] = useState('01058204625');
-  const [error, setError] = useState<string | null>(null);
-  const [dialed, setDialed] = useState(false);
 
-  const handleCall = async () => {
-    try {
-      setError(null);
-      setDialed(false);
-      await call({ number });
-      setDialed(true);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
+  const handleCall = () => call.execute({ number });
 
   const handleDigit = (digit: string) => {
     setNumber((prev) => prev + digit);
@@ -92,8 +81,8 @@ function PhonePage() {
         </div>
       </div>
 
-      {dialed && <div className="result success">Dialing {number}...</div>}
-      {error && <div className="result error">{error}</div>}
+      {call.data && <div className="result success">Dialing {number}...</div>}
+      {call.error && <div className="result error">{call.error.message}</div>}
     </div>
   );
 }

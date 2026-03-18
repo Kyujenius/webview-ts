@@ -8,22 +8,13 @@ function SharePage() {
   const [title, setTitle] = useState('Check this out!');
   const [message, setMessage] = useState('Hello from webview-ts');
   const [url, setUrl] = useState('https://github.com');
-  const [result, setResult] = useState<{ shared: boolean } | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleShare = async () => {
-    try {
-      setError(null);
-      const res = await doShare({
-        title: title || undefined,
-        message: message || undefined,
-        url: url || undefined,
-      });
-      setResult(res);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
+  const handleShare = () =>
+    doShare.execute({
+      title: title || undefined,
+      message: message || undefined,
+      url: url || undefined,
+    });
 
   return (
     <div>
@@ -63,14 +54,14 @@ function SharePage() {
         </div>
         <button onClick={handleShare}>Share</button>
 
-        {result && (
+        {doShare.data && (
           <div className="result" style={{ marginTop: '1rem' }}>
-            {result.shared ? 'Shared successfully!' : 'Share was cancelled'}
+            {doShare.data.shared ? 'Shared successfully!' : 'Share was cancelled'}
           </div>
         )}
       </div>
 
-      {error && <div className="result error">{error}</div>}
+      {doShare.error && <div className="result error">{doShare.error.message}</div>}
     </div>
   );
 }

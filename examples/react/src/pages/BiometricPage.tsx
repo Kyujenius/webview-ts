@@ -1,45 +1,17 @@
-import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
-import {
-  biometric,
-  type CheckAvailabilityResponse,
-  type AuthenticateResponse,
-} from '@example/plugins';
+import { biometric } from '@example/plugins';
 
 function BiometricPage() {
   const { checkAvailability, authenticate } = usePlugin(biometric);
   const { connectionMode } = useBridge();
-  const [availability, setAvailability] = useState<CheckAvailabilityResponse | null>(null);
-  const [authResult, setAuthResult] = useState<AuthenticateResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleCheckAvailability = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await checkAvailability();
-      setAvailability(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check availability');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleCheckAvailability = () => checkAvailability.execute();
+  const handleAuthenticate = () => authenticate.execute({ reason: 'Authenticate to continue' });
 
-  const handleAuthenticate = async () => {
-    setLoading(true);
-    setError(null);
-    setAuthResult(null);
-    try {
-      const result = await authenticate({ reason: 'Authenticate to continue' });
-      setAuthResult(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const availability = checkAvailability.data;
+  const authResult = authenticate.data;
+  const error = checkAvailability.error ?? authenticate.error;
+  const loading = checkAvailability.isLoading || authenticate.isLoading;
 
   return (
     <div>
@@ -60,7 +32,7 @@ function BiometricPage() {
       <div className="card">
         <h2>Check Availability</h2>
         <button className="button" onClick={handleCheckAvailability} disabled={loading}>
-          {loading ? 'Checking...' : 'Check Biometric Availability'}
+          {checkAvailability.isLoading ? 'Checking...' : 'Check Biometric Availability'}
         </button>
         {availability && (
           <div className="result" style={{ marginTop: '1rem' }}>
@@ -79,13 +51,13 @@ function BiometricPage() {
       <div className="card">
         <h2>Authentication</h2>
         <button className="button" onClick={handleAuthenticate} disabled={loading}>
-          {loading ? 'Authenticating...' : 'Authenticate'}
+          {authenticate.isLoading ? 'Authenticating...' : 'Authenticate'}
         </button>
       </div>
 
       {error && (
         <div className="result error">
-          <strong>Error:</strong> {error}
+          <strong>Error:</strong> {error.message}
         </div>
       )}
 
