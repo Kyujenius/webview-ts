@@ -48,3 +48,4 @@ lerna-debug.log*
 # AI
 .claude
 *.md
+.omc/
