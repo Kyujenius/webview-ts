@@ -14,7 +14,6 @@ export type {
   ShortHostHandlers,
   ShortFallbackHandlers,
   HostHandlerContext,
-  PluginCall,
   InterceptorMap,
   TimeoutMap,
   PluginInstance,

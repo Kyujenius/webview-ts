@@ -7,11 +7,9 @@ import type {
   PluginInstance,
   ShortHostHandlers,
   HostPluginResult,
-  AutoMethods,
   ActionNameMap,
   EventNameMap,
   ExpandActions,
-  PluginCall,
   ShortFallbackHandlers,
 } from './types';
 import type { Middleware } from '../types/middleware';
@@ -72,15 +70,6 @@ export function definePlugin<
     interceptors,
     timeouts,
     fallback: undefined,
-
-    methods(call: PluginCall<ExpandActions<TName, TMarkers>>) {
-      const methods: Record<string, (payload: any) => Promise<any>> = {};
-      for (const short of shortNames) {
-        const fullName = `${name}.${short}`;
-        methods[short] = (payload: any) => call(fullName as any, payload);
-      }
-      return methods as AutoMethods<TMarkers>;
-    },
 
     host(handlers: ShortHostHandlers<TMarkers, TEvents>): HostPluginResult {
       const wrappedHandlers: Record<string, (payload: any, context: any) => Promise<any>> = {};

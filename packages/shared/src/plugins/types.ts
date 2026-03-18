@@ -1,6 +1,5 @@
-import type { ActionDefinitionShape } from '../types/action-map';
 import type { Middleware } from '../types/middleware';
-import type { FallbackMap } from '../types/bridge';
+import type { BridgeCallOptions, FallbackMap } from '../types/bridge';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -85,13 +84,19 @@ export type EventNameMap<TName extends string, TEvents extends EventMarkerMap> =
   readonly [K in keyof TEvents & string]: `${TName}.${K}`;
 };
 
-/** Auto-generated client methods from markers */
+/** Auto-generated client methods from markers — returns action state objects */
 export type AutoMethods<TMarkers extends ActionMarkerMap> = {
-  [K in keyof TMarkers & string]: ExtractPayload<TMarkers[K]> extends void
-    ? () => Promise<ExtractResponse<TMarkers[K]>>
-    : undefined extends ExtractPayload<TMarkers[K]>
-      ? (payload?: ExtractPayload<TMarkers[K]>) => Promise<ExtractResponse<TMarkers[K]>>
-      : (payload: ExtractPayload<TMarkers[K]>) => Promise<ExtractResponse<TMarkers[K]>>;
+  [K in keyof TMarkers & string]: {
+    execute: (
+      payload: ExtractPayload<TMarkers[K]>,
+      options?: BridgeCallOptions
+    ) => Promise<ExtractResponse<TMarkers[K]>>;
+    data: ExtractResponse<TMarkers[K]> | null;
+    error: Error | null;
+    isLoading: boolean;
+    status: ActionStatus;
+    reset: () => void;
+  };
 };
 
 /** Typed event subscriber from usePlugin().on */
@@ -155,7 +160,6 @@ export interface PluginInstance<
   readonly interceptors: InterceptorMap;
   readonly timeouts: TimeoutMap;
   readonly fallback?: FallbackMap;
-  readonly methods: (call: PluginCall<ExpandActions<TName, TMarkers>>) => AutoMethods<TMarkers>;
   readonly host: (handlers: ShortHostHandlers<TMarkers, TEvents>) => HostPluginResult;
   /** Attach fallback handlers to this plugin (chainable) */
   withFallback(handlers: ShortFallbackHandlers<TMarkers>): PluginInstance<TName, TMarkers, TEvents>;
@@ -169,14 +173,6 @@ export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
 };
 
 // ─── Shared types ───
-
-/** Typed call function — constrained to a plugin's actions */
-export type PluginCall<TActions extends Record<string, ActionDefinitionShape>> = <
-  K extends keyof TActions & string,
->(
-  action: K,
-  payload: TActions[K]['payload']
-) => Promise<TActions[K]['response']>;
 
 /** Request context passed to host handlers */
 export interface RequestContext {
