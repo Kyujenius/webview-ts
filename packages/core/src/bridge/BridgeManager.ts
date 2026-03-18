@@ -1,6 +1,7 @@
 /**
  * Main bridge manager - orchestrates all bridge operations
  */
+import { ActionStateManager } from './ActionStateManager';
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
@@ -372,6 +373,23 @@ export class BridgeManager<
     for (const [action, timeout] of Object.entries(timeoutMap)) {
       this.actionTimeouts.set(action, timeout);
     }
+  }
+
+  /**
+   * Create a framework-agnostic state manager for a single action.
+   * The returned manager can be consumed directly or via framework adapters.
+   *
+   * Pull model (React):            manager.subscribe + manager.getSnapshot
+   * Push model (Vue/Svelte/Solid): manager.watch
+   */
+  createActionState<TAction extends ActionNames<TActions>>(
+    action: TAction,
+    defaultOptions?: BridgeCallOptions
+  ): ActionStateManager<InferResponse<TActions, TAction>, InferPayload<TActions, TAction>> {
+    return new ActionStateManager(
+      (payload: InferPayload<TActions, TAction>, callOptions?: BridgeCallOptions) =>
+        this.call(action, payload, callOptions ?? defaultOptions)
+    );
   }
 
   /**
