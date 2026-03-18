@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".turbo",
+    "tests",
+    "examples/react-native",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

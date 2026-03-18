@@ -1,6 +1,6 @@
-export const useMemo = (fn: any) => fn();
-export const useCallback = (fn: any) => fn;
-export const useEffect = (fn: any) => {
+export const useMemo = (fn: any, _deps?: any) => fn();
+export const useCallback = (fn: any, _deps?: any) => fn;
+export const useEffect = (fn: any, _deps?: any) => {
   fn();
 };
 export const useRef = (val: any) => ({ current: val });

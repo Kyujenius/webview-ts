@@ -53,7 +53,7 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
       };
       const response = await host.handleMessage(message);
       if (!response.success) {
-        throw new Error(response.error?.message ?? 'Host handler failed');
+        throw new Error(response.error.message);
       }
       return response.data;
     };
@@ -61,7 +61,7 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
 
   const bridge = new BridgeManager({
     ...options.clientConfig,
-    fallback: { mode: 'always', handlers: fallbackHandlers },
+    fallback: fallbackHandlers,
   });
 
   // Apply middleware

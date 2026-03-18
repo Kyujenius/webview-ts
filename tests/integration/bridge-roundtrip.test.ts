@@ -42,7 +42,11 @@ describe('Bridge round-trip: BridgeManager ↔ BridgeHost', () => {
       pair.bridge.call('counter.next', {}),
     ]);
 
-    const values = [a.value, b.value, c.value].sort();
+    const values = [
+      (a as { value: number }).value,
+      (b as { value: number }).value,
+      (c as { value: number }).value,
+    ].sort();
     expect(values).toEqual([1, 2, 3]);
   });
 

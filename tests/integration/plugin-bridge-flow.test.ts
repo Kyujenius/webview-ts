@@ -58,7 +58,7 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
         };
         const response = await bridgeHost.handleMessage(message);
         if (!response.success) {
-          throw new Error(response.error?.message ?? 'Host handler failed');
+          throw new Error(response.error.message);
         }
         return response.data;
       };
@@ -101,18 +101,25 @@ describe('Camera plugin: full message flow', () => {
   });
 
   it('pickImage: multiple=true returns multiple images', async () => {
-    const result = await bridge.call('camera.pickImage', { multiple: true });
+    const result = (await bridge.call('camera.pickImage', { multiple: true })) as {
+      images: { uri: string }[];
+    };
     expect(result.images).toHaveLength(2);
     expect(result.images[0].uri).toBe('native://img1');
   });
 
   it('pickImage: multiple=false returns single image', async () => {
-    const result = await bridge.call('camera.pickImage', { multiple: false });
+    const result = (await bridge.call('camera.pickImage', { multiple: false })) as {
+      images: { uri: string }[];
+    };
     expect(result.images).toHaveLength(1);
   });
 
   it('recordVideo: maxDuration flows through', async () => {
-    const result = await bridge.call('camera.recordVideo', { maxDuration: 60 });
+    const result = (await bridge.call('camera.recordVideo', { maxDuration: 60 })) as {
+      uri: string;
+      duration: number;
+    };
     expect(result.duration).toBe(60);
     expect(result.uri).toBe('native://video.mp4');
   });
@@ -148,19 +155,25 @@ describe('Storage plugin: full message flow', () => {
 
   it('setItem + getItem roundtrip', async () => {
     await bridge.call('storage.setItem', { key: 'user', value: 'Alice' });
-    const result = await bridge.call('storage.getItem', { key: 'user' });
+    const result = (await bridge.call('storage.getItem', { key: 'user' })) as {
+      value: string | null;
+    };
     expect(result.value).toBe('Alice');
   });
 
   it('getItem returns null for missing key', async () => {
-    const result = await bridge.call('storage.getItem', { key: 'nonexistent' });
+    const result = (await bridge.call('storage.getItem', { key: 'nonexistent' })) as {
+      value: string | null;
+    };
     expect(result.value).toBeNull();
   });
 
   it('removeItem removes the key', async () => {
     await bridge.call('storage.setItem', { key: 'temp', value: 'data' });
     await bridge.call('storage.removeItem', { key: 'temp' });
-    const result = await bridge.call('storage.getItem', { key: 'temp' });
+    const result = (await bridge.call('storage.getItem', { key: 'temp' })) as {
+      value: string | null;
+    };
     expect(result.value).toBeNull();
   });
 
@@ -168,7 +181,9 @@ describe('Storage plugin: full message flow', () => {
     store.clear();
     await bridge.call('storage.setItem', { key: 'a', value: '1' });
     await bridge.call('storage.setItem', { key: 'b', value: '2' });
-    const result = await bridge.call('storage.getAllKeys', {} as Record<string, never>);
+    const result = (await bridge.call('storage.getAllKeys', {} as Record<string, never>)) as {
+      keys: string[];
+    };
     expect(result.keys).toContain('a');
     expect(result.keys).toContain('b');
   });
@@ -176,7 +191,9 @@ describe('Storage plugin: full message flow', () => {
   it('clear removes all keys', async () => {
     await bridge.call('storage.setItem', { key: 'x', value: 'y' });
     await bridge.call('storage.clear', {} as Record<string, never>);
-    const result = await bridge.call('storage.getAllKeys', {} as Record<string, never>);
+    const result = (await bridge.call('storage.getAllKeys', {} as Record<string, never>)) as {
+      keys: string[];
+    };
     expect(result.keys).toHaveLength(0);
   });
 });
@@ -201,10 +218,16 @@ describe('Multiple plugins: combined host', () => {
   const { bridge } = createBridgePair([cameraHost, storageHost]);
 
   it('camera and storage both work through same bridge', async () => {
-    const photo = await bridge.call('camera.takePhoto', {});
+    const photo = (await bridge.call('camera.takePhoto', {})) as {
+      uri: string;
+      width: number;
+      height: number;
+    };
     expect(photo.uri).toBe('photo.jpg');
 
-    const stored = await bridge.call('storage.getItem', { key: 'test' });
+    const stored = (await bridge.call('storage.getItem', { key: 'test' })) as {
+      value: string | null;
+    };
     expect(stored.value).toBe('cached');
   });
 });
@@ -229,11 +252,11 @@ describe('Custom plugin: definePlugin + full flow', () => {
   const { bridge } = createBridgePair([paymentHost]);
 
   it('custom plugin with zero amount', async () => {
-    const result = await bridge.call('payment.checkout' as any, {
+    const result = (await bridge.call('payment.checkout', {
       amount: 0,
       currency: 'KRW',
-    });
-    expect((result as any).success).toBe(false);
+    })) as { transactionId: string; success: boolean };
+    expect(result.success).toBe(false);
   });
 });
 
@@ -253,7 +276,7 @@ describe('Error handling: host handler throws', () => {
   const { bridge } = createBridgePair([errorHost]);
 
   it('host error propagates to client as rejection', async () => {
-    await expect(bridge.call('error.fail' as any, {})).rejects.toThrow('Intentional failure');
+    await expect(bridge.call('error.fail', {})).rejects.toThrow('Intentional failure');
   });
 });
 
