@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { DevToolsMiddleware } from './DevToolsMiddleware';
 import type { MiddlewareContext } from '@webview-ts/shared';
 import type { TransportMessage } from '../transport/DevToolsTransport';
+import type { MessageStatus } from '../types/index';
 
 function makeCtx(action: string, payload?: unknown): MiddlewareContext {
   return {
@@ -48,7 +49,7 @@ describe('DevToolsMiddleware', () => {
         ctx.response = {
           id: ctx.request.id,
           success: false,
-          error: { code: 'TEST_ERROR', message: 'Test error' },
+          error: { code: 'HANDLER_ERROR', message: 'Test error' },
           timestamp: Date.now(),
         };
       });
@@ -56,7 +57,7 @@ describe('DevToolsMiddleware', () => {
       const messages = middleware.getStore().getMessages();
       expect(messages).toHaveLength(1);
       expect(messages[0].status).toBe('error');
-      expect(messages[0].error).toEqual({ code: 'TEST_ERROR', message: 'Test error' });
+      expect(messages[0].error).toEqual({ code: 'HANDLER_ERROR', message: 'Test error' });
     });
 
     it('should record thrown exception', async () => {
@@ -86,7 +87,12 @@ describe('DevToolsMiddleware', () => {
 
       const ctx = makeCtx('testAction');
       await mw.fn(ctx, async () => {
-        ctx.response = { id: ctx.request.id, success: true, timestamp: Date.now() };
+        ctx.response = {
+          id: ctx.request.id,
+          success: true,
+          data: undefined,
+          timestamp: Date.now(),
+        };
       });
 
       expect(capturedStatus).toBe('pending');
@@ -137,7 +143,12 @@ describe('DevToolsMiddleware', () => {
 
       const ctx = makeCtx('testAction');
       await mw.fn(ctx, async () => {
-        ctx.response = { id: ctx.request.id, success: true, timestamp: Date.now() };
+        ctx.response = {
+          id: ctx.request.id,
+          success: true,
+          data: undefined,
+          timestamp: Date.now(),
+        };
       });
 
       expect(statuses).toEqual(['pending', 'success']);
@@ -164,7 +175,12 @@ describe('DevToolsMiddleware', () => {
       const mw = new DevToolsMiddleware({ transport: mockTransport });
       const ctx = makeCtx('test.action');
       await mw.fn(ctx, async () => {
-        ctx.response = { id: ctx.request.id, success: true, timestamp: Date.now() };
+        ctx.response = {
+          id: ctx.request.id,
+          success: true,
+          data: undefined,
+          timestamp: Date.now(),
+        };
       });
 
       expect(sent).toHaveLength(2);
