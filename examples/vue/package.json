@@ -1,0 +1,27 @@
+{
+  "name": "@example/vue",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Vue 3 example app demonstrating webview-ts usage",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@example/plugins": "workspace:*",
+    "@webview-ts/core": "workspace:*",
+    "@webview-ts/vue": "workspace:*",
+    "@webview-ts/shared": "workspace:*",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "^2.0.0"
+  }
+}
