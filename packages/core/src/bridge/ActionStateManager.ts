@@ -30,12 +30,12 @@ export class ActionStateManager<TData, TPayload = unknown> {
     private readonly callFn: (payload: TPayload, options?: BridgeCallOptions) => Promise<TData>
   ) {}
 
-  /** 현재 상태 스냅샷 반환 (참조 안정적 — 변경 시에만 새 객체로 교체) */
+  /** Returns current state snapshot. Reference is stable — replaced only when state changes. */
   getSnapshot = (): ActionState<TData> => {
     return this.state;
   };
 
-  /** Pull model: React useSyncExternalStore 호환 */
+  /** Pull model: compatible with React useSyncExternalStore */
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => {
@@ -43,7 +43,7 @@ export class ActionStateManager<TData, TPayload = unknown> {
     };
   };
 
-  /** Push model helper: Vue/Svelte/Solid 어댑터용 */
+  /** Push model helper: for Vue/Svelte/Solid adapters */
   watch = (listener: (state: ActionState<TData>) => void): (() => void) => {
     return this.subscribe(() => listener(this.getSnapshot()));
   };
@@ -56,7 +56,7 @@ export class ActionStateManager<TData, TPayload = unknown> {
       return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      // 에러 시 이전 data 유지 (현재 useActionCore 동작과 일치)
+      // preserve previous data on error (matches current useActionCore behavior)
       this.setState({ status: 'error', data: this.state.data, error, isLoading: false });
       throw error;
     }
