@@ -17,5 +17,5 @@ export function useBridgeContext<
 >(): BridgeContextValue<TActions> {
   const context = useContext(BridgeContext);
   if (!context) throw new Error('useBridgeContext must be used within a <BridgeProvider>');
-  return context as BridgeContextValue<TActions>;
+  return context as unknown as BridgeContextValue<TActions>;
 }
