@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-const isActive = (path: string) => route.path === path ? 'active' : '';
+const navLinks = [
+  { to: '/', label: 'Home' },
+  { to: '/camera', label: 'Camera' },
+  { to: '/location', label: 'Location' },
+  { to: '/biometric', label: 'Biometric' },
+  { to: '/phone', label: 'Phone' },
+  { to: '/calendar', label: 'Calendar' },
+  { to: '/device', label: 'Device' },
+  { to: '/share', label: 'Share' },
+  { to: '/actions', label: 'useAction' },
+] as const;
 </script>
 
 <template>
@@ -12,15 +19,9 @@ const isActive = (path: string) => route.path === path ? 'active' : '';
 
   <nav class="nav">
     <ul>
-      <li><RouterLink to="/" :class="isActive('/')">Home</RouterLink></li>
-      <li><RouterLink to="/camera" :class="isActive('/camera')">Camera</RouterLink></li>
-      <li><RouterLink to="/location" :class="isActive('/location')">Location</RouterLink></li>
-      <li><RouterLink to="/biometric" :class="isActive('/biometric')">Biometric</RouterLink></li>
-      <li><RouterLink to="/phone" :class="isActive('/phone')">Phone</RouterLink></li>
-      <li><RouterLink to="/calendar" :class="isActive('/calendar')">Calendar</RouterLink></li>
-      <li><RouterLink to="/device" :class="isActive('/device')">Device</RouterLink></li>
-      <li><RouterLink to="/share" :class="isActive('/share')">Share</RouterLink></li>
-      <li><RouterLink to="/actions" :class="isActive('/actions')">useAction</RouterLink></li>
+      <li v-for="link in navLinks" :key="link.to">
+        <RouterLink :to="link.to">{{ link.label }}</RouterLink>
+      </li>
     </ul>
   </nav>
 </template>

@@ -2,6 +2,9 @@
 import { ref, computed } from 'vue';
 import { usePlugin, useBridge } from '../bridge';
 import { calendar } from '@example/plugins';
+import type { GetEventsResponse } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge.vue';
+import ErrorMessage from '../components/ErrorMessage.vue';
 
 const { connectionMode } = useBridge();
 const { addEvent, getEvents } = usePlugin(calendar);
@@ -31,25 +34,21 @@ const handleGetEvents = () => {
   getEvents.execute({ startDate: start, endDate: end });
 };
 
-const events = computed(() => (getEvents.data.value as any)?.events ?? []);
+const events = computed(() => (getEvents.data.value as GetEventsResponse | null)?.events ?? []);
 const error = computed(() => addEvent.error.value ?? getEvents.error.value);
 </script>
 
 <template>
   <div>
     <h1>Calendar</h1>
-    <p class="mode-badge">
-      {{ connectionMode === 'native' ? 'Native Bridge'
-        : connectionMode === 'fallback' ? 'Fallback (In-Memory)'
-        : 'Disconnected' }}
-    </p>
+    <ModeBadge :connectionMode="connectionMode" fallbackLabel="Fallback (In-Memory)" />
     <div class="card">
       <h2>Add Event</h2>
-      <div style="display: flex; flex-direction: column; gap: 8px">
-        <input v-model="title" type="text" placeholder="Event title" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd" />
-        <input v-model="startDate" type="datetime-local" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd" />
-        <input v-model="endDate" type="datetime-local" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd" />
-        <input v-model="notes" type="text" placeholder="Notes (optional)" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd" />
+      <div class="flex-col-gap">
+        <input v-model="title" type="text" placeholder="Event title" class="input" />
+        <input v-model="startDate" type="datetime-local" class="input" />
+        <input v-model="endDate" type="datetime-local" class="input" />
+        <input v-model="notes" type="text" placeholder="Notes (optional)" class="input" />
         <button class="button" @click="handleAdd" :disabled="!title || !startDate || !endDate">
           Add to Calendar
         </button>
@@ -66,6 +65,6 @@ const error = computed(() => addEvent.error.value ?? getEvents.error.value);
         </div>
       </div>
     </div>
-    <div v-if="error" class="result error">{{ error.message }}</div>
+    <ErrorMessage :error="error" />
   </div>
 </template>

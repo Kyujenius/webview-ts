@@ -77,7 +77,7 @@ html, body {
 .nav a[href="/share"]::before { content: "📤"; }
 
 .nav a:hover,
-.nav a.active {
+.nav a.router-link-exact-active {
   color: #007bff;
 }
 
@@ -227,4 +227,104 @@ h3 {
   background: #f0f9ff;
   color: #0369a1;
   margin-bottom: 0.75rem;
+}
+
+/* Form inputs */
+.input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.input-tel {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.5rem;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+/* Layout helpers */
+.flex-col-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flex-row-gap {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dial-button {
+  padding: 14px;
+  font-size: 1.1rem;
+}
+
+.button-call {
+  background: #22c55e;
+}
+
+.button-call:hover {
+  background: #16a34a;
+}
+
+/* Table helpers */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.info-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.info-table td:first-child {
+  font-weight: 500;
+  color: #666;
+}
+
+.info-table td:last-child {
+  font-family: monospace;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.compare-table th {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.compare-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.compare-table td:first-child {
+  font-weight: 500;
+  color: #555;
+}
+
+.compare-table td:nth-child(n+2) {
+  font-family: monospace;
+  font-size: 0.8rem;
 }

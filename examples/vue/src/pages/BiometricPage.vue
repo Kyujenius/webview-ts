@@ -2,12 +2,11 @@
 import { computed } from 'vue';
 import { usePlugin, useBridge } from '../bridge';
 import { biometric } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge.vue';
+import ErrorMessage from '../components/ErrorMessage.vue';
 
 const { connectionMode } = useBridge();
 const { checkAvailability, authenticate } = usePlugin(biometric);
-
-const handleCheckAvailability = () => checkAvailability.execute();
-const handleAuthenticate = () => authenticate.execute({ reason: 'Authenticate to continue' });
 
 const availability = computed(() => checkAvailability.data.value);
 const authResult = computed(() => authenticate.data.value);
@@ -18,15 +17,10 @@ const loading = computed(() => checkAvailability.isLoading.value || authenticate
 <template>
   <div>
     <h1>Biometric Plugin</h1>
-    <div class="result" style="background: #f0f9ff; padding: 0.75rem; margin-bottom: 1rem">
-      <strong>Mode:</strong>
-      {{ connectionMode === 'native' ? 'Native Bridge'
-        : connectionMode === 'fallback' ? 'Fallback (Mock)'
-        : 'Disconnected' }}
-    </div>
+    <ModeBadge :connectionMode="connectionMode" fallbackLabel="Fallback (Mock)" />
     <div class="card">
       <h2>Check Availability</h2>
-      <button class="button" @click="handleCheckAvailability" :disabled="loading">
+      <button class="button" @click="checkAvailability.execute()" :disabled="loading">
         {{ checkAvailability.isLoading.value ? 'Checking...' : 'Check Biometric Availability' }}
       </button>
       <div v-if="availability" class="result" style="margin-top: 1rem">
@@ -38,13 +32,11 @@ const loading = computed(() => checkAvailability.isLoading.value || authenticate
     </div>
     <div class="card">
       <h2>Authentication</h2>
-      <button class="button" @click="handleAuthenticate" :disabled="loading">
+      <button class="button" @click="authenticate.execute({ reason: 'Authenticate to continue' })" :disabled="loading">
         {{ authenticate.isLoading.value ? 'Authenticating...' : 'Authenticate' }}
       </button>
     </div>
-    <div v-if="error" class="result error">
-      <strong>Error:</strong> {{ error.message }}
-    </div>
+    <ErrorMessage :error="error" />
     <div v-if="authResult" class="card">
       <h2>Authentication Result</h2>
       <div :class="['result', authResult.success ? 'success' : 'error']">

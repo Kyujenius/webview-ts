@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue';
 import { usePlugin, useBridge, useEvent } from '../bridge';
 import { location } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge.vue';
+import ErrorMessage from '../components/ErrorMessage.vue';
 
 const { connectionMode } = useBridge();
 const { getCurrentPosition, watchPosition, clearWatch } = usePlugin(location);
@@ -15,8 +17,6 @@ useEvent('location.updated', (pos: { latitude: number; longitude: number; accura
   livePosition.value = pos;
   eventCount.value++;
 });
-
-const handleGetCurrentPosition = () => getCurrentPosition.execute();
 
 const handleWatchPosition = async () => {
   if (watchId.value !== null) return;
@@ -37,16 +37,11 @@ const error = computed(() => getCurrentPosition.error.value ?? watchPosition.err
 <template>
   <div>
     <h1>Location Plugin</h1>
-    <div class="result" style="background: #f0f9ff; padding: 0.75rem; margin-bottom: 1rem">
-      <strong>Mode:</strong>
-      {{ connectionMode === 'native' ? 'Native Bridge'
-        : connectionMode === 'fallback' ? 'Fallback (Seoul, KR)'
-        : 'Disconnected' }}
-    </div>
+    <ModeBadge :connectionMode="connectionMode" fallbackLabel="Fallback (Seoul, KR)" />
     <div class="card">
       <h2>Location Actions</h2>
-      <div style="display: flex; gap: 1rem; flex-wrap: wrap">
-        <button class="button" @click="handleGetCurrentPosition" :disabled="getCurrentPosition.isLoading.value">
+      <div class="flex-row-gap">
+        <button class="button" @click="getCurrentPosition.execute()" :disabled="getCurrentPosition.isLoading.value">
           {{ getCurrentPosition.isLoading.value ? 'Loading...' : 'Get Current Position' }}
         </button>
         <button class="button button-secondary" @click="handleWatchPosition" :disabled="watchId !== null">
@@ -57,9 +52,7 @@ const error = computed(() => getCurrentPosition.error.value ?? watchPosition.err
         </button>
       </div>
     </div>
-    <div v-if="error" class="result error">
-      <strong>Error:</strong> {{ error.message }}
-    </div>
+    <ErrorMessage :error="error" />
     <div v-if="position" class="card">
       <h2>Current Position</h2>
       <div class="result success">
