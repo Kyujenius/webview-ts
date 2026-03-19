@@ -17,15 +17,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@webview-ts/shared": ["./packages/shared/src/index.ts"],
-      "@webview-ts/core": ["./packages/core/src/index.ts"],
-      "@webview-ts/react": ["./packages/clients/react/src/index.ts"],
-      "@webview-ts/vue": ["./packages/clients/vue/src/index.ts"],
-      "@webview-ts/react-native": ["./packages/hosts/react-native/src/index.ts"],
-      "@webview-ts/devtools": ["./packages/devtools/src/index.ts"]
-    }
+    "jsx": "react-jsx"
   },
   "exclude": ["node_modules", "dist", "build", ".turbo", "tests", "examples/react-native"]
 }

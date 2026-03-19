@@ -6,10 +6,10 @@ import { usePlugin } from '../composables/usePlugin';
 
 function createMockManager() {
   let watchListener: ((state: any) => void) | null = null;
-  let state = {
-    status: 'idle' as const,
-    data: null as unknown,
-    error: null as Error | null,
+  let state: { status: string; data: unknown; error: Error | null; isLoading: boolean } = {
+    status: 'idle',
+    data: null,
+    error: null,
     isLoading: false,
   };
 

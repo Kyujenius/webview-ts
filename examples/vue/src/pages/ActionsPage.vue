@@ -22,7 +22,7 @@ deviceInfo.isLoading   // Ref&lt;boolean&gt;
 deviceInfo.error       // Ref&lt;Error | null&gt;
 deviceInfo.status      // Ref&lt;'idle' | 'loading' | 'success' | 'error'&gt;
 deviceInfo.reset()     // clear state</pre>
-      <button @click="deviceInfo.execute()" :disabled="deviceInfo.isLoading.value">
+      <button @click="deviceInfo.execute({})" :disabled="deviceInfo.isLoading.value">
         {{ deviceInfo.isLoading.value ? 'Loading...' : 'Get Device Info' }}
       </button>
       <pre v-if="deviceInfo.data.value" class="result success" style="margin-top: 0.75rem">{{ JSON.stringify(deviceInfo.data.value, null, 2) }}</pre>

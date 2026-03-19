@@ -6,8 +6,8 @@ import { useAction } from '../composables/useAction';
 
 function createMockManager(initialData: { data?: unknown; error?: Error | null } = {}) {
   let watchListener: ((state: any) => void) | null = null;
-  let state = {
-    status: 'idle' as const,
+  let state: { status: string; data: unknown; error: Error | null; isLoading: boolean } = {
+    status: 'idle',
     data: initialData.data ?? null,
     error: initialData.error ?? null,
     isLoading: false,
