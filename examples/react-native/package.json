@@ -4,6 +4,7 @@
   "main": "index.ts",
   "private": true,
   "scripts": {
+    "dev": "npx expo start",
     "start": "npx expo start",
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
