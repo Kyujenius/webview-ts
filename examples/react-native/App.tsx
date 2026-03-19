@@ -12,7 +12,7 @@ import {
   shareHost,
 } from './hosts';
 
-const WEB_APP_URL = 'http://localhost:3003';
+const WEB_APP_URL = 'http://localhost:3000';
 
 export default function App() {
   const { webViewProps } = useBridgeHost({
