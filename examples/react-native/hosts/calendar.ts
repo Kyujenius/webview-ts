@@ -2,11 +2,15 @@ import * as ExpoCalendar from 'expo-calendar';
 import { Platform } from 'react-native';
 import { calendar } from '@example/plugins';
 
-async function getDefaultCalendarId(): Promise<string> {
+async function ensureCalendarPermission(): Promise<void> {
   const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
   if (status !== 'granted') {
     throw new Error('Calendar permission not granted');
   }
+}
+
+async function getDefaultCalendarId(): Promise<string> {
+  await ensureCalendarPermission();
 
   const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
 
@@ -32,10 +36,7 @@ export const calendarHost = calendar.host({
     return { id };
   },
   getEvents: async (payload) => {
-    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
-    if (status !== 'granted') {
-      throw new Error('Calendar permission not granted');
-    }
+    await ensureCalendarPermission();
 
     const calendars = await ExpoCalendar.getCalendarsAsync(ExpoCalendar.EntityTypes.EVENT);
     const calendarIds = calendars.map((c) => c.id);
