@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
 import { calendar } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge';
+import ActionError from '../components/ActionError';
 
 function CalendarPage() {
   const { connectionMode } = useBridge();
@@ -36,42 +38,36 @@ function CalendarPage() {
   return (
     <div>
       <h1>Calendar</h1>
-      <p className="mode-badge">
-        {connectionMode === 'native'
-          ? 'Native Bridge'
-          : connectionMode === 'fallback'
-            ? 'Fallback (In-Memory)'
-            : 'Disconnected'}
-      </p>
+      <ModeBadge connectionMode={connectionMode} fallbackLabel="In-Memory" />
 
       <div className="card">
         <h2>Add Event</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="form-column">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Event title"
-            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            className="form-input"
           />
           <input
             type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            className="form-input"
           />
           <input
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            className="form-input"
           />
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes (optional)"
-            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+            className="form-input"
           />
           <button
             className="button"
@@ -106,7 +102,7 @@ function CalendarPage() {
         )}
       </div>
 
-      {error && <div className="result error">{error.message}</div>}
+      <ActionError error={error} />
     </div>
   );
 }

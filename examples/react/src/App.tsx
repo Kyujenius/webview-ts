@@ -1,3 +1,4 @@
+import { ComponentType } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import CameraPage from './pages/CameraPage';
@@ -9,6 +10,18 @@ import DevicePage from './pages/DevicePage';
 import SharePage from './pages/SharePage';
 import ActionsPage from './pages/ActionsPage';
 
+const routes: { path: string; label: string; component: ComponentType }[] = [
+  { path: '/', label: 'Home', component: HomePage },
+  { path: '/camera', label: 'Camera', component: CameraPage },
+  { path: '/location', label: 'Location', component: LocationPage },
+  { path: '/biometric', label: 'Biometric', component: BiometricPage },
+  { path: '/phone', label: 'Phone', component: PhonePage },
+  { path: '/calendar', label: 'Calendar', component: CalendarPage },
+  { path: '/device', label: 'Device', component: DevicePage },
+  { path: '/share', label: 'Share', component: SharePage },
+  { path: '/actions', label: 'useAction', component: ActionsPage },
+];
+
 function App() {
   const location = useLocation();
 
@@ -18,65 +31,21 @@ function App() {
     <>
       <div className="container page-content">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/camera" element={<CameraPage />} />
-          <Route path="/location" element={<LocationPage />} />
-          <Route path="/biometric" element={<BiometricPage />} />
-          <Route path="/phone" element={<PhonePage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/device" element={<DevicePage />} />
-          <Route path="/share" element={<SharePage />} />
-          <Route path="/actions" element={<ActionsPage />} />
+          {routes.map(({ path, component: Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))}
         </Routes>
       </div>
 
       <nav className="nav">
         <ul>
-          <li>
-            <Link to="/" className={isActive('/')}>
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link to="/camera" className={isActive('/camera')}>
-              Camera
-            </Link>
-          </li>
-          <li>
-            <Link to="/location" className={isActive('/location')}>
-              Location
-            </Link>
-          </li>
-          <li>
-            <Link to="/biometric" className={isActive('/biometric')}>
-              Biometric
-            </Link>
-          </li>
-          <li>
-            <Link to="/phone" className={isActive('/phone')}>
-              Phone
-            </Link>
-          </li>
-          <li>
-            <Link to="/calendar" className={isActive('/calendar')}>
-              Calendar
-            </Link>
-          </li>
-          <li>
-            <Link to="/device" className={isActive('/device')}>
-              Device
-            </Link>
-          </li>
-          <li>
-            <Link to="/share" className={isActive('/share')}>
-              Share
-            </Link>
-          </li>
-          <li>
-            <Link to="/actions" className={isActive('/actions')}>
-              useAction
-            </Link>
-          </li>
+          {routes.map(({ path, label }) => (
+            <li key={path}>
+              <Link to={path} className={isActive(path)}>
+                {label}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
     </>

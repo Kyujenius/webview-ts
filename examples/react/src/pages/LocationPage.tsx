@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { usePlugin, useBridge } from '../bridge';
 import { location } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge';
+import ActionError from '../components/ActionError';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch, on } = usePlugin(location);
@@ -42,21 +44,11 @@ function LocationPage() {
     <div>
       <h1>Location Plugin</h1>
 
-      <div
-        className="result"
-        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
-      >
-        <strong>Mode:</strong>{' '}
-        {connectionMode === 'native'
-          ? 'Native Bridge'
-          : connectionMode === 'fallback'
-            ? 'Fallback (Seoul, KR)'
-            : 'Disconnected'}
-      </div>
+      <ModeBadge connectionMode={connectionMode} fallbackLabel="Seoul, KR" />
 
       <div className="card">
         <h2>Location Actions</h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="action-row">
           <button
             className="button"
             onClick={handleGetCurrentPosition}
@@ -81,11 +73,7 @@ function LocationPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="result error">
-          <strong>Error:</strong> {error.message}
-        </div>
-      )}
+      <ActionError error={error} />
 
       {position && (
         <div className="card">

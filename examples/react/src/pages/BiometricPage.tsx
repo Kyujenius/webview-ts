@@ -1,5 +1,7 @@
 import { usePlugin, useBridge } from '../bridge';
 import { biometric } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge';
+import ActionError from '../components/ActionError';
 
 function BiometricPage() {
   const { checkAvailability, authenticate } = usePlugin(biometric);
@@ -17,17 +19,7 @@ function BiometricPage() {
     <div>
       <h1>Biometric Plugin</h1>
 
-      <div
-        className="result"
-        style={{ background: '#f0f9ff', padding: '0.75rem', marginBottom: '1rem' }}
-      >
-        <strong>Mode:</strong>{' '}
-        {connectionMode === 'native'
-          ? 'Native Bridge'
-          : connectionMode === 'fallback'
-            ? 'Fallback (Mock)'
-            : 'Disconnected'}
-      </div>
+      <ModeBadge connectionMode={connectionMode} fallbackLabel="Mock" />
 
       <div className="card">
         <h2>Check Availability</h2>
@@ -55,11 +47,7 @@ function BiometricPage() {
         </button>
       </div>
 
-      {error && (
-        <div className="result error">
-          <strong>Error:</strong> {error.message}
-        </div>
-      )}
+      <ActionError error={error} />
 
       {authResult && (
         <div className="card">

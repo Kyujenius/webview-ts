@@ -1,5 +1,8 @@
 import { usePlugin, useBridge } from '../bridge';
 import { device } from '@example/plugins';
+import type { DeviceInfoResponse } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge';
+import ActionError from '../components/ActionError';
 
 function DevicePage() {
   const { connectionMode } = useBridge();
@@ -7,18 +10,12 @@ function DevicePage() {
 
   const handleGetInfo = () => getInfo.execute();
 
-  const info = getInfo.data ? (getInfo.data as unknown as Record<string, unknown>) : null;
+  const info = getInfo.data ? (getInfo.data as DeviceInfoResponse) : null;
 
   return (
     <div>
       <h1>Device Plugin</h1>
-      <p className="mode-badge">
-        {connectionMode === 'native'
-          ? 'Native Bridge'
-          : connectionMode === 'fallback'
-            ? 'Fallback (Web)'
-            : 'Disconnected'}
-      </p>
+      <ModeBadge connectionMode={connectionMode} fallbackLabel="Web" />
 
       <div className="card">
         <h2>Device Information</h2>
@@ -26,14 +23,12 @@ function DevicePage() {
 
         {info && (
           <div className="result" style={{ marginTop: '1rem' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className="info-table">
               <tbody>
                 {Object.entries(info).map(([key, value]) => (
-                  <tr key={key} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '6px 8px', fontWeight: 500, color: '#666' }}>{key}</td>
-                    <td style={{ padding: '6px 8px', fontFamily: 'monospace' }}>
-                      {String(value ?? 'N/A')}
-                    </td>
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{String(value ?? 'N/A')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -42,7 +37,7 @@ function DevicePage() {
         )}
       </div>
 
-      {getInfo.error && <div className="result error">{getInfo.error.message}</div>}
+      <ActionError error={getInfo.error} />
     </div>
   );
 }

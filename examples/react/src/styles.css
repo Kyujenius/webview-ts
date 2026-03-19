@@ -228,3 +228,107 @@ h3 {
   color: #0369a1;
   margin-bottom: 0.75rem;
 }
+
+/* Action button row (horizontal wrap) */
+.action-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Vertical form layout */
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Standard form input */
+.form-input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* Phone dial pad input */
+.dial-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.5rem;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-family: monospace;
+}
+
+/* Dial pad grid */
+.dial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dial-grid .button {
+  padding: 14px;
+  font-size: 1.1rem;
+}
+
+/* Call button (green) */
+.button-call {
+  background: #22c55e;
+}
+
+.button-call:hover {
+  background: #16a34a;
+}
+
+/* Info table */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.info-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.info-table td:first-child {
+  font-weight: 500;
+  color: #666;
+}
+
+.info-table td:last-child {
+  font-family: monospace;
+}
+
+/* Comparison table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.compare-table th {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.compare-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.compare-table td:first-child {
+  font-weight: 500;
+  color: #555;
+}
+
+.compare-table td:not(:first-child) {
+  font-family: monospace;
+  font-size: 0.8rem;
+}

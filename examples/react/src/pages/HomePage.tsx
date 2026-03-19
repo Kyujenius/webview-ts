@@ -1,4 +1,5 @@
 import { useBridge } from '../bridge';
+import { getModeLabel, getModeClassName } from '../components/ModeBadge';
 
 function HomePage() {
   const { connectionMode } = useBridge();
@@ -11,21 +12,7 @@ function HomePage() {
         <h2>Bridge Status</h2>
         <p>
           Status:{' '}
-          <span
-            className={
-              connectionMode === 'native'
-                ? 'status-connected'
-                : connectionMode === 'fallback'
-                  ? 'status-fallback'
-                  : 'status-disconnected'
-            }
-          >
-            {connectionMode === 'native'
-              ? 'Connected to Native'
-              : connectionMode === 'fallback'
-                ? 'Fallback Mode'
-                : 'Disconnected'}
-          </span>
+          <span className={getModeClassName(connectionMode)}>{getModeLabel(connectionMode)}</span>
         </p>
         <p style={{ marginTop: '1rem' }}>
           This example app demonstrates the usage of all webview-ts packages:
@@ -89,9 +76,8 @@ function HomePage() {
         </p>
         {connectionMode !== 'native' && (
           <div className="result error" style={{ marginTop: '1rem' }}>
-            <strong>Note:</strong> You are currently in{' '}
-            {connectionMode === 'fallback' ? 'fallback' : 'disconnected'} mode. To test native
-            features, run this app inside a React Native WebView with the{' '}
+            <strong>Note:</strong> You are currently in {getModeLabel(connectionMode).toLowerCase()}{' '}
+            mode. To test native features, run this app inside a React Native WebView with the{' '}
             <code>@webview-ts/react-native</code> package configured.
           </div>
         )}

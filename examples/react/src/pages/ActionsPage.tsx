@@ -1,5 +1,6 @@
 import { useAction, usePlugin } from '../bridge';
 import { device } from '@example/plugins';
+import ActionError from '../components/ActionError';
 
 function ActionsPage() {
   const deviceInfo = useAction('device.getInfo');
@@ -28,11 +29,7 @@ deviceInfo.reset()     // clear state`}</pre>
             {JSON.stringify(deviceInfo.data, null, 2)}
           </pre>
         )}
-        {deviceInfo.error && (
-          <p className="result error" style={{ marginTop: '0.75rem' }}>
-            {deviceInfo.error.message}
-          </p>
-        )}
+        <ActionError error={deviceInfo.error} />
       </div>
 
       <div className="card">
@@ -54,42 +51,16 @@ getInfo.reset()`}</pre>
             {JSON.stringify(getInfo.data, null, 2)}
           </pre>
         )}
-        {getInfo.error && (
-          <p className="result error" style={{ marginTop: '0.75rem' }}>
-            {getInfo.error.message}
-          </p>
-        )}
+        <ActionError error={getInfo.error} />
       </div>
 
       <div className="card">
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+        <table className="compare-table">
           <thead>
-            <tr style={{ background: '#f8f9fa' }}>
-              <th
-                style={{
-                  padding: '8px 12px',
-                  textAlign: 'left',
-                  borderBottom: '2px solid #dee2e6',
-                }}
-              />
-              <th
-                style={{
-                  padding: '8px 12px',
-                  textAlign: 'left',
-                  borderBottom: '2px solid #dee2e6',
-                }}
-              >
-                useAction
-              </th>
-              <th
-                style={{
-                  padding: '8px 12px',
-                  textAlign: 'left',
-                  borderBottom: '2px solid #dee2e6',
-                }}
-              >
-                usePlugin
-              </th>
+            <tr>
+              <th />
+              <th>useAction</th>
+              <th>usePlugin</th>
             </tr>
           </thead>
           <tbody>
@@ -100,14 +71,10 @@ getInfo.reset()`}</pre>
               ['Events', '—', '.on("name", handler)'],
               ['Analogy', 'useQuery()', 'useQueries([…])'],
             ].map(([label, a, b]) => (
-              <tr key={label} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '6px 12px', fontWeight: 500, color: '#555' }}>{label}</td>
-                <td style={{ padding: '6px 12px', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                  {a}
-                </td>
-                <td style={{ padding: '6px 12px', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                  {b}
-                </td>
+              <tr key={label}>
+                <td>{label}</td>
+                <td>{a}</td>
+                <td>{b}</td>
               </tr>
             ))}
           </tbody>

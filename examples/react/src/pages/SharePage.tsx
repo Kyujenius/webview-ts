@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { usePlugin, useBridge } from '../bridge';
 import { share } from '@example/plugins';
+import ModeBadge from '../components/ModeBadge';
+import ActionError from '../components/ActionError';
 
 function SharePage() {
   const { connectionMode } = useBridge();
@@ -19,37 +21,31 @@ function SharePage() {
   return (
     <div>
       <h1>Share Plugin</h1>
-      <p className="mode-badge">
-        {connectionMode === 'native'
-          ? 'Native Bridge'
-          : connectionMode === 'fallback'
-            ? 'Fallback (Web Share API)'
-            : 'Disconnected'}
-      </p>
+      <ModeBadge connectionMode={connectionMode} fallbackLabel="Web Share API" />
 
       <div className="card">
         <h2>Share Content</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+        <div className="form-column" style={{ marginBottom: '12px' }}>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title"
-            style={{ padding: '8px' }}
+            className="form-input"
           />
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Message"
-            style={{ padding: '8px' }}
+            className="form-input"
           />
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="URL"
-            style={{ padding: '8px' }}
+            className="form-input"
           />
         </div>
         <button onClick={handleShare}>Share</button>
@@ -61,7 +57,7 @@ function SharePage() {
         )}
       </div>
 
-      {doShare.error && <div className="result error">{doShare.error.message}</div>}
+      <ActionError error={doShare.error} />
     </div>
   );
 }
