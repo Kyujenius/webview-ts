@@ -1,7 +1,7 @@
 export interface ImpactPayload {
-  style?: string;
+  style?: 'light' | 'medium' | 'heavy';
 }
 
 export interface NotificationPayload {
-  type?: string;
+  type?: 'success' | 'warning' | 'error';
 }

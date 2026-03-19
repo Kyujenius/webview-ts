@@ -6,13 +6,17 @@ export const device = definePlugin('device', {
 }).withFallback({
   getInfo: async () => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    let osName = 'Unknown';
 
-    if (ua.includes('Windows')) osName = 'Windows';
-    else if (ua.includes('Mac')) osName = 'macOS';
-    else if (ua.includes('Linux')) osName = 'Linux';
-    else if (ua.includes('Android')) osName = 'Android';
-    else if (ua.includes('iPhone') || ua.includes('iPad')) osName = 'iOS';
+    const OS_MAP: [string[], string][] = [
+      [['Windows'], 'Windows'],
+      [['Mac'], 'macOS'],
+      [['Linux'], 'Linux'],
+      [['Android'], 'Android'],
+      [['iPhone', 'iPad'], 'iOS'],
+    ];
+
+    const osName =
+      OS_MAP.find(([keywords]) => keywords.some((k) => ua.includes(k)))?.[1] ?? 'Unknown';
 
     return {
       name: 'Web Browser',
