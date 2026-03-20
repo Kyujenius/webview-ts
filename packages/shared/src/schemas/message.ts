@@ -16,6 +16,8 @@ export function isBridgeMessage(value: unknown): value is BridgeMessage {
   return (
     isObject(value) &&
     typeof value.id === 'string' &&
+    typeof value.sourceId === 'string' &&
+    typeof value.targetId === 'string' &&
     typeof value.action === 'string' &&
     typeof value.timestamp === 'number'
   );
@@ -26,7 +28,13 @@ export function isBridgeMessage(value: unknown): value is BridgeMessage {
  */
 export function isBridgeResponse(value: unknown): value is BridgeResponse {
   if (!isObject(value)) return false;
-  if (typeof value.id !== 'string' || typeof value.timestamp !== 'number') return false;
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.sourceId !== 'string' ||
+    typeof value.targetId !== 'string' ||
+    typeof value.timestamp !== 'number'
+  )
+    return false;
   if (value.success === true) {
     return 'data' in value;
   }
@@ -46,6 +54,7 @@ export function isBridgeResponse(value: unknown): value is BridgeResponse {
 export function isBridgeEvent(value: unknown): value is BridgeEvent {
   return (
     isObject(value) &&
+    typeof value.sourceId === 'string' &&
     typeof value.event === 'string' &&
     'payload' in value &&
     typeof value.timestamp === 'number'
