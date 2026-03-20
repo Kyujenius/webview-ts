@@ -49,6 +49,8 @@ describe('Middleware end-to-end', () => {
     // Call directly via host to test host-side middleware
     const response = await pair.host.handleMessage({
       id: 'mw-test-1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'test',
       payload: {},
       timestamp: Date.now(),
@@ -102,6 +104,8 @@ describe('Middleware end-to-end', () => {
         // Don't call next() — short-circuit with cached response
         ctx.response = {
           id: ctx.request.id,
+          sourceId: 'host',
+          targetId: ctx.request.sourceId,
           success: true,
           data: { cached: true },
           timestamp: Date.now(),

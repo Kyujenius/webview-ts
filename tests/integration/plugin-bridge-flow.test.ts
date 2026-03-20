@@ -52,6 +52,8 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
       fallback[actionName] = async (payload: any) => {
         const message: BridgeMessage = {
           id: `int-${Date.now()}-${Math.random()}`,
+          sourceId: 'loopback',
+          targetId: 'host',
           action: actionName,
           payload,
           timestamp: Date.now(),

@@ -102,6 +102,8 @@ describe('Timeout', () => {
 
     const response = await pair.host.handleMessage({
       id: 'timeout-1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'slow',
       payload: {},
       timestamp: Date.now(),

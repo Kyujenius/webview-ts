@@ -63,6 +63,8 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
     fallbackHandlers[action] = async (payload: any) => {
       const message: BridgeMessage = {
         id: `lb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        sourceId: 'loopback',
+        targetId: 'host',
         action,
         payload,
         timestamp: Date.now(),
