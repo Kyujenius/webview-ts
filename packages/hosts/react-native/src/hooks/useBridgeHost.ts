@@ -1,4 +1,4 @@
-import type { ActionMapBase, Middleware } from '@webview-ts/shared';
+import type { ActionMapBase, StrictKeyOf, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
@@ -11,7 +11,7 @@ import { MessageHandler } from '../bridge/MessageHandler';
  * Ensures all actions are implemented with the right signatures.
  */
 export type TypedHandlers<TActions extends ActionMapBase> = {
-  [K in keyof TActions & string]: ActionHandler<TActions[K]['payload'], TActions[K]['response']>;
+  [K in StrictKeyOf<TActions>]: ActionHandler<TActions[K]['payload'], TActions[K]['response']>;
 };
 
 // ---- Pure function (non-React) ----
