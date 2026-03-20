@@ -1,3 +1,5 @@
+import type { StrictKeyOf } from './utils';
+
 export interface ActionDefinitionShape {
   payload: unknown;
   response: unknown;
@@ -15,6 +17,6 @@ export type InferResponse<
   TAction extends keyof TMap,
 > = TMap[TAction]['response'];
 
-export type ActionNames<TMap extends ActionMapBase> = keyof TMap & string;
+export type ActionNames<TMap extends ActionMapBase> = StrictKeyOf<TMap>;
 
 export type ActionMap<T extends ActionMapBase> = T;
