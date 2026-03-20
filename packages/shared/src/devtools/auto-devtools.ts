@@ -24,7 +24,7 @@ const DEVTOOLS_MW_NAME = '__auto_devtools';
 export interface AutoDevToolsTarget {
   prepend(middleware: Middleware): void;
   removeMiddleware(name: string): boolean;
-  /** Subscribe to all events (optional — only BridgeManager has this) */
+  /** Subscribe to all events (optional — only BridgeClient has this) */
   onAnyEvent?(handler: (event: string, payload: unknown) => void): () => void;
 }
 

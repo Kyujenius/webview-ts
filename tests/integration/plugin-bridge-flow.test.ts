@@ -3,7 +3,7 @@
  *
  * Verifies that messages travel the full path:
  *   usePlugin(camera).takePhoto()
- *     → BridgeManager.call('camera.takePhoto', payload)
+ *     → BridgeClient.call('camera.takePhoto', payload)
  *       → BridgeHost.handleMessage(message)
  *         → camera.host() handler executes
  *           → BridgeResponse flows back

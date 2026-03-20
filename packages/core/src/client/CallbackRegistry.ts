@@ -66,7 +66,7 @@ export class CallbackRegistry {
     this.callbacks.delete(response.id);
 
     // Always resolve with the full BridgeResponse.
-    // The caller (BridgeManager) is responsible for unwrapping data vs throwing on error.
+    // The caller (BridgeClient) is responsible for unwrapping data vs throwing on error.
     entry.resolve(response);
 
     return true;
