@@ -3,12 +3,11 @@ import type {
   BridgeResponse,
   BridgeError,
   BridgeEvent,
-  BridgeHost as IBridgeHost,
   Middleware,
   MiddlewareContext,
+  HostAdapter,
 } from '@webview-ts/shared';
-import { MiddlewarePipeline, toBridgeErrorCode } from '@webview-ts/shared';
-import { createDebugLogger } from '../utils/debug-log';
+import { MiddlewarePipeline, toBridgeErrorCode, createDebugLogger } from '@webview-ts/shared';
 
 /**
  * Configuration for the BridgeHost
@@ -40,14 +39,14 @@ export interface RequestContext {
 }
 
 /**
- * BridgeHost - React Native side bridge implementation.
+ * BridgeHost - Native side bridge implementation.
  * Uses the same Koa-style onion middleware as the web-side BridgeClient.
  */
-export class BridgeHost implements IBridgeHost {
+export class BridgeHost {
   private config: Required<BridgeHostConfig>;
   private handlers: Map<string, ActionHandler>;
   private pipeline: MiddlewarePipeline;
-  private messageCallback?: (message: string) => void;
+  private adapter?: HostAdapter;
   private log: (message: string, data?: unknown) => void;
 
   constructor(config: BridgeHostConfig = {}) {
@@ -107,8 +106,17 @@ export class BridgeHost implements IBridgeHost {
     this.unregisterHandler(action);
   }
 
-  setMessageCallback(callback: (message: string) => void): void {
-    this.messageCallback = callback;
+  /**
+   * Attach a HostAdapter for bidirectional communication.
+   * Returns a detach function.
+   */
+  attach(adapter: HostAdapter): () => void {
+    this.adapter = adapter;
+    const unsub = adapter.onMessage((json) => this.handleMessageString(json));
+    return () => {
+      unsub();
+      this.adapter = undefined;
+    };
   }
 
   /**
@@ -222,17 +230,17 @@ export class BridgeHost implements IBridgeHost {
   }
 
   private sendToWebView(message: BridgeResponse | BridgeEvent): void {
-    if (!this.messageCallback) {
-      throw new Error('Message callback not set. Call setMessageCallback() first.');
+    if (!this.adapter) {
+      throw new Error('No adapter attached. Call attach(adapter) first.');
     }
     const messageJson = JSON.stringify(message);
-    this.messageCallback(messageJson);
+    this.adapter.send(messageJson);
   }
 
   destroy(): void {
     this.handlers.clear();
     this.pipeline.clear();
-    this.messageCallback = undefined;
+    this.adapter = undefined;
     this.log('BridgeHost destroyed');
   }
 }
