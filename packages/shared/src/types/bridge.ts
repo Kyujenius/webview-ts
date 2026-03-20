@@ -170,6 +170,7 @@ export interface Bridge {
 export enum Platform {
   IOS = 'ios',
   ANDROID = 'android',
+  REACT_NATIVE = 'react-native',
   WEB = 'web',
   UNKNOWN = 'unknown',
 }

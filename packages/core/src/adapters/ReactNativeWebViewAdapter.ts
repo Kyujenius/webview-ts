@@ -47,9 +47,7 @@ export class ReactNativeWebViewAdapter implements ClientAdapter {
   }
 
   getPlatform(): Platform {
-    // ReactNativeWebView runs on both iOS and Android,
-    // but from the bridge's perspective the transport is the same.
-    return Platform.IOS; // Could be Android too; platform-specific logic is host-side
+    return Platform.REACT_NATIVE;
   }
 
   get connectionMode(): ConnectionMode {
