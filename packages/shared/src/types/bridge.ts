@@ -168,24 +168,7 @@ export interface Bridge {
  * Platform detection result
  */
 export enum Platform {
-  IOS = 'ios',
-  ANDROID = 'android',
   REACT_NATIVE = 'react-native',
   WEB = 'web',
   UNKNOWN = 'unknown',
-}
-
-/**
- * Platform detector interface
- */
-export interface PlatformDetector {
-  /**
-   * Detect current platform
-   */
-  detect(): Platform;
-
-  /**
-   * Check if running in WebView
-   */
-  isWebView(): boolean;
 }
