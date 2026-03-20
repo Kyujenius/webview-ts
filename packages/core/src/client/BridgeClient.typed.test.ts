@@ -1,5 +1,5 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import { createBridge } from '../index';
+import { createClient } from '../index';
 import type { TypedBridge } from '@webview-ts/shared';
 
 type TestActions = {
@@ -7,20 +7,20 @@ type TestActions = {
   'storage.get': { payload: { key: string }; response: { value: string | null } };
 };
 
-describe('BridgeManager with ActionMap', () => {
+describe('BridgeClient with ActionMap', () => {
   it('should accept generic type parameter', () => {
-    const bridge = createBridge<TestActions>();
+    const bridge = createClient<TestActions>();
     expectTypeOf(bridge).toMatchTypeOf<TypedBridge<TestActions>>();
   });
 
   it('should work without type parameter (backward compatible)', () => {
-    const bridge = createBridge();
+    const bridge = createClient();
     expect(bridge).toBeDefined();
     expect(typeof bridge.call).toBe('function');
   });
 
   it('should enforce payload types', () => {
-    const bridge = createBridge<TestActions>();
+    const bridge = createClient<TestActions>();
     type CallResult = ReturnType<typeof bridge.call<'camera.take'>>;
     expectTypeOf<CallResult>().toEqualTypeOf<Promise<{ uri: string }>>();
   });
@@ -31,14 +31,14 @@ type TestEvents = {
   'theme.changed': 'light' | 'dark';
 };
 
-describe('BridgeManager with EventMap', () => {
+describe('BridgeClient with EventMap', () => {
   it('should accept TEvents generic parameter', () => {
-    const bridge = createBridge<TestActions, TestEvents>();
+    const bridge = createClient<TestActions, TestEvents>();
     expect(bridge).toBeDefined();
   });
 
   it('should infer event payload types', () => {
-    const bridge = createBridge<TestActions, TestEvents>();
+    const bridge = createClient<TestActions, TestEvents>();
 
     // Verify on() handler payload type is inferred
     bridge.on('location.updated', (payload) => {
@@ -50,7 +50,7 @@ describe('BridgeManager with EventMap', () => {
   });
 
   it('should work without TEvents (backward compatible)', () => {
-    const bridge = createBridge<TestActions>();
+    const bridge = createClient<TestActions>();
     // Should accept any event string
     const unsub = bridge.on('anything', () => {});
     expect(typeof unsub).toBe('function');

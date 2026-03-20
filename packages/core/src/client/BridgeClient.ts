@@ -1,11 +1,11 @@
 /**
- * Main bridge manager - orchestrates all bridge operations
+ * Main bridge client - orchestrates all bridge operations
  */
 import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared';
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
-import { createNativeAdapter, type NativeAdapter } from '../adapters/index';
+import { createClientAdapter, type ClientAdapter } from '../adapters/index';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { generateMessageId } from '../utils/id-generator';
@@ -34,9 +34,9 @@ import type {
 type EventHandler<T = unknown> = (payload: T) => void;
 
 /**
- * Bridge manager implementation
+ * Bridge client implementation
  */
-export class BridgeManager<
+export class BridgeClient<
   TActions extends ActionMapBase = ActionMapBase,
   TEvents extends EventMapBase = EventMapBase,
 > {
@@ -49,7 +49,7 @@ export class BridgeManager<
     retry?: BridgeConfig['retry'];
     fallback?: BridgeConfig['fallback'];
   };
-  private adapter: NativeAdapter;
+  private adapter: ClientAdapter;
   private callbacks: CallbackRegistry;
   private queue: MessageQueue;
   private middleware: MiddlewarePipeline;
@@ -80,7 +80,7 @@ export class BridgeManager<
       fallback: config.fallback,
     };
 
-    this.adapter = createNativeAdapter();
+    this.adapter = createClientAdapter();
 
     const normalized = this.normalizeFallback(this.config.fallback);
     if (!this.adapter.isAvailable() && normalized.enabled) {

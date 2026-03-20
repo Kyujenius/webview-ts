@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BridgeManager } from './BridgeManager';
+import { BridgeClient } from './BridgeClient';
 
-describe('BridgeManager', () => {
-  let bridge: BridgeManager;
+describe('BridgeClient', () => {
+  let bridge: BridgeClient;
 
   beforeEach(() => {
-    bridge = new BridgeManager({
+    bridge = new BridgeClient({
       timeout: 5000,
       debug: false,
     });
@@ -13,7 +13,7 @@ describe('BridgeManager', () => {
 
   describe('initialization', () => {
     it('should create bridge with default config', () => {
-      const defaultBridge = new BridgeManager();
+      const defaultBridge = new BridgeClient();
       const config = defaultBridge.getConfig();
 
       expect(config.timeout).toBe(0);
@@ -23,7 +23,7 @@ describe('BridgeManager', () => {
     });
 
     it('should create bridge with custom config', () => {
-      const customBridge = new BridgeManager({
+      const customBridge = new BridgeClient({
         timeout: 10000,
         debug: true,
         maxConcurrentRequests: 50,
@@ -85,34 +85,34 @@ describe('BridgeManager', () => {
 
   describe('fallback normalization', () => {
     it('should treat true as enabled with no handlers', () => {
-      const b = new BridgeManager({ fallback: true });
+      const b = new BridgeClient({ fallback: true });
       expect(b.connectionMode).toBe('fallback');
     });
 
     it('should treat false as disabled', () => {
-      const b = new BridgeManager({ fallback: false });
+      const b = new BridgeClient({ fallback: false });
       expect(b.connectionMode).toBe('disconnected');
     });
 
     it('should treat undefined as disabled', () => {
-      const b = new BridgeManager({});
+      const b = new BridgeClient({});
       expect(b.connectionMode).toBe('disconnected');
     });
 
     it('should accept FallbackMap directly', () => {
-      const b = new BridgeManager({
+      const b = new BridgeClient({
         fallback: { 'test.action': async () => 'ok' },
       });
       expect(b.connectionMode).toBe('fallback');
     });
 
     it('should accept explicit mode object with reject', () => {
-      const b = new BridgeManager({ fallback: { mode: 'reject' } });
+      const b = new BridgeClient({ fallback: { mode: 'reject' } });
       expect(b.connectionMode).toBe('fallback');
     });
 
     it('should accept explicit mode object with mock and handlers', () => {
-      const b = new BridgeManager({
+      const b = new BridgeClient({
         fallback: { mode: 'mock', handlers: { 'test.action': async () => 42 } },
       });
       expect(b.connectionMode).toBe('fallback');

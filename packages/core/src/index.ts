@@ -5,23 +5,23 @@
  * Provides the main bridge API, middleware pipeline, and platform adapters.
  */
 
-export * from './bridge';
+export * from './client';
 export * from './adapters';
 export * from './middleware';
 export * from './utils';
 
-import { BridgeManager } from './bridge/BridgeManager';
+import { BridgeClient } from './client/BridgeClient';
 import type { BridgeConfig, ActionMapBase, EventMapBase } from '@webview-ts/shared';
 
 /**
  * Create and initialize a new bridge instance.
  * Calls connect() automatically so it's ready to use immediately.
  */
-export function createBridge<
+export function createClient<
   TActions extends ActionMapBase = ActionMapBase,
   TEvents extends EventMapBase = EventMapBase,
->(config?: BridgeConfig): BridgeManager<TActions, TEvents> {
-  const bridge = new BridgeManager<TActions, TEvents>(config);
+>(config?: BridgeConfig): BridgeClient<TActions, TEvents> {
+  const bridge = new BridgeClient<TActions, TEvents>(config);
   bridge.connect();
   return bridge;
 }
@@ -29,4 +29,4 @@ export function createBridge<
 /**
  * Default export - convenient for simple usage
  */
-export default createBridge;
+export default createClient;

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { BridgeManager } from './BridgeManager';
+import { BridgeClient } from './BridgeClient';
 
-describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
-  let bridge: BridgeManager;
+describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
+  let bridge: BridgeClient;
 
   afterEach(() => {
     bridge?.dispose();
@@ -10,7 +10,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
 
   it('connect() adds a message listener', () => {
     const spy = vi.spyOn(window, 'addEventListener');
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
 
     // Constructor should NOT add listener
     const beforeConnect = spy.mock.calls.filter((c) => c[0] === 'message');
@@ -25,7 +25,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
 
   it('disconnect() removes the message listener', () => {
     const removeSpy = vi.spyOn(window, 'removeEventListener');
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
     bridge.connect();
     bridge.disconnect();
 
@@ -36,7 +36,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
 
   it('connect() is idempotent — calling twice adds only one listener', () => {
     const spy = vi.spyOn(window, 'addEventListener');
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
 
     bridge.connect();
     bridge.connect();
@@ -48,7 +48,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   });
 
   it('disconnect() is idempotent — safe to call without connect', () => {
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
     expect(() => bridge.disconnect()).not.toThrow();
     expect(() => bridge.disconnect()).not.toThrow();
   });
@@ -56,7 +56,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   it('Strict Mode cycle: connect → destroy → connect leaves exactly one listener', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
 
     // Simulate useEffect mount
     bridge.connect();
@@ -76,7 +76,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   });
 
   it('configuration survives connect/disconnect cycles', () => {
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
     const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
     bridge.use(mw);
     bridge.registerInterceptors({ 'test.action': [mw] });
@@ -95,7 +95,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   });
 
   it('no duplicate events after connect/disconnect cycle', () => {
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
     const handler = vi.fn();
     bridge.on('test.updated', handler);
 
@@ -115,7 +115,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   });
 
   it('no events received after final disconnect', () => {
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
     const handler = vi.fn();
     bridge.on('test.updated', handler);
 
@@ -134,7 +134,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   it('multiple Strict Mode cycles — no listener accumulation', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');
-    bridge = new BridgeManager({ fallback: true });
+    bridge = new BridgeClient({ fallback: true });
 
     // Simulate 3 consecutive Strict Mode mount/unmount cycles
     for (let i = 0; i < 3; i++) {
@@ -154,7 +154,7 @@ describe('BridgeManager - connect/disconnect lifecycle (Strict Mode)', () => {
   });
 
   it('call() works after connect/disconnect cycle (fallback mode)', async () => {
-    bridge = new BridgeManager({
+    bridge = new BridgeClient({
       fallback: {
         'test.echo': async (payload: any) => ({ echoed: payload.msg }),
       },
