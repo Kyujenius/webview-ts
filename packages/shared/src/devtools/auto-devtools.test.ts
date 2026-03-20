@@ -185,7 +185,14 @@ describe('tryAutoDevTools', () => {
     const ws = MockWebSocket.instances[0];
 
     const ctx = {
-      request: { id: 'msg-1', action: 'test.action', payload: { foo: 1 }, timestamp: Date.now() },
+      request: {
+        id: 'msg-1',
+        sourceId: 'client-1',
+        targetId: 'host',
+        action: 'test.action',
+        payload: { foo: 1 },
+        timestamp: Date.now(),
+      },
       startTime: Date.now(),
       metadata: new Map(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +227,13 @@ describe('tryAutoDevTools', () => {
     const ws = MockWebSocket.instances[0];
 
     const ctx = {
-      request: { id: 'msg-2', action: 'test.fail', timestamp: Date.now() },
+      request: {
+        id: 'msg-2',
+        sourceId: 'client-1',
+        targetId: 'host',
+        action: 'test.fail',
+        timestamp: Date.now(),
+      },
       startTime: Date.now(),
       metadata: new Map(),
     };

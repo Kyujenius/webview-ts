@@ -33,6 +33,8 @@ describe('CallbackRegistry', () => {
 
     const response = {
       id: 'msg-2',
+      sourceId: 'host',
+      targetId: 'client-1',
       success: true as const,
       data: { result: 'ok' },
       timestamp: Date.now(),
@@ -52,6 +54,8 @@ describe('CallbackRegistry', () => {
 
     registry.handleResponse({
       id: 'msg-3',
+      sourceId: 'host',
+      targetId: 'client-1',
       success: true as const,
       data: null,
       timestamp: Date.now(),

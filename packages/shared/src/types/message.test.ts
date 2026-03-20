@@ -8,6 +8,8 @@ describe('Message Types', () => {
     it('should have correct structure', () => {
       const message: BridgeMessage<{ foo: string }> = {
         id: 'test-id',
+        sourceId: 'client-1',
+        targetId: 'host',
         action: 'test-action',
         payload: { foo: 'bar' },
         timestamp: Date.now(),
@@ -24,6 +26,8 @@ describe('Message Types', () => {
     it('should support successful response', () => {
       const response: BridgeResponse<{ result: number }> = {
         id: 'test-id',
+        sourceId: 'host',
+        targetId: 'client-1',
         success: true,
         data: { result: 42 },
         timestamp: Date.now(),
@@ -44,6 +48,8 @@ describe('Message Types', () => {
 
       const response: BridgeResponse = {
         id: 'test-id',
+        sourceId: 'host',
+        targetId: 'client-1',
         success: false,
         error,
         timestamp: Date.now(),
@@ -60,6 +66,8 @@ describe('Message Types', () => {
     it('narrows to success variant with data: T', () => {
       const res: BridgeResponse<number> = {
         id: '1',
+        sourceId: 'host',
+        targetId: 'client-1',
         success: true,
         data: 42,
         timestamp: Date.now(),
@@ -73,6 +81,8 @@ describe('Message Types', () => {
     it('narrows to error variant with error: BridgeError', () => {
       const res: BridgeResponse = {
         id: '1',
+        sourceId: 'host',
+        targetId: 'client-1',
         success: false,
         error: { code: 'TIMEOUT', message: 'timed out' },
         timestamp: Date.now(),
@@ -87,6 +97,7 @@ describe('Message Types', () => {
   describe('BridgeEvent', () => {
     it('should have correct structure', () => {
       const event: BridgeEvent<{ value: string }> = {
+        sourceId: 'host',
         event: 'test-event',
         payload: { value: 'test' },
         timestamp: Date.now(),

@@ -290,7 +290,13 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       // The middleware closure still references the old ws,
       // but sendRecord should handle null safely
       const ctx = {
-        request: { id: 'msg-1', action: 'test', timestamp: Date.now() },
+        request: {
+          id: 'msg-1',
+          sourceId: 'client-1',
+          targetId: 'host',
+          action: 'test',
+          timestamp: Date.now(),
+        },
         startTime: Date.now(),
         metadata: new Map(),
         response: undefined as any,

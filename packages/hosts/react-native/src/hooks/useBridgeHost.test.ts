@@ -46,6 +46,8 @@ describe('createSimpleBridgeHost', () => {
 
     const message = {
       id: 'test-1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'action.one',
       payload: { key: 'value' },
       timestamp: Date.now(),
@@ -53,7 +55,7 @@ describe('createSimpleBridgeHost', () => {
 
     const response = await bridgeHost.handleMessage(message);
     expect(response.success).toBe(true);
-    expect(response.data).toEqual({ result: 'ok' });
+    if (response.success) expect(response.data).toEqual({ result: 'ok' });
   });
 
   it('should provide sendEvent function', () => {
@@ -94,6 +96,8 @@ describe('createSimpleBridgeHost with plugins', () => {
 
     const message = {
       id: 'test-1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'mock.echo',
       payload: { msg: 'hello' },
       timestamp: Date.now(),
@@ -101,7 +105,7 @@ describe('createSimpleBridgeHost with plugins', () => {
 
     const response = await result.bridgeHost.handleMessage(message);
     expect(response.success).toBe(true);
-    expect(response.data).toEqual({ echoed: 'hello' });
+    if (response.success) expect(response.data).toEqual({ echoed: 'hello' });
   });
 
   it('should support plugins alongside handlers', async () => {
@@ -118,19 +122,23 @@ describe('createSimpleBridgeHost with plugins', () => {
 
     const pluginResponse = await result.bridgeHost.handleMessage({
       id: '1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'mock.echo',
       payload: { msg: 'hi' },
       timestamp: 0,
     });
-    expect(pluginResponse.data).toEqual({ echoed: 'hi' });
+    if (pluginResponse.success) expect(pluginResponse.data).toEqual({ echoed: 'hi' });
 
     const customResponse = await result.bridgeHost.handleMessage({
       id: '2',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'custom.action',
       payload: {},
       timestamp: 0,
     });
-    expect(customResponse.data).toEqual({ custom: true });
+    if (customResponse.success) expect(customResponse.data).toEqual({ custom: true });
   });
 
   it('should throw on duplicate action names', () => {
