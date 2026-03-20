@@ -19,5 +19,5 @@
     "noImplicitReturns": true,
     "jsx": "react-jsx"
   },
-  "exclude": ["node_modules", "dist", "build", ".turbo", "tests", "examples/react-native"]
+  "exclude": ["node_modules", "dist", "build", ".turbo", "examples/react-native"]
 }
