@@ -1,9 +1,9 @@
 import { createContext, useContext } from 'react';
-import type { BridgeManager } from '@webview-ts/core';
+import type { BridgeClient } from '@webview-ts/core';
 import type { ActionMapBase, ConnectionMode } from '@webview-ts/shared';
 
 export interface BridgeContextValue<TActions extends ActionMapBase = ActionMapBase> {
-  bridge: BridgeManager<TActions>;
+  bridge: BridgeClient<TActions>;
   isAvailable: boolean;
   connectionMode: ConnectionMode;
 }

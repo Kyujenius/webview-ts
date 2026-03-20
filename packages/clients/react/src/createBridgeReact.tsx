@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
-import { BridgeManager } from '@webview-ts/core';
+import { BridgeClient } from '@webview-ts/core';
 import { ActionStateManager } from '@webview-ts/shared';
 import type { ActionState } from '@webview-ts/shared';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
@@ -24,7 +24,7 @@ import { useActionCore } from './internal/useActionCore';
 import { useEventCore } from './internal/useEventCore';
 
 interface BridgeContextValue<TActions extends ActionMapBase, TEvents extends EventMapBase> {
-  bridge: BridgeManager<TActions, TEvents>;
+  bridge: BridgeClient<TActions, TEvents>;
   isAvailable: boolean;
   connectionMode: ConnectionMode;
 }
@@ -94,7 +94,7 @@ export function createBridgeReact<
       }
 
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
-      const b = new BridgeManager<TAllActions, TAllEvents>(finalConfig);
+      const b = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
       // Register per-action interceptors from plugin definitions
       if (options?.plugins) {
