@@ -1,6 +1,6 @@
 import type { App, Plugin } from 'vue';
 import { inject, onScopeDispose } from 'vue';
-import { BridgeManager } from '@webview-ts/core';
+import { BridgeClient } from '@webview-ts/core';
 import type {
   BridgeConfig,
   FallbackMap,
@@ -69,7 +69,7 @@ export function createBridgeVue<
     }
 
     const finalConfig: BridgeConfig = { ...options?.config, fallback: finalFallback };
-    const bridge = new BridgeManager<TAllActions, TAllEvents>(finalConfig);
+    const bridge = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
     // Register interceptors and timeouts from plugins
     if (options?.plugins) {
