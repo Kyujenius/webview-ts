@@ -6,5 +6,5 @@ export function useEvent<TPayload = unknown>(
   handler: (payload: TPayload) => void
 ): void {
   const { bridge } = useBridgeContext();
-  useEventCore(bridge, event, handler);
+  useEventCore(bridge as any, event as any, handler as any);
 }
