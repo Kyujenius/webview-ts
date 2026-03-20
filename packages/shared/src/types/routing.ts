@@ -1,6 +1,6 @@
-export type RoutingStrategy = 'native' | 'targeted' | 'broadcast';
+export type RoutingStrategy = 'host' | 'targeted' | 'broadcast';
 
 export const TARGET = {
-  NATIVE: 'native',
+  HOST: 'host',
   BROADCAST: '__broadcast__',
 } as const;

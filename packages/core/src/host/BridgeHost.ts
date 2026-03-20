@@ -153,7 +153,7 @@ export class BridgeHost {
           success: true,
           data,
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: message.sourceId,
         };
       });
@@ -187,7 +187,7 @@ export class BridgeHost {
         success: false,
         error: bridgeError,
         timestamp: Date.now(),
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: message.sourceId,
       };
     }
@@ -210,7 +210,7 @@ export class BridgeHost {
       event,
       payload,
       timestamp: Date.now(),
-      sourceId: 'native',
+      sourceId: 'host',
     };
     this.sendToWebView(eventMessage);
     this.log(`Sent event: ${event}`, eventMessage);

@@ -191,7 +191,7 @@ export class BridgeClient<
       payload,
       timestamp: Date.now(),
       sourceId: this.sourceId,
-      targetId: TARGET.NATIVE,
+      targetId: TARGET.HOST,
     };
 
     const ctx: MiddlewareContext = {
