@@ -10,9 +10,9 @@ import { ReactNativeWebViewAdapter, isReactNativeWebView } from './ReactNativeWe
 import { platformDetector } from '../utils/platform-detector';
 
 /**
- * Native adapter interface
+ * Client adapter interface
  */
-export interface NativeAdapter {
+export interface ClientAdapter {
   /**
    * Send message to native
    */
@@ -43,7 +43,7 @@ export interface NativeAdapter {
  * 3. Android JS interface (window.AndroidBridge)
  * 4. MockAdapter (fallback)
  */
-export function createNativeAdapter(): NativeAdapter {
+export function createClientAdapter(): ClientAdapter {
   // react-native-webview injects window.ReactNativeWebView
   if (isReactNativeWebView()) {
     return new ReactNativeWebViewAdapter();
@@ -64,7 +64,7 @@ export function createNativeAdapter(): NativeAdapter {
 /**
  * Mock adapter for non-WebView environments
  */
-class MockAdapter implements NativeAdapter {
+class MockAdapter implements ClientAdapter {
   send(_message: BridgeMessage): void {
     console.warn('[webview-ts] Mock adapter: message not sent (no native bridge available)');
   }

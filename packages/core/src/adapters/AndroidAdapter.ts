@@ -4,7 +4,7 @@
 
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import type { NativeAdapter } from './NativeAdapter';
+import type { ClientAdapter } from './ClientAdapter';
 
 /**
  * Android bridge interface
@@ -23,7 +23,7 @@ declare global {
 /**
  * Adapter for Android JavaScript interface
  */
-export class AndroidAdapter implements NativeAdapter {
+export class AndroidAdapter implements ClientAdapter {
   private bridge: AndroidBridgeInterface | undefined;
 
   constructor() {

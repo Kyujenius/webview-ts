@@ -8,7 +8,7 @@
 
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import type { NativeAdapter } from './NativeAdapter';
+import type { ClientAdapter } from './ClientAdapter';
 
 interface ReactNativeWebViewInterface {
   postMessage(message: string): void;
@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-export class ReactNativeWebViewAdapter implements NativeAdapter {
+export class ReactNativeWebViewAdapter implements ClientAdapter {
   private bridge: ReactNativeWebViewInterface | undefined;
 
   constructor() {

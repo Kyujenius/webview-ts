@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { BridgeManager } from './BridgeManager';
+import { BridgeClient } from './BridgeClient';
 
-describe('BridgeManager - Concurrent Requests', () => {
-  let bridge: BridgeManager;
+describe('BridgeClient - Concurrent Requests', () => {
+  let bridge: BridgeClient;
 
   afterEach(() => {
     bridge?.destroy();
@@ -10,7 +10,7 @@ describe('BridgeManager - Concurrent Requests', () => {
 
   it('should handle 10 concurrent calls independently', async () => {
     let callCount = 0;
-    bridge = new BridgeManager({
+    bridge = new BridgeClient({
       enableDeduplication: false,
       fallback: {
         'counter.get': async () => {
@@ -28,7 +28,7 @@ describe('BridgeManager - Concurrent Requests', () => {
 
   it('should deduplicate same action+payload when deduplication enabled', async () => {
     let callCount = 0;
-    bridge = new BridgeManager({
+    bridge = new BridgeClient({
       enableDeduplication: true,
       fallback: {
         'data.fetch': async () => {
@@ -51,7 +51,7 @@ describe('BridgeManager - Concurrent Requests', () => {
   });
 
   it('should throw when queue exceeds maxConcurrentRequests', async () => {
-    bridge = new BridgeManager({
+    bridge = new BridgeClient({
       maxConcurrentRequests: 2,
       enableDeduplication: false,
       fallback: {

@@ -41,7 +41,7 @@ export interface RequestContext {
 
 /**
  * BridgeHost - React Native side bridge implementation.
- * Uses the same Koa-style onion middleware as the web-side BridgeManager.
+ * Uses the same Koa-style onion middleware as the web-side BridgeClient.
  */
 export class BridgeHost implements IBridgeHost {
   private config: Required<BridgeHostConfig>;

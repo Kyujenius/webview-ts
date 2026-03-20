@@ -4,7 +4,7 @@
 
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import type { NativeAdapter } from './NativeAdapter';
+import type { ClientAdapter } from './ClientAdapter';
 
 /**
  * iOS webkit.messageHandlers interface
@@ -28,7 +28,7 @@ declare global {
 /**
  * Adapter for iOS WebKit message handlers
  */
-export class IOSAdapter implements NativeAdapter {
+export class IOSAdapter implements ClientAdapter {
   private handler: WebKitMessageHandler | undefined;
 
   constructor() {

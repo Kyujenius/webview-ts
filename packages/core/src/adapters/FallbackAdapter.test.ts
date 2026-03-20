@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createBridge } from '../index';
+import { createClient } from '../index';
 
 describe('Fallback mode', () => {
   it('should use fallback handlers when native is unavailable', async () => {
-    const bridge = createBridge({
+    const bridge = createClient({
       fallback: {
         'camera.take': async (_payload: any) => ({
           uri: '/mock/photo.jpg',
@@ -17,13 +17,13 @@ describe('Fallback mode', () => {
   });
 
   it('should throw if no fallback handler for the requested action', async () => {
-    const bridge = createBridge({ fallback: {}, timeout: 50 });
+    const bridge = createClient({ fallback: {}, timeout: 50 });
     await expect(bridge.call('missing.action', {})).rejects.toThrow();
   });
 
   it('should log to console when fallback is true', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const bridge = createBridge({ fallback: true, timeout: 50 });
+    const bridge = createClient({ fallback: true, timeout: 50 });
     await expect(bridge.call('any.action', {})).rejects.toThrow();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('[webview-ts fallback]'),
@@ -36,7 +36,7 @@ describe('Fallback mode', () => {
     const win = globalThis as any;
     win.webkit = { messageHandlers: { tsBridge: { postMessage: vi.fn() } } };
     const fallbackFn = vi.fn();
-    const bridge = createBridge({ fallback: { 'test.action': fallbackFn }, timeout: 50 });
+    const bridge = createClient({ fallback: { 'test.action': fallbackFn }, timeout: 50 });
     try {
       await bridge.call('test.action', {});
     } catch {

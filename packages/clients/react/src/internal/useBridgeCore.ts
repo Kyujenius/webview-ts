@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { BridgeManager } from '@webview-ts/core';
+import type { BridgeClient } from '@webview-ts/core';
 import type {
   ActionMapBase,
   EventMapBase,
@@ -9,7 +9,7 @@ import type {
 } from '@webview-ts/shared';
 
 export function useBridgeCore<TActions extends ActionMapBase, TEvents extends EventMapBase>(
-  bridge: BridgeManager<TActions, TEvents>
+  bridge: BridgeClient<TActions, TEvents>
 ) {
   const call = useCallback(
     <TAction extends ActionNames<TActions>>(

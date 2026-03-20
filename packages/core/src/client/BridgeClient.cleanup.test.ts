@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { BridgeManager } from './BridgeManager';
+import { BridgeClient } from './BridgeClient';
 
-describe('BridgeManager - Cleanup', () => {
-  let bridge: BridgeManager;
+describe('BridgeClient - Cleanup', () => {
+  let bridge: BridgeClient;
 
   afterEach(() => {
     bridge?.dispose();
@@ -10,7 +10,7 @@ describe('BridgeManager - Cleanup', () => {
 
   describe('destroy()', () => {
     it('should preserve middleware after destroy', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
       bridge.use(mw);
       bridge.destroy();
@@ -21,7 +21,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should preserve event handlers after destroy', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       const handler = vi.fn();
       bridge.on('testEvent', handler);
       bridge.destroy();
@@ -30,7 +30,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should preserve action interceptors after destroy', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.registerInterceptors({
         'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
       });
@@ -40,7 +40,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should preserve action timeouts after destroy', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.registerTimeouts({ 'camera.getInfo': 5000 });
       bridge.destroy();
 
@@ -48,7 +48,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should clear pending contexts after destroy', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge['pendingContexts'].set('test-id', {} as any);
       bridge.destroy();
 
@@ -56,7 +56,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should be idempotent', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.destroy();
       expect(() => bridge.destroy()).not.toThrow();
     });
@@ -64,7 +64,7 @@ describe('BridgeManager - Cleanup', () => {
 
   describe('dispose()', () => {
     it('should clear middleware after dispose', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.use({ name: 'test', fn: async (_ctx: any, next: any) => next() });
       bridge.dispose();
 
@@ -72,7 +72,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should clear event handlers after dispose', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.on('testEvent', vi.fn());
       bridge.dispose();
 
@@ -80,7 +80,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should clear action interceptors after dispose', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.registerInterceptors({
         'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
       });
@@ -90,7 +90,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should clear action timeouts after dispose', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.registerTimeouts({ 'camera.getInfo': 5000 });
       bridge.dispose();
 
@@ -98,7 +98,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should be idempotent', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       bridge.dispose();
       expect(() => bridge.dispose()).not.toThrow();
     });
@@ -106,7 +106,7 @@ describe('BridgeManager - Cleanup', () => {
 
   describe('event handler lifecycle', () => {
     it('should not call handler after off()', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       const handler = vi.fn();
       bridge.on('test', handler);
       bridge.off('test', handler);
@@ -120,7 +120,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should remove all handlers when off() called without handler', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       const handler1 = vi.fn();
       const handler2 = vi.fn();
       bridge.on('test', handler1);
@@ -136,7 +136,7 @@ describe('BridgeManager - Cleanup', () => {
     });
 
     it('should return working unsubscribe function from on()', () => {
-      bridge = new BridgeManager({ fallback: true });
+      bridge = new BridgeClient({ fallback: true });
       const handler = vi.fn();
       const unsub = bridge.on('test', handler);
 

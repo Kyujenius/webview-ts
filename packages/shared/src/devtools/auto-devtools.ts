@@ -19,12 +19,12 @@ const DEVTOOLS_PORT = 4000;
 const DEVTOOLS_MW_NAME = '__auto_devtools';
 
 /**
- * Minimal interface that both BridgeManager (core) and BridgeHost (RN) satisfy.
+ * Minimal interface that both BridgeClient (core) and BridgeHost (RN) satisfy.
  */
 export interface AutoDevToolsTarget {
   prepend(middleware: Middleware): void;
   removeMiddleware(name: string): boolean;
-  /** Subscribe to all events (optional — only BridgeManager has this) */
+  /** Subscribe to all events (optional — only BridgeClient has this) */
   onAnyEvent?(handler: (event: string, payload: unknown) => void): () => void;
 }
 
@@ -205,7 +205,7 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
  * Returns a cleanup function if connected, or undefined if skipped.
  *
  * @param target - Bridge instance to attach devtools middleware to
- * @param role   - 'host' (BridgeHost / RN) or 'client' (BridgeManager / web)
+ * @param role   - 'host' (BridgeHost / RN) or 'client' (BridgeClient / web)
  *
  * Uses a singleton WebSocket — multiple calls share one connection.
  * This prevents duplicate connections from React Strict Mode's

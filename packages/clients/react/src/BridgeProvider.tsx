@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { createBridge } from '@webview-ts/core';
+import { createClient } from '@webview-ts/core';
 import type { BridgeConfig } from '@webview-ts/shared';
 import { BridgeContext } from './BridgeContext';
 
@@ -9,7 +9,7 @@ export interface BridgeProviderProps {
 }
 
 export function BridgeProvider({ config, children }: BridgeProviderProps) {
-  const bridge = useMemo(() => createBridge(config), []);
+  const bridge = useMemo(() => createClient(config), []);
   const [isAvailable, setIsAvailable] = useState(() => bridge.isAvailable());
   const [connectionMode, setConnectionMode] = useState(() => bridge.connectionMode);
   useEffect(() => {

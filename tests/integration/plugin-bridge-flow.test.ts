@@ -3,18 +3,18 @@
  *
  * Verifies that messages travel the full path:
  *   usePlugin(camera).takePhoto()
- *     → BridgeManager.call('camera.takePhoto', payload)
+ *     → BridgeClient.call('camera.takePhoto', payload)
  *       → BridgeHost.handleMessage(message)
  *         → camera.host() handler executes
  *           → BridgeResponse flows back
  *             → Promise resolves with typed data
  *
- * Uses BridgeManager's fallback mechanism to route messages through
+ * Uses BridgeClient's fallback mechanism to route messages through
  * a real BridgeHost instance, testing actual handler dispatch.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { BridgeHost } from '@webview-ts/react-native';
-import { createBridge } from '@webview-ts/core';
+import { createClient } from '@webview-ts/core';
 import { definePlugin, action } from '@webview-ts/shared';
 import type { BridgeMessage } from '@webview-ts/shared';
 
@@ -35,7 +35,7 @@ const storage = definePlugin('storage', {
 });
 
 /**
- * Create a bridge pair: client BridgeManager + host BridgeHost
+ * Create a bridge pair: client BridgeClient + host BridgeHost
  * connected via fallback adapter that routes through the host.
  */
 function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
@@ -65,7 +65,7 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
     }
   }
 
-  const bridge = createBridge({ fallback });
+  const bridge = createClient({ fallback });
   return { bridge, bridgeHost };
 }
 

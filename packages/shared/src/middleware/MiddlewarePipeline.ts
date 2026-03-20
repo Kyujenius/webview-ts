@@ -1,7 +1,7 @@
 /**
  * Koa-style onion middleware pipeline.
  *
- * Shared between web (BridgeManager) and host (BridgeHost) —
+ * Shared between web (BridgeClient) and host (BridgeHost) —
  * both sides use the same pipeline and middleware types.
  */
 

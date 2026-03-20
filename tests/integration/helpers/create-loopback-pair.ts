@@ -1,5 +1,5 @@
 import { BridgeHost } from '@webview-ts/react-native';
-import { BridgeManager } from '@webview-ts/core';
+import { BridgeClient } from '@webview-ts/core';
 import type { BridgeMessage, Middleware } from '@webview-ts/shared';
 
 export interface LoopbackPairOptions {
@@ -10,17 +10,17 @@ export interface LoopbackPairOptions {
 }
 
 /**
- * Create a BridgeManager <-> BridgeHost pair connected via FallbackAdapter loopback.
+ * Create a BridgeClient <-> BridgeHost pair connected via FallbackAdapter loopback.
  *
  * Message flow (call/response):
- *   BridgeManager.call()
+ *   BridgeClient.call()
  *     -> FallbackAdapter invokes handler
  *       -> handler calls host.handleMessage(message) -- object-level
  *         -> host middleware pipeline -> handler executes -> BridgeResponse
- *           -> FallbackAdapter resolves promise -> BridgeManager receives data
+ *           -> FallbackAdapter resolves promise -> BridgeClient receives data
  *
  * Message flow (events):
- *   host.sendEvent() -> messageCallback -> BridgeManager.handleEvent()
+ *   host.sendEvent() -> messageCallback -> BridgeClient.handleEvent()
  *
  * Note: JSON serialization boundary is tested separately in serialization-boundary.test.ts
  * via BridgeHost.handleMessageString() directly.
@@ -33,7 +33,7 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
 
   host.setMessageCallback((json: string) => {
     clientInbox.push(json);
-    // Dispatch to window so BridgeManager's message listener picks it up
+    // Dispatch to window so BridgeClient's message listener picks it up
     // (requires happy-dom environment for window/MessageEvent to exist)
     window.dispatchEvent(new MessageEvent('message', { data: json }));
   });
@@ -59,7 +59,7 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
     };
   }
 
-  const bridge = new BridgeManager({
+  const bridge = new BridgeClient({
     ...options.clientConfig,
     fallback: fallbackHandlers,
   });
