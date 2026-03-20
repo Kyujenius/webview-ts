@@ -14,6 +14,16 @@ export interface BridgeMessage<T = unknown> {
   id: string;
 
   /**
+   * Identifier of the webview that sent this message
+   */
+  sourceId: string;
+
+  /**
+   * Identifier of the target webview or native
+   */
+  targetId: string;
+
+  /**
    * Action/method to be invoked
    */
   action: string;
@@ -36,6 +46,8 @@ export type BridgeResponse<T = unknown> = BridgeSuccessResponse<T> | BridgeError
 
 export interface BridgeSuccessResponse<T = unknown> {
   id: string;
+  sourceId: string;
+  targetId: string;
   success: true;
   data: T;
   timestamp: number;
@@ -43,6 +55,8 @@ export interface BridgeSuccessResponse<T = unknown> {
 
 export interface BridgeErrorResponse {
   id: string;
+  sourceId: string;
+  targetId: string;
   success: false;
   error: BridgeError;
   timestamp: number;
@@ -72,6 +86,11 @@ export interface BridgeError {
  * Event message for native-to-web push notifications
  */
 export interface BridgeEvent<T = unknown> {
+  /**
+   * Identifier of the webview that emitted this event
+   */
+  sourceId: string;
+
   /**
    * Event name/type
    */
