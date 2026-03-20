@@ -1,7 +1,7 @@
 /**
  * Main bridge manager - orchestrates all bridge operations
  */
-import { ActionStateManager } from './ActionStateManager';
+import { ActionStateManager } from '@webview-ts/shared';
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
