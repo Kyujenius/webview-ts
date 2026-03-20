@@ -7,7 +7,7 @@ describe('isBridgeMessage', () => {
       isBridgeMessage({
         id: '1',
         sourceId: 'web-1',
-        targetId: 'native',
+        targetId: 'host',
         action: 'test',
         timestamp: 123,
       })
@@ -19,7 +19,7 @@ describe('isBridgeMessage', () => {
       isBridgeMessage({
         id: '1',
         sourceId: 'web-1',
-        targetId: 'native',
+        targetId: 'host',
         action: 'test',
         payload: { foo: 1 },
         timestamp: 123,
@@ -33,12 +33,12 @@ describe('isBridgeMessage', () => {
 
   it('should return false for missing id', () => {
     expect(
-      isBridgeMessage({ sourceId: 'web-1', targetId: 'native', action: 'test', timestamp: 123 })
+      isBridgeMessage({ sourceId: 'web-1', targetId: 'host', action: 'test', timestamp: 123 })
     ).toBe(false);
   });
 
   it('should return false for missing sourceId', () => {
-    expect(isBridgeMessage({ id: '1', targetId: 'native', action: 'test', timestamp: 123 })).toBe(
+    expect(isBridgeMessage({ id: '1', targetId: 'host', action: 'test', timestamp: 123 })).toBe(
       false
     );
   });
@@ -50,15 +50,15 @@ describe('isBridgeMessage', () => {
   });
 
   it('should return false for missing action', () => {
-    expect(
-      isBridgeMessage({ id: '1', sourceId: 'web-1', targetId: 'native', timestamp: 123 })
-    ).toBe(false);
+    expect(isBridgeMessage({ id: '1', sourceId: 'web-1', targetId: 'host', timestamp: 123 })).toBe(
+      false
+    );
   });
 
   it('should return false for missing timestamp', () => {
-    expect(
-      isBridgeMessage({ id: '1', sourceId: 'web-1', targetId: 'native', action: 'test' })
-    ).toBe(false);
+    expect(isBridgeMessage({ id: '1', sourceId: 'web-1', targetId: 'host', action: 'test' })).toBe(
+      false
+    );
   });
 });
 
@@ -67,7 +67,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: true,
         data: 42,
@@ -80,7 +80,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: false,
         timestamp: 123,
@@ -90,16 +90,16 @@ describe('isBridgeResponse', () => {
   });
 
   it('should return false for missing success', () => {
-    expect(
-      isBridgeResponse({ id: '1', sourceId: 'native', targetId: 'web-1', timestamp: 123 })
-    ).toBe(false);
+    expect(isBridgeResponse({ id: '1', sourceId: 'host', targetId: 'web-1', timestamp: 123 })).toBe(
+      false
+    );
   });
 
   it('should return false for non-boolean success', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: 'yes',
         timestamp: 123,
@@ -111,7 +111,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: true,
         data: 42,
@@ -124,7 +124,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: false,
         error: { code: 'TIMEOUT', message: 'x' },
@@ -137,7 +137,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: true,
         timestamp: 1,
@@ -149,7 +149,7 @@ describe('isBridgeResponse', () => {
     expect(
       isBridgeResponse({
         id: '1',
-        sourceId: 'native',
+        sourceId: 'host',
         targetId: 'web-1',
         success: false,
         timestamp: 1,
@@ -165,7 +165,7 @@ describe('isBridgeResponse', () => {
 
   it('should return false for missing targetId', () => {
     expect(
-      isBridgeResponse({ id: '1', sourceId: 'native', success: true, data: 42, timestamp: 123 })
+      isBridgeResponse({ id: '1', sourceId: 'host', success: true, data: 42, timestamp: 123 })
     ).toBe(false);
   });
 });
@@ -173,14 +173,14 @@ describe('isBridgeResponse', () => {
 describe('isBridgeEvent', () => {
   it('should return true for valid event', () => {
     expect(
-      isBridgeEvent({ sourceId: 'native', event: 'location.updated', payload: {}, timestamp: 1 })
+      isBridgeEvent({ sourceId: 'host', event: 'location.updated', payload: {}, timestamp: 1 })
     ).toBe(true);
   });
 
   it('should return true for event with any payload', () => {
     expect(
       isBridgeEvent({
-        sourceId: 'native',
+        sourceId: 'host',
         event: 'data.changed',
         payload: [1, 2, 3],
         timestamp: 100,
@@ -193,15 +193,15 @@ describe('isBridgeEvent', () => {
   });
 
   it('should return false for missing event field', () => {
-    expect(isBridgeEvent({ sourceId: 'native', payload: {}, timestamp: 1 })).toBe(false);
+    expect(isBridgeEvent({ sourceId: 'host', payload: {}, timestamp: 1 })).toBe(false);
   });
 
   it('should return false for missing payload field', () => {
-    expect(isBridgeEvent({ sourceId: 'native', event: 'test', timestamp: 1 })).toBe(false);
+    expect(isBridgeEvent({ sourceId: 'host', event: 'test', timestamp: 1 })).toBe(false);
   });
 
   it('should return false for missing timestamp', () => {
-    expect(isBridgeEvent({ sourceId: 'native', event: 'test', payload: {} })).toBe(false);
+    expect(isBridgeEvent({ sourceId: 'host', event: 'test', payload: {} })).toBe(false);
   });
 
   it('should return false for non-object values', () => {

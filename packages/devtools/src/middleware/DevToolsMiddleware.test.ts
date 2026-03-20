@@ -12,7 +12,7 @@ function makeCtx(action: string, payload?: unknown): MiddlewareContext {
       payload,
       timestamp: Date.now(),
       sourceId: 'test',
-      targetId: 'native',
+      targetId: 'host',
     },
     response: undefined,
     startTime: Date.now(),
@@ -37,7 +37,7 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: { result: 'ok' },
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: 'test',
         };
       });
@@ -60,7 +60,7 @@ describe('DevToolsMiddleware', () => {
           success: false,
           error: { code: 'HANDLER_ERROR', message: 'Test error' },
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: 'test',
         };
       });
@@ -103,7 +103,7 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: 'test',
         };
       });
@@ -161,7 +161,7 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: 'test',
         };
       });
@@ -195,7 +195,7 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
-          sourceId: 'native',
+          sourceId: 'host',
           targetId: 'test',
         };
       });
