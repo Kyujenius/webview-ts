@@ -30,7 +30,7 @@ describe('createSimpleBridgeHost', () => {
     });
 
     expect(result.bridgeHost).toBeDefined();
-    expect(result.messageHandler).toBeDefined();
+    expect(result.adapter).toBeDefined();
     expect(result.webViewProps).toBeDefined();
     expect(typeof result.webViewProps.onMessage).toBe('function');
     expect(typeof result.webViewProps.ref).toBe('function');

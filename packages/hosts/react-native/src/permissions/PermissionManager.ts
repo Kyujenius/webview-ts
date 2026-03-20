@@ -1,6 +1,6 @@
 import { PermissionStatus } from '@webview-ts/shared';
 import { Platform } from 'react-native';
-import { createDebugLogger } from '../utils/debug-log';
+import { createDebugLogger } from '@webview-ts/shared';
 
 /**
  * Configuration for PermissionManager

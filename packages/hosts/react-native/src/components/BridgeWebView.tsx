@@ -2,7 +2,7 @@ import { useMemo, useCallback, useEffect } from 'react';
 import type { ActionMapBase, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
 import { ConnectionRegistry, generateSourceId } from '@webview-ts/shared';
-import type { BridgeHostConfig } from '../bridge/BridgeHost';
+import type { BridgeHostConfig } from '@webview-ts/core';
 import { createSimpleBridgeHost, type TypedHandlers } from '../hooks/useBridgeHost';
 
 export interface BridgeWebViewProps<TActions extends ActionMapBase = ActionMapBase> {
@@ -40,7 +40,7 @@ export function useBridgeWebView<TActions extends ActionMapBase = ActionMapBase>
   useEffect(() => {
     if (!registry) return;
     const sender = (message: string) => {
-      host.messageHandler.sendToWebView(message);
+      host.adapter.send(message);
     };
     registry.register(sourceId, sender);
     return () => registry.unregister(sourceId);
