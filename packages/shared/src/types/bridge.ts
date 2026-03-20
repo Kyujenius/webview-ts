@@ -2,7 +2,7 @@
  * Core bridge types and interfaces
  */
 
-import type { BridgeMessage, BridgeResponse, BridgeError } from './message';
+import type { BridgeError } from './message';
 
 export interface RetryConfig {
   maxAttempts: number;
@@ -162,34 +162,6 @@ export interface Bridge {
    * Get bridge configuration
    */
   getConfig(): BridgeConfig;
-}
-
-/**
- * Native bridge host interface
- */
-export interface BridgeHost {
-  /**
-   * Handle incoming message from web
-   */
-  handleMessage(message: BridgeMessage): Promise<BridgeResponse>;
-
-  /**
-   * Send event to web
-   */
-  sendEvent<TPayload = unknown>(event: string, payload: TPayload): void;
-
-  /**
-   * Register action handler
-   */
-  registerHandler<TPayload = unknown, TResponse = unknown>(
-    action: string,
-    handler: (payload: TPayload) => Promise<TResponse>
-  ): void;
-
-  /**
-   * Unregister action handler
-   */
-  unregisterHandler(action: string): void;
 }
 
 /**

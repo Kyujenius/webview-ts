@@ -16,3 +16,4 @@ export { METADATA_KEYS } from './constants/metadata-keys';
 export { tryAutoDevTools } from './devtools/auto-devtools';
 export type { AutoDevToolsTarget } from './devtools/auto-devtools';
 export { generateSourceId } from './utils/source-id';
+export { createDebugLogger } from './utils/debug-log';
