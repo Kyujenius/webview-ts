@@ -37,6 +37,7 @@ type EventHandler<T = unknown> = (payload: T) => void;
  */
 export class BridgeManager<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+  TEvents extends Record<string, unknown> = Record<string, unknown>,
 > {
   private config: {
     timeout: number;
@@ -283,7 +284,7 @@ export class BridgeManager<
   /**
    * Subscribe to native events
    */
-  on<TPayload = unknown>(event: string, handler: EventHandler<TPayload>): () => void {
+  on<K extends string & keyof TEvents>(event: K, handler: EventHandler<TEvents[K]>): () => void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
     }
@@ -292,14 +293,14 @@ export class BridgeManager<
 
     // Return unsubscribe function
     return () => {
-      this.off(event, handler as EventHandler);
+      this.off(event, handler as EventHandler<TEvents[K]>);
     };
   }
 
   /**
    * Unsubscribe from native events
    */
-  off(event: string, handler?: EventHandler): void {
+  off<K extends string & keyof TEvents>(event: K, handler?: EventHandler<TEvents[K]>): void {
     if (!handler) {
       // Remove all handlers for this event
       this.eventHandlers.delete(event);
@@ -308,7 +309,7 @@ export class BridgeManager<
 
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
-      handlers.delete(handler);
+      handlers.delete(handler as EventHandler);
       if (handlers.size === 0) {
         this.eventHandlers.delete(event);
       }
