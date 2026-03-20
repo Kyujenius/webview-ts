@@ -34,7 +34,7 @@ describe('Fallback mode', () => {
 
   it('should not use fallback when native IS available', async () => {
     const win = globalThis as any;
-    win.webkit = { messageHandlers: { tsBridge: { postMessage: vi.fn() } } };
+    win.ReactNativeWebView = { postMessage: vi.fn() };
     const fallbackFn = vi.fn();
     const bridge = createClient({ fallback: { 'test.action': fallbackFn }, timeout: 50 });
     try {
@@ -43,6 +43,6 @@ describe('Fallback mode', () => {
       /* timeout expected */
     }
     expect(fallbackFn).not.toHaveBeenCalled();
-    delete win.webkit;
+    delete win.ReactNativeWebView;
   });
 });

@@ -5,7 +5,7 @@ import type {
   ConnectionMode,
 } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import type { ClientAdapter } from './ClientAdapter';
+import type { ClientAdapter } from '@webview-ts/shared';
 
 export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;
