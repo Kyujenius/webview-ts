@@ -13,3 +13,4 @@ export * from './event-map';
 export * from './utils';
 export * from './routing';
 export * from './host-adapter';
+export * from './client-adapter';

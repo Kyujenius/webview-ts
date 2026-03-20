@@ -5,7 +5,8 @@ import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
-import { createClientAdapter, type ClientAdapter } from '../adapters/index';
+import { createClientAdapter } from '../adapters/index';
+import type { ClientAdapter } from '@webview-ts/shared';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { generateMessageId } from '../utils/id-generator';

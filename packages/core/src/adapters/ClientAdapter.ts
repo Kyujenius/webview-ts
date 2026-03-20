@@ -1,64 +1,23 @@
 /**
- * Base adapter interface and factory
+ * Client adapter factory
  */
 
-import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
+import type { BridgeMessage, ConnectionMode, ClientAdapter } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import { IOSAdapter } from './IOSAdapter';
-import { AndroidAdapter } from './AndroidAdapter';
 import { ReactNativeWebViewAdapter, isReactNativeWebView } from './ReactNativeWebViewAdapter';
-import { platformDetector } from '../utils/platform-detector';
-
-/**
- * Client adapter interface
- */
-export interface ClientAdapter {
-  /**
-   * Send message to native
-   */
-  send(message: BridgeMessage): void;
-
-  /**
-   * Check if adapter is available
-   */
-  isAvailable(): boolean;
-
-  /**
-   * Get platform
-   */
-  getPlatform(): Platform;
-
-  /**
-   * Current connection mode
-   */
-  connectionMode: ConnectionMode;
-}
 
 /**
  * Create appropriate adapter for current platform.
  *
  * Priority:
- * 1. react-native-webview (window.ReactNativeWebView) — most common RN host
- * 2. iOS WebKit (window.webkit.messageHandlers.tsBridge)
- * 3. Android JS interface (window.AndroidBridge)
- * 4. MockAdapter (fallback)
+ * 1. react-native-webview (window.ReactNativeWebView)
+ * 2. MockAdapter (fallback — no native bridge)
  */
 export function createClientAdapter(): ClientAdapter {
-  // react-native-webview injects window.ReactNativeWebView
   if (isReactNativeWebView()) {
     return new ReactNativeWebViewAdapter();
   }
-
-  const platform = platformDetector.detect();
-
-  switch (platform) {
-    case Platform.IOS:
-      return new IOSAdapter();
-    case Platform.ANDROID:
-      return new AndroidAdapter();
-    default:
-      return new MockAdapter();
-  }
+  return new MockAdapter();
 }
 
 /**
