@@ -5,9 +5,9 @@ import type {
   ConnectionMode,
 } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import type { NativeAdapter } from './NativeAdapter';
+import type { ClientAdapter } from './ClientAdapter';
 
-export class FallbackAdapter implements NativeAdapter {
+export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;
   private readonly logOnly: boolean;
   private readonly responseCallback: (response: BridgeResponse) => void;
