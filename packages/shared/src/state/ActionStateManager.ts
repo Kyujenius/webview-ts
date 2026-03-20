@@ -1,4 +1,5 @@
-import type { ActionStatus, BridgeCallOptions } from '@webview-ts/shared';
+import type { ActionStatus } from '../plugins/types';
+import type { BridgeCallOptions } from '../types/bridge';
 
 export interface ActionState<TData> {
   status: ActionStatus;
