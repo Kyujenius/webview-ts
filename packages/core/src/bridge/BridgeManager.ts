@@ -19,7 +19,8 @@ import type {
   BridgeError,
   Middleware,
   MiddlewareContext,
-  ActionDefinitionShape,
+  ActionMapBase,
+  EventMapBase,
   ActionNames,
   InferPayload,
   InferResponse,
@@ -36,8 +37,8 @@ type EventHandler<T = unknown> = (payload: T) => void;
  * Bridge manager implementation
  */
 export class BridgeManager<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown> = Record<string, unknown>,
+  TActions extends ActionMapBase = ActionMapBase,
+  TEvents extends EventMapBase = EventMapBase,
 > {
   private config: {
     timeout: number;

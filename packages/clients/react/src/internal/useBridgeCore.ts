@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
 import type { BridgeManager } from '@webview-ts/core';
 import type {
-  ActionDefinitionShape,
+  ActionMapBase,
+  EventMapBase,
   ActionNames,
   InferPayload,
   BridgeCallOptions,
 } from '@webview-ts/shared';
 
-export function useBridgeCore<
-  TActions extends Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown>,
->(bridge: BridgeManager<TActions, TEvents>) {
+export function useBridgeCore<TActions extends ActionMapBase, TEvents extends EventMapBase>(
+  bridge: BridgeManager<TActions, TEvents>
+) {
   const call = useCallback(
     <TAction extends ActionNames<TActions>>(
       action: TAction,

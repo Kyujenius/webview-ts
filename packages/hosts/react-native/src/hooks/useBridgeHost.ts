@@ -1,4 +1,4 @@
-import type { ActionDefinitionShape, Middleware } from '@webview-ts/shared';
+import type { ActionMapBase, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
 import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
 import { BridgeHost } from '../bridge/BridgeHost';
@@ -10,15 +10,13 @@ import { MessageHandler } from '../bridge/MessageHandler';
  * Maps each action in the ActionMap to a handler with the correct payload/response types.
  * Ensures all actions are implemented with the right signatures.
  */
-export type TypedHandlers<TActions extends Record<string, ActionDefinitionShape>> = {
+export type TypedHandlers<TActions extends ActionMapBase> = {
   [K in keyof TActions & string]: ActionHandler<TActions[K]['payload'], TActions[K]['response']>;
 };
 
 // ---- Pure function (non-React) ----
 
-export interface SimpleBridgeHostOptions<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
-> {
+export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = ActionMapBase> {
   /** Action handlers — fully typed when TActions is provided */
   handlers?: TypedHandlers<TActions>;
   /** Plugins that provide additional handlers */
@@ -62,9 +60,9 @@ export interface SimpleBridgeHostResult {
  * });
  * ```
  */
-export function createSimpleBridgeHost<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
->(options: SimpleBridgeHostOptions<TActions>): SimpleBridgeHostResult {
+export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
+  options: SimpleBridgeHostOptions<TActions>
+): SimpleBridgeHostResult {
   const { handlers, plugins, middleware, config, debug } = options;
 
   const bridgeHost = new BridgeHost({ ...config, debug });
@@ -163,9 +161,9 @@ export interface UseBridgeHostReturn {
  * return <WebView {...webViewProps} source={{ uri: webUrl }} />;
  * ```
  */
-export function useBridgeHost<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
->(options: SimpleBridgeHostOptions<TActions>): UseBridgeHostReturn {
+export function useBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
+  options: SimpleBridgeHostOptions<TActions>
+): UseBridgeHostReturn {
   const result = useMemo(() => createSimpleBridgeHost(options), []);
 
   useEffect(() => {

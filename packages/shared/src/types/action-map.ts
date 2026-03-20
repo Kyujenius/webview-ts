@@ -3,16 +3,18 @@ export interface ActionDefinitionShape {
   response: unknown;
 }
 
+export type ActionMapBase = Record<string, ActionDefinitionShape>;
+
 export type InferPayload<
-  TMap extends Record<string, ActionDefinitionShape>,
+  TMap extends ActionMapBase,
   TAction extends keyof TMap,
 > = TMap[TAction]['payload'];
 
 export type InferResponse<
-  TMap extends Record<string, ActionDefinitionShape>,
+  TMap extends ActionMapBase,
   TAction extends keyof TMap,
 > = TMap[TAction]['response'];
 
-export type ActionNames<TMap extends Record<string, ActionDefinitionShape>> = keyof TMap & string;
+export type ActionNames<TMap extends ActionMapBase> = keyof TMap & string;
 
-export type ActionMap<T extends Record<string, ActionDefinitionShape>> = T;
+export type ActionMap<T extends ActionMapBase> = T;

@@ -11,15 +11,15 @@ export * from './middleware';
 export * from './utils';
 
 import { BridgeManager } from './bridge/BridgeManager';
-import type { BridgeConfig, ActionDefinitionShape } from '@webview-ts/shared';
+import type { BridgeConfig, ActionMapBase, EventMapBase } from '@webview-ts/shared';
 
 /**
  * Create and initialize a new bridge instance.
  * Calls connect() automatically so it's ready to use immediately.
  */
 export function createBridge<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown> = Record<string, unknown>,
+  TActions extends ActionMapBase = ActionMapBase,
+  TEvents extends EventMapBase = EventMapBase,
 >(config?: BridgeConfig): BridgeManager<TActions, TEvents> {
   const bridge = new BridgeManager<TActions, TEvents>(config);
   bridge.connect();

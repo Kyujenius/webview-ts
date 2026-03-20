@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import type { BridgeManager } from '@webview-ts/core';
-import type { ActionDefinitionShape } from '@webview-ts/shared';
+import type { ActionMapBase, EventMapBase } from '@webview-ts/shared';
 
 export function useEventCore<
-  TActions extends Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown>,
+  TActions extends ActionMapBase,
+  TEvents extends EventMapBase,
   K extends string & keyof TEvents,
 >(
   bridge: BridgeManager<TActions, TEvents>,

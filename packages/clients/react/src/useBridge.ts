@@ -1,5 +1,5 @@
 import type {
-  ActionDefinitionShape,
+  ActionMapBase,
   ActionNames,
   InferPayload,
   InferResponse,
@@ -8,9 +8,7 @@ import type {
 import { useBridgeContext } from './BridgeContext';
 import { useBridgeCore } from './internal/useBridgeCore';
 
-export interface UseBridgeReturn<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
-> {
+export interface UseBridgeReturn<TActions extends ActionMapBase = ActionMapBase> {
   call: <TAction extends ActionNames<TActions>>(
     action: TAction,
     payload: InferPayload<TActions, TAction>,
@@ -22,7 +20,7 @@ export interface UseBridgeReturn<
 }
 
 export function useBridge<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+  TActions extends ActionMapBase = ActionMapBase,
 >(): UseBridgeReturn<TActions> {
   const { bridge, isAvailable } = useBridgeContext<TActions>();
   const { call, on, off } = useBridgeCore(bridge as any);

@@ -1,10 +1,10 @@
-import type { ActionDefinitionShape, ActionNames, InferPayload, InferResponse } from './action-map';
-import type { EventNames } from './event-map';
+import type { ActionMapBase, ActionNames, InferPayload, InferResponse } from './action-map';
+import type { EventMapBase, EventNames } from './event-map';
 import type { BridgeConfig, BridgeCallOptions } from './bridge';
 
 export interface TypedBridge<
-  TActions extends Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown> = Record<string, unknown>,
+  TActions extends ActionMapBase,
+  TEvents extends EventMapBase = EventMapBase,
 > {
   call<TAction extends ActionNames<TActions>>(
     action: TAction,

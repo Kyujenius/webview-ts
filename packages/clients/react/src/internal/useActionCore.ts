@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type { BridgeManager } from '@webview-ts/core';
-import type { ActionDefinitionShape, ActionNames, BridgeCallOptions } from '@webview-ts/shared';
+import type { ActionMapBase, ActionNames, BridgeCallOptions } from '@webview-ts/shared';
 
 export function useActionCore<
-  TActions extends Record<string, ActionDefinitionShape>,
+  TActions extends ActionMapBase,
   TAction extends ActionNames<TActions>,
 >(bridge: BridgeManager<TActions>, action: TAction, defaultOptions?: BridgeCallOptions) {
   const manager = useMemo(

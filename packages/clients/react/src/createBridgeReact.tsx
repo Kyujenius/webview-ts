@@ -7,7 +7,8 @@ import type {
   BridgeConfig,
   BridgeCallOptions,
   ConnectionMode,
-  ActionDefinitionShape,
+  ActionMapBase,
+  EventMapBase,
   ActionNames,
   FallbackMap,
   EventNames,
@@ -22,10 +23,7 @@ import { useBridgeCore } from './internal/useBridgeCore';
 import { useActionCore } from './internal/useActionCore';
 import { useEventCore } from './internal/useEventCore';
 
-interface BridgeContextValue<
-  TActions extends Record<string, ActionDefinitionShape>,
-  TEvents extends Record<string, unknown>,
-> {
+interface BridgeContextValue<TActions extends ActionMapBase, TEvents extends EventMapBase> {
   bridge: BridgeManager<TActions, TEvents>;
   isAvailable: boolean;
   connectionMode: ConnectionMode;
@@ -38,7 +36,7 @@ export interface TypedBridgeProviderProps {
 
 export interface CreateBridgeReactOptions<
   TPlugins extends PluginInstance<any, any, any>[],
-  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+  TCustomEvents extends EventMapBase = Record<string, never>,
 > {
   plugins?: TPlugins;
   config?: BridgeConfig;
@@ -47,9 +45,9 @@ export interface CreateBridgeReactOptions<
 }
 
 export function createBridgeReact<
-  TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
+  TCustomActions extends ActionMapBase = Record<string, never>,
   const TPlugins extends PluginInstance<any, any, any>[] = [],
-  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+  TCustomEvents extends EventMapBase = Record<string, never>,
 >(options?: CreateBridgeReactOptions<TPlugins, TCustomEvents>) {
   type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
   type TAllEvents = MergePluginEvents<TPlugins> & TCustomEvents;

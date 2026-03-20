@@ -1,5 +1,5 @@
 import type {
-  ActionDefinitionShape,
+  ActionMapBase,
   ActionNames,
   BridgeCallOptions,
   ActionStatus,
@@ -8,7 +8,7 @@ import { useBridgeContext } from './BridgeContext';
 import { useActionCore } from './internal/useActionCore';
 
 export interface UseActionReturn<
-  TActions extends Record<string, ActionDefinitionShape>,
+  TActions extends ActionMapBase,
   TAction extends ActionNames<TActions>,
 > {
   status: ActionStatus;
@@ -23,7 +23,7 @@ export interface UseActionReturn<
 }
 
 export function useAction<
-  TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
+  TActions extends ActionMapBase = ActionMapBase,
   TAction extends ActionNames<TActions> = ActionNames<TActions>,
 >(action: TAction, defaultOptions?: BridgeCallOptions): UseActionReturn<TActions, TAction> {
   const { bridge } = useBridgeContext<TActions>();

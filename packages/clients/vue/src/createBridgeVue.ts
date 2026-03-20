@@ -4,7 +4,8 @@ import { BridgeManager } from '@webview-ts/core';
 import type {
   BridgeConfig,
   FallbackMap,
-  ActionDefinitionShape,
+  ActionMapBase,
+  EventMapBase,
   EventNames,
 } from '@webview-ts/shared';
 import type { PluginInstance, MergePluginActions, MergePluginEvents } from '@webview-ts/shared';
@@ -15,7 +16,7 @@ import { usePlugin } from './composables/usePlugin';
 
 export interface CreateBridgeVueOptions<
   TPlugins extends PluginInstance<any, any, any>[] = [],
-  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+  TCustomEvents extends EventMapBase = Record<string, never>,
 > {
   config?: BridgeConfig;
   plugins?: TPlugins;
@@ -24,9 +25,9 @@ export interface CreateBridgeVueOptions<
 }
 
 export function createBridgeVue<
-  TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
+  TCustomActions extends ActionMapBase = Record<string, never>,
   const TPlugins extends PluginInstance<any, any, any>[] = [],
-  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+  TCustomEvents extends EventMapBase = Record<string, never>,
 >(
   options?: CreateBridgeVueOptions<TPlugins, TCustomEvents>
 ): Plugin & {
