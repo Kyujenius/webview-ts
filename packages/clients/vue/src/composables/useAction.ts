@@ -1,6 +1,6 @@
 import { ref, onScopeDispose, inject } from 'vue';
 import { BRIDGE_KEY } from '../bridgeKey';
-import type { ActionState } from '@webview-ts/core';
+import type { ActionState } from '@webview-ts/shared';
 
 export function useAction(action: string) {
   const ctx = inject(BRIDGE_KEY);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
-import { BridgeManager, ActionStateManager } from '@webview-ts/core';
-import type { ActionState } from '@webview-ts/core';
+import { BridgeManager } from '@webview-ts/core';
+import { ActionStateManager } from '@webview-ts/shared';
+import type { ActionState } from '@webview-ts/shared';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
   BridgeConfig,
@@ -9,14 +10,23 @@ import type {
   ActionDefinitionShape,
   ActionNames,
   FallbackMap,
+  EventNames,
 } from '@webview-ts/shared';
-import type { PluginInstance, MergePluginActions } from '@webview-ts/shared';
+import type {
+  PluginInstance,
+  MergePluginActions,
+  MergePluginEvents,
+  TypedEventSubscriber,
+} from '@webview-ts/shared';
 import { useBridgeCore } from './internal/useBridgeCore';
 import { useActionCore } from './internal/useActionCore';
 import { useEventCore } from './internal/useEventCore';
 
-interface BridgeContextValue<TActions extends Record<string, ActionDefinitionShape>> {
-  bridge: BridgeManager<TActions>;
+interface BridgeContextValue<
+  TActions extends Record<string, ActionDefinitionShape>,
+  TEvents extends Record<string, unknown>,
+> {
+  bridge: BridgeManager<TActions, TEvents>;
   isAvailable: boolean;
   connectionMode: ConnectionMode;
 }
@@ -26,20 +36,27 @@ export interface TypedBridgeProviderProps {
   children: React.ReactNode;
 }
 
-export interface CreateBridgeReactOptions<TPlugins extends PluginInstance<any, any, any>[]> {
+export interface CreateBridgeReactOptions<
+  TPlugins extends PluginInstance<any, any, any>[],
+  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+> {
   plugins?: TPlugins;
   config?: BridgeConfig;
+  /** Zero-cost event type marker for custom events. Use `{} as MyEvents`. */
+  events?: TCustomEvents;
 }
 
 export function createBridgeReact<
   TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
   const TPlugins extends PluginInstance<any, any, any>[] = [],
->(options?: CreateBridgeReactOptions<TPlugins>) {
+  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+>(options?: CreateBridgeReactOptions<TPlugins, TCustomEvents>) {
   type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
+  type TAllEvents = MergePluginEvents<TPlugins> & TCustomEvents;
 
-  const Context = createContext<BridgeContextValue<TAllActions> | null>(null);
+  const Context = createContext<BridgeContextValue<TAllActions, TAllEvents> | null>(null);
 
-  function useTypedContext(): BridgeContextValue<TAllActions> {
+  function useTypedContext(): BridgeContextValue<TAllActions, TAllEvents> {
     const ctx = useContext(Context);
     if (!ctx)
       throw new Error('useBridge/useAction/useEvent must be used within a <BridgeProvider>');
@@ -79,7 +96,7 @@ export function createBridgeReact<
       }
 
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
-      const b = new BridgeManager<TAllActions>(finalConfig);
+      const b = new BridgeManager<TAllActions, TAllEvents>(finalConfig);
 
       // Register per-action interceptors from plugin definitions
       if (options?.plugins) {
@@ -134,7 +151,10 @@ export function createBridgeReact<
 
   // ---- useEvent ----
 
-  function useEvent<TPayload = unknown>(event: string, handler: (payload: TPayload) => void): void {
+  function useEvent<K extends EventNames<TAllEvents>>(
+    event: K,
+    handler: (payload: TAllEvents[K]) => void
+  ): void {
     const { bridge } = useTypedContext();
     useEventCore(bridge, event, handler);
   }
@@ -180,11 +200,11 @@ export function createBridgeReact<
 
     const snapshots = useSyncExternalStore(store.subscribe, store.getSnapshot);
 
-    const on = useCallback(
-      (eventShortName: string, handler: (payload: any) => void) => {
+    const on: TypedEventSubscriber<TPlugin['_eventTypes']> = useCallback(
+      ((eventShortName: string, handler: (payload: any) => void) => {
         const fullName = `${plugin.name}.${eventShortName}`;
-        return bridge.on(fullName, handler);
-      },
+        return bridge.on(fullName as any, handler as any);
+      }) as any,
       [bridge, plugin]
     );
 

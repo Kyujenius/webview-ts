@@ -7,9 +7,10 @@ import type {
   BridgeCallOptions,
 } from '@webview-ts/shared';
 
-export function useBridgeCore<TActions extends Record<string, ActionDefinitionShape>>(
-  bridge: BridgeManager<TActions>
-) {
+export function useBridgeCore<
+  TActions extends Record<string, ActionDefinitionShape>,
+  TEvents extends Record<string, unknown>,
+>(bridge: BridgeManager<TActions, TEvents>) {
   const call = useCallback(
     <TAction extends ActionNames<TActions>>(
       action: TAction,
@@ -19,12 +20,13 @@ export function useBridgeCore<TActions extends Record<string, ActionDefinitionSh
     [bridge]
   );
   const on = useCallback(
-    <TPayload = unknown>(event: string, handler: (payload: TPayload) => void) =>
+    <K extends string & keyof TEvents>(event: K, handler: (payload: TEvents[K]) => void) =>
       bridge.on(event, handler),
     [bridge]
   );
   const off = useCallback(
-    (event: string, handler?: (payload: unknown) => void) => bridge.off(event, handler),
+    <K extends string & keyof TEvents>(event: K, handler?: (payload: TEvents[K]) => void) =>
+      bridge.off(event, handler),
     [bridge]
   );
   return { call, on, off };

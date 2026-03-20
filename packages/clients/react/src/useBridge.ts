@@ -25,6 +25,6 @@ export function useBridge<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
 >(): UseBridgeReturn<TActions> {
   const { bridge, isAvailable } = useBridgeContext<TActions>();
-  const { call, on, off } = useBridgeCore(bridge);
-  return { call, on, off, isAvailable };
+  const { call, on, off } = useBridgeCore(bridge as any);
+  return { call, on: on as any, off: off as any, isAvailable };
 }

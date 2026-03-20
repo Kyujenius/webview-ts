@@ -1,6 +1,7 @@
 import { ref, onScopeDispose, inject } from 'vue';
 import { BRIDGE_KEY } from '../bridgeKey';
-import type { ActionState } from '@webview-ts/core';
+import type { ActionState } from '@webview-ts/shared';
+import type { TypedEventSubscriber } from '@webview-ts/shared';
 
 export function usePlugin(plugin: any) {
   const ctx = inject(BRIDGE_KEY);
@@ -40,10 +41,10 @@ export function usePlugin(plugin: any) {
     };
   }
 
-  result.on = (eventName: string, handler: (payload: any) => void) => {
+  result.on = ((eventName: string, handler: (payload: any) => void) => {
     const fullName = `${plugin.name}.${eventName}`;
     return ctx.bridge.on(fullName, handler);
-  };
+  }) as TypedEventSubscriber<typeof plugin._eventTypes>;
 
   onScopeDispose(() => disposers.forEach((fn) => fn()));
 

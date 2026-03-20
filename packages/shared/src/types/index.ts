@@ -9,3 +9,4 @@ export * from './plugin';
 export * from './action-map';
 export * from './typed-bridge';
 export * from './errors';
+export * from './event-map';

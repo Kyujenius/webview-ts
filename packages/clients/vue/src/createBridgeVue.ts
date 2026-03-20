@@ -1,24 +1,46 @@
 import type { App, Plugin } from 'vue';
+import { inject, onScopeDispose } from 'vue';
 import { BridgeManager } from '@webview-ts/core';
-import type { BridgeConfig, FallbackMap } from '@webview-ts/shared';
-import type { PluginInstance } from '@webview-ts/shared';
+import type {
+  BridgeConfig,
+  FallbackMap,
+  ActionDefinitionShape,
+  EventNames,
+} from '@webview-ts/shared';
+import type { PluginInstance, MergePluginActions, MergePluginEvents } from '@webview-ts/shared';
 import { BRIDGE_KEY } from './bridgeKey';
 import { useBridge } from './composables/useBridge';
 import { useAction } from './composables/useAction';
 import { usePlugin } from './composables/usePlugin';
-import { useEvent } from './composables/useEvent';
 
-export interface CreateBridgeVueOptions {
+export interface CreateBridgeVueOptions<
+  TPlugins extends PluginInstance<any, any, any>[] = [],
+  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+> {
   config?: BridgeConfig;
-  plugins?: PluginInstance<any, any, any>[];
+  plugins?: TPlugins;
+  /** Zero-cost event type marker for custom events. Use `{} as MyEvents`. */
+  events?: TCustomEvents;
 }
 
-export function createBridgeVue(options?: CreateBridgeVueOptions): Plugin & {
+export function createBridgeVue<
+  TCustomActions extends Record<string, ActionDefinitionShape> = Record<string, never>,
+  const TPlugins extends PluginInstance<any, any, any>[] = [],
+  TCustomEvents extends Record<string, unknown> = Record<string, never>,
+>(
+  options?: CreateBridgeVueOptions<TPlugins, TCustomEvents>
+): Plugin & {
   useBridge: typeof useBridge;
   useAction: typeof useAction;
   usePlugin: typeof usePlugin;
-  useEvent: typeof useEvent;
+  useEvent: <K extends EventNames<MergePluginEvents<TPlugins> & TCustomEvents>>(
+    event: K,
+    handler: (payload: (MergePluginEvents<TPlugins> & TCustomEvents)[K]) => void
+  ) => void;
 } {
+  type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
+  type TAllEvents = MergePluginEvents<TPlugins> & TCustomEvents;
+
   function install(app: App) {
     // Collect fallbacks from plugins
     let pluginFallback: FallbackMap = {};
@@ -46,7 +68,7 @@ export function createBridgeVue(options?: CreateBridgeVueOptions): Plugin & {
     }
 
     const finalConfig: BridgeConfig = { ...options?.config, fallback: finalFallback };
-    const bridge = new BridgeManager(finalConfig);
+    const bridge = new BridgeManager<TAllActions, TAllEvents>(finalConfig);
 
     // Register interceptors and timeouts from plugins
     if (options?.plugins) {
@@ -72,5 +94,18 @@ export function createBridgeVue(options?: CreateBridgeVueOptions): Plugin & {
     app.config.globalProperties.$webviewBridgeCleanup = () => bridge.destroy();
   }
 
-  return { install, useBridge, useAction, usePlugin, useEvent };
+  // Typed useEvent — closured to access TAllEvents
+  function useTypedEvent<K extends EventNames<TAllEvents>>(
+    event: K,
+    handler: (payload: TAllEvents[K]) => void
+  ): void {
+    const ctx = inject(BRIDGE_KEY);
+    if (!ctx) {
+      throw new Error('[webview-ts/vue] useEvent() called without BridgeProvider.');
+    }
+    const unsubscribe = ctx.bridge.on(event as string, handler as (payload: unknown) => void);
+    onScopeDispose(unsubscribe);
+  }
+
+  return { install, useBridge, useAction, usePlugin, useEvent: useTypedEvent as any };
 }

@@ -19,8 +19,9 @@ import type { BridgeConfig, ActionDefinitionShape } from '@webview-ts/shared';
  */
 export function createBridge<
   TActions extends Record<string, ActionDefinitionShape> = Record<string, ActionDefinitionShape>,
->(config?: BridgeConfig): BridgeManager<TActions> {
-  const bridge = new BridgeManager<TActions>(config);
+  TEvents extends Record<string, unknown> = Record<string, unknown>,
+>(config?: BridgeConfig): BridgeManager<TActions, TEvents> {
+  const bridge = new BridgeManager<TActions, TEvents>(config);
   bridge.connect();
   return bridge;
 }
