@@ -98,6 +98,8 @@ describe('BridgeHost', () => {
 
       const message: BridgeMessage = {
         id: 'msg-1',
+        sourceId: 'client-1',
+        targetId: 'host',
         action: 'testAction',
         payload: { test: 'data' },
         timestamp: Date.now(),
@@ -119,6 +121,8 @@ describe('BridgeHost', () => {
     it('should send error response for unregistered action', async () => {
       const message: BridgeMessage = {
         id: 'msg-1',
+        sourceId: 'client-1',
+        targetId: 'host',
         action: 'unknownAction',
         timestamp: Date.now(),
       };
@@ -134,6 +138,8 @@ describe('BridgeHost', () => {
 
       const message: BridgeMessage = {
         id: 'msg-1',
+        sourceId: 'client-1',
+        targetId: 'host',
         action: 'testAction',
         timestamp: Date.now(),
       };
