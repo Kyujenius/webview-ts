@@ -1,14 +1,34 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { BridgeHost } from '@webview-ts/react-native';
+import { BridgeHost } from '@webview-ts/core';
+import type { HostAdapter } from '@webview-ts/shared';
+
+function createMockAdapter() {
+  const listeners = new Set<(json: string) => void>();
+  const sent: string[] = [];
+  const adapter: HostAdapter = {
+    send: (msg: string) => {
+      sent.push(msg);
+    },
+    onMessage: (cb: (json: string) => void) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    destroy: () => {
+      listeners.clear();
+    },
+  };
+  return { adapter, sent };
+}
 
 describe('Serialization boundary', () => {
   let host: BridgeHost;
-  const sent: string[] = [];
+  let sent: string[];
 
   function freshHost() {
     host = new BridgeHost();
-    sent.length = 0;
-    host.setMessageCallback((json) => sent.push(json));
+    const mock = createMockAdapter();
+    sent = mock.sent;
+    host.attach(mock.adapter);
     return host;
   }
 

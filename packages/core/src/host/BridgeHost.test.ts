@@ -1,18 +1,43 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BridgeHost } from './BridgeHost';
 import type { BridgeMessage } from '@webview-ts/shared';
+import type { HostAdapter } from '@webview-ts/shared';
+
+function createMockAdapter() {
+  const listeners = new Set<(json: string) => void>();
+  const sent: string[] = [];
+  const adapter: HostAdapter = {
+    send: (msg: string) => {
+      sent.push(msg);
+    },
+    onMessage: (cb: (json: string) => void) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    destroy: () => {
+      listeners.clear();
+    },
+  };
+  return {
+    adapter,
+    sent,
+    injectMessage: (json: string) => {
+      for (const l of listeners) l(json);
+    },
+  };
+}
 
 describe('BridgeHost', () => {
   let bridgeHost: BridgeHost;
-  let messageCallback: ReturnType<typeof vi.fn>;
+  let mockAdapter: ReturnType<typeof createMockAdapter>;
 
   beforeEach(() => {
     bridgeHost = new BridgeHost({
       debug: false,
     });
 
-    messageCallback = vi.fn();
-    bridgeHost.setMessageCallback(messageCallback);
+    mockAdapter = createMockAdapter();
+    bridgeHost.attach(mockAdapter.adapter);
   });
 
   describe('initialization', () => {
@@ -88,7 +113,7 @@ describe('BridgeHost', () => {
         })
       );
 
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":true'));
+      expect(mockAdapter.sent.some((s) => s.includes('"success":true'))).toBe(true);
     });
 
     it('should send error response for unregistered action', async () => {
@@ -100,7 +125,7 @@ describe('BridgeHost', () => {
 
       await bridgeHost.handleMessageString(JSON.stringify(message));
 
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":false'));
+      expect(mockAdapter.sent.some((s) => s.includes('"success":false'))).toBe(true);
     });
 
     it('should send error response when handler throws', async () => {
@@ -115,8 +140,8 @@ describe('BridgeHost', () => {
 
       await bridgeHost.handleMessageString(JSON.stringify(message));
 
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"success":false'));
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('Handler error'));
+      expect(mockAdapter.sent.some((s) => s.includes('"success":false'))).toBe(true);
+      expect(mockAdapter.sent.some((s) => s.includes('Handler error'))).toBe(true);
     });
   });
 
@@ -124,14 +149,14 @@ describe('BridgeHost', () => {
     it('should emit events to WebView', () => {
       bridgeHost.emit('testEvent', { data: 'test' });
 
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"event":"testEvent"'));
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"data":"test"'));
+      expect(mockAdapter.sent.some((s) => s.includes('"event":"testEvent"'))).toBe(true);
+      expect(mockAdapter.sent.some((s) => s.includes('"data":"test"'))).toBe(true);
     });
 
     it('should emit events without payload', () => {
       bridgeHost.emit('testEvent');
 
-      expect(messageCallback).toHaveBeenCalledWith(expect.stringContaining('"event":"testEvent"'));
+      expect(mockAdapter.sent.some((s) => s.includes('"event":"testEvent"'))).toBe(true);
     });
   });
 

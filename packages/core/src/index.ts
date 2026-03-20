@@ -9,6 +9,7 @@ export * from './client';
 export * from './adapters';
 export * from './middleware';
 export * from './utils';
+export * from './host';
 
 import { BridgeClient } from './client/BridgeClient';
 import type { BridgeConfig, ActionMapBase, EventMapBase } from '@webview-ts/shared';

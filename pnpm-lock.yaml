@@ -417,6 +417,9 @@ importers:
 
   packages/hosts/react-native:
     dependencies:
+      '@webview-ts/core':
+        specifier: workspace:*
+        version: link:../../core
       '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../shared

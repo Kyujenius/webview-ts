@@ -1,8 +1,8 @@
 import type { ActionMapBase, StrictKeyOf, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
-import type { BridgeHostConfig, ActionHandler } from '../bridge/BridgeHost';
-import { BridgeHost } from '../bridge/BridgeHost';
-import { MessageHandler } from '../bridge/MessageHandler';
+import type { BridgeHostConfig, ActionHandler } from '@webview-ts/core';
+import { BridgeHost } from '@webview-ts/core';
+import { ReactNativeHostAdapter } from '../adapters/ReactNativeHostAdapter';
 
 // ---- Typed handler map ----
 
@@ -31,7 +31,7 @@ export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = Action
 
 export interface SimpleBridgeHostResult {
   bridgeHost: BridgeHost;
-  messageHandler: MessageHandler;
+  adapter: ReactNativeHostAdapter;
   /** Spread these onto your WebView component */
   webViewProps: {
     onMessage: (event: any) => void;
@@ -74,7 +74,8 @@ export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMa
     }
   }
 
-  const messageHandler = new MessageHandler(bridgeHost, { debug });
+  const adapter = new ReactNativeHostAdapter();
+  bridgeHost.attach(adapter);
 
   const registeredActions = new Set<string>();
 
@@ -111,15 +112,15 @@ export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMa
   }
 
   const webViewProps = {
-    onMessage: messageHandler.handleWebViewMessage,
-    ref: (ref: any) => messageHandler.setWebViewRef(ref),
+    onMessage: adapter.handleNativeEvent,
+    ref: (ref: any) => adapter.setWebViewRef(ref),
   };
 
   const sendEvent = <T>(event: string, payload: T) => {
     bridgeHost.sendEvent(event, payload);
   };
 
-  return { bridgeHost, messageHandler, webViewProps, sendEvent };
+  return { bridgeHost, adapter, webViewProps, sendEvent };
 }
 
 // ---- React hook ----

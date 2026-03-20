@@ -41,6 +41,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@webview-ts/core": "workspace:*",
     "@webview-ts/shared": "workspace:*"
   },
   "peerDependencies": {
