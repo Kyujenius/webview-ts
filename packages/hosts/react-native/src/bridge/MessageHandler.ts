@@ -68,7 +68,7 @@ export class MessageHandler {
    * `injectJavaScript` with raw string interpolation.
    * The web side listens via `window.addEventListener('message', ...)`.
    */
-  private sendToWebView(messageJson: string): void {
+  sendToWebView(messageJson: string): void {
     if (!this.webViewRef) {
       const error = new Error('WebView reference not set');
       this.config.onError(error);

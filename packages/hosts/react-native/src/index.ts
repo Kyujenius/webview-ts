@@ -27,6 +27,10 @@ export type {
   TypedHandlers,
 } from './hooks/useBridgeHost';
 
+// Components
+export { useBridgeWebView } from './components/BridgeWebView';
+export type { BridgeWebViewProps } from './components/BridgeWebView';
+
 // Convenience factory
 import { BridgeHost, type BridgeHostConfig } from './bridge/BridgeHost';
 import { MessageHandler, type MessageHandlerConfig } from './bridge/MessageHandler';
