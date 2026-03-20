@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { createLoopbackPair } from './helpers/create-loopback-pair';
 
-describe('Bridge round-trip: BridgeManager ↔ BridgeHost', () => {
+describe('Bridge round-trip: BridgeClient ↔ BridgeHost', () => {
   let pair: ReturnType<typeof createLoopbackPair>;
 
   afterEach(() => pair?.destroy());
