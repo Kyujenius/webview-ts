@@ -11,11 +11,17 @@ export class FallbackAdapter implements NativeAdapter {
   private readonly handlers: FallbackMap;
   private readonly logOnly: boolean;
   private readonly responseCallback: (response: BridgeResponse) => void;
+  private readonly bridgeSourceId: string;
 
-  constructor(fallback: true | FallbackMap, responseCallback: (response: BridgeResponse) => void) {
+  constructor(
+    fallback: true | FallbackMap,
+    responseCallback: (response: BridgeResponse) => void,
+    bridgeSourceId: string = 'bridge'
+  ) {
     this.logOnly = fallback === true;
     this.handlers = fallback === true ? {} : fallback;
     this.responseCallback = responseCallback;
+    this.bridgeSourceId = bridgeSourceId;
   }
 
   send(message: BridgeMessage): void {
@@ -32,7 +38,14 @@ export class FallbackAdapter implements NativeAdapter {
     }
     Promise.resolve(handler(payload))
       .then((data) => {
-        this.responseCallback({ id, success: true, data, timestamp: Date.now() });
+        this.responseCallback({
+          id,
+          success: true,
+          data,
+          timestamp: Date.now(),
+          sourceId: 'fallback',
+          targetId: this.bridgeSourceId,
+        });
       })
       .catch((error) => {
         this.responseCallback({
@@ -43,6 +56,8 @@ export class FallbackAdapter implements NativeAdapter {
             message: error instanceof Error ? error.message : String(error),
           },
           timestamp: Date.now(),
+          sourceId: 'fallback',
+          targetId: this.bridgeSourceId,
         });
       });
   }
@@ -56,6 +71,8 @@ export class FallbackAdapter implements NativeAdapter {
         message: `No fallback handler for action: ${action}`,
       },
       timestamp: Date.now(),
+      sourceId: 'fallback',
+      targetId: this.bridgeSourceId,
     });
   }
 

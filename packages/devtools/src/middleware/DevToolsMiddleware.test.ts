@@ -6,7 +6,14 @@ import type { MessageStatus } from '../types/index';
 
 function makeCtx(action: string, payload?: unknown): MiddlewareContext {
   return {
-    request: { id: `msg-${Date.now()}`, action, payload, timestamp: Date.now() },
+    request: {
+      id: `msg-${Date.now()}`,
+      action,
+      payload,
+      timestamp: Date.now(),
+      sourceId: 'test',
+      targetId: 'native',
+    },
     response: undefined,
     startTime: Date.now(),
     metadata: new Map(),
@@ -30,6 +37,8 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: { result: 'ok' },
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: 'test',
         };
       });
 
@@ -51,6 +60,8 @@ describe('DevToolsMiddleware', () => {
           success: false,
           error: { code: 'HANDLER_ERROR', message: 'Test error' },
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: 'test',
         };
       });
 
@@ -92,6 +103,8 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: 'test',
         };
       });
 
@@ -148,6 +161,8 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: 'test',
         };
       });
 
@@ -180,6 +195,8 @@ describe('DevToolsMiddleware', () => {
           success: true,
           data: undefined,
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: 'test',
         };
       });
 

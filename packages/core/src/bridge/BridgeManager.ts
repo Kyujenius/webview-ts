@@ -1,7 +1,7 @@
 /**
  * Main bridge manager - orchestrates all bridge operations
  */
-import { ActionStateManager } from '@webview-ts/shared';
+import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared';
 import { CallbackRegistry } from './CallbackRegistry';
 import { MessageQueue } from './MessageQueue';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
@@ -62,12 +62,14 @@ export class BridgeManager<
   private actionInterceptors = new Map<string, Middleware[]>();
   /** Per-action timeouts: { 'camera.getInfo': 5000 } */
   private actionTimeouts = new Map<string, number>();
+  private readonly sourceId: string;
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
   /** Auto-devtools cleanup function */
   private _devtoolsCleanup?: () => void;
 
   constructor(config: BridgeConfig = {}) {
+    this.sourceId = generateSourceId(config.name);
     this.config = {
       timeout: config.timeout ?? 0,
       debug: config.debug ?? false,
@@ -82,8 +84,10 @@ export class BridgeManager<
 
     const normalized = this.normalizeFallback(this.config.fallback);
     if (!this.adapter.isAvailable() && normalized.enabled) {
-      this.adapter = new FallbackAdapter(normalized.handlers ?? true, (response) =>
-        this.handleResponse(response)
+      this.adapter = new FallbackAdapter(
+        normalized.handlers ?? true,
+        (response) => this.handleResponse(response),
+        this.sourceId
       );
     }
 
@@ -185,6 +189,8 @@ export class BridgeManager<
       action,
       payload,
       timestamp: Date.now(),
+      sourceId: this.sourceId,
+      targetId: TARGET.NATIVE,
     };
 
     const ctx: MiddlewareContext = {

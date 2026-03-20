@@ -145,6 +145,8 @@ export class BridgeHost implements IBridgeHost {
           success: true,
           data,
           timestamp: Date.now(),
+          sourceId: 'native',
+          targetId: message.sourceId,
         };
       });
 
@@ -177,6 +179,8 @@ export class BridgeHost implements IBridgeHost {
         success: false,
         error: bridgeError,
         timestamp: Date.now(),
+        sourceId: 'native',
+        targetId: message.sourceId,
       };
     }
   }
@@ -198,6 +202,7 @@ export class BridgeHost implements IBridgeHost {
       event,
       payload,
       timestamp: Date.now(),
+      sourceId: 'native',
     };
     this.sendToWebView(eventMessage);
     this.log(`Sent event: ${event}`, eventMessage);
