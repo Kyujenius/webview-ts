@@ -20,6 +20,8 @@ export type {
   HostPluginResult,
   RequestContext,
   MergePluginActions,
+  ExpandEvents,
+  MergePluginEvents,
   PluginFromArray,
   DefinePluginOptions,
   EventNameMap,

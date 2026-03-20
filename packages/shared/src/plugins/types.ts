@@ -200,3 +200,18 @@ export type PluginFromArray<
   TPlugins extends PluginInstance<any, any, any>[],
   TPlugin extends PluginInstance<any, any, any>,
 > = TPlugin extends TPlugins[number] ? TPlugin : never;
+
+/** Expand short-name event markers to fully-qualified event map.
+ *  e.g. Name='location', { updated: EventMarker<Position> }
+ *     → { 'location.updated': Position } */
+export type ExpandEvents<TName extends string, TEvents extends EventMarkerMap> = {
+  [K in keyof TEvents & string as `${TName}.${K}`]: ExtractEventPayload<TEvents[K]>;
+};
+
+/** Merge event maps from multiple plugins into an intersection */
+export type MergePluginEvents<T extends PluginInstance<any, any, any>[]> = T extends [
+  infer First extends PluginInstance<any, any, any>,
+  ...infer Rest extends PluginInstance<any, any, any>[],
+]
+  ? ExpandEvents<First['name'], First['_eventTypes']> & MergePluginEvents<Rest>
+  : Record<string, never>;
