@@ -1,5 +1,7 @@
 import type { Middleware } from '../types/middleware';
 import type { BridgeCallOptions, FallbackMap } from '../types/bridge';
+import type { StrictKeyOf } from '../types/utils';
+import type { RoutingStrategy } from '../types/routing';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -9,6 +11,8 @@ export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 export interface ActionOptions {
   /** Timeout in ms for this action. 0 or undefined = no timeout (default) */
   timeout?: number;
+  /** Routing strategy for this action */
+  routing?: RoutingStrategy;
 }
 
 /** Branded type marker — carries Payload/Response at type level, empty at runtime */
@@ -19,6 +23,8 @@ export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __interceptors?: Middleware[];
   /** Per-action timeout in ms (runtime) */
   readonly __timeout?: number;
+  /** Per-action routing strategy (runtime) */
+  readonly __routing?: RoutingStrategy;
   /** Chain an interceptor to this action */
   use(interceptor: Middleware): ActionMarker<TPayload, TResponse>;
 }
@@ -31,6 +37,7 @@ export function action<TPayload = void, TResponse = void>(
   const marker: any = {
     __interceptors: interceptors,
     __timeout: options?.timeout,
+    __routing: options?.routing,
     use(interceptor: Middleware) {
       interceptors.push(interceptor);
       return marker;
@@ -44,14 +51,21 @@ export type ActionMarkerMap = Record<string, ActionMarker<any, any>>;
 
 // ─── event() type marker ───
 
+/** Options for event() marker */
+export interface EventOptions {
+  /** Routing strategy for this event */
+  routing?: RoutingStrategy;
+}
+
 /** Branded type marker — carries event payload type at type level */
 export interface EventMarker<TPayload = void> {
   readonly __eventPayload: TPayload;
+  readonly __routing?: RoutingStrategy;
 }
 
 /** Zero-runtime type marker for defining plugin events */
-export function event<TPayload = void>(): EventMarker<TPayload> {
-  return {} as EventMarker<TPayload>;
+export function event<TPayload = void>(options?: EventOptions): EventMarker<TPayload> {
+  return { __routing: options?.routing } as EventMarker<TPayload>;
 }
 
 /** A record of short-name event markers */
@@ -68,7 +82,7 @@ export type ExtractResponse<T> = T extends ActionMarker<any, infer R> ? R : neve
 /** Expand short-name markers to fully-qualified ActionDefinitionShape map.
  *  e.g. Name='camera', { takePhoto: ActionMarker<P,R> } → { 'camera.takePhoto': { payload: P; response: R } } */
 export type ExpandActions<TName extends string, TMarkers extends ActionMarkerMap> = {
-  [K in keyof TMarkers & string as `${TName}.${K}`]: {
+  [K in StrictKeyOf<TMarkers> as `${TName}.${K}`]: {
     payload: ExtractPayload<TMarkers[K]>;
     response: ExtractResponse<TMarkers[K]>;
   };
@@ -76,17 +90,17 @@ export type ExpandActions<TName extends string, TMarkers extends ActionMarkerMap
 
 /** Runtime action name map: { takePhoto: 'camera.takePhoto' } */
 export type ActionNameMap<TName extends string, TMarkers extends ActionMarkerMap> = {
-  readonly [K in keyof TMarkers & string]: `${TName}.${K}`;
+  readonly [K in StrictKeyOf<TMarkers>]: `${TName}.${K}`;
 };
 
 /** Runtime event name map: { updated: 'location.updated' } */
 export type EventNameMap<TName extends string, TEvents extends EventMarkerMap> = {
-  readonly [K in keyof TEvents & string]: `${TName}.${K}`;
+  readonly [K in StrictKeyOf<TEvents>]: `${TName}.${K}`;
 };
 
 /** Auto-generated client methods from markers — returns action state objects */
 export type AutoMethods<TMarkers extends ActionMarkerMap> = {
-  [K in keyof TMarkers & string]: {
+  [K in StrictKeyOf<TMarkers>]: {
     execute: (
       payload: ExtractPayload<TMarkers[K]>,
       options?: BridgeCallOptions
@@ -100,9 +114,7 @@ export type AutoMethods<TMarkers extends ActionMarkerMap> = {
 };
 
 /** Typed event subscriber from usePlugin().on */
-export type TypedEventSubscriber<TEvents extends EventMarkerMap> = <
-  K extends keyof TEvents & string,
->(
+export type TypedEventSubscriber<TEvents extends EventMarkerMap> = <K extends StrictKeyOf<TEvents>>(
   event: K,
   handler: (payload: ExtractEventPayload<TEvents[K]>) => void
 ) => () => void;
@@ -112,7 +124,7 @@ export type ShortHostHandlers<
   TMarkers extends ActionMarkerMap,
   TEvents extends EventMarkerMap = Record<string, never>,
 > = {
-  [K in keyof TMarkers & string]: (
+  [K in StrictKeyOf<TMarkers>]: (
     payload: ExtractPayload<TMarkers[K]>,
     context: HostHandlerContext<TEvents>
   ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
@@ -121,11 +133,11 @@ export type ShortHostHandlers<
 /** Context passed to host handlers — includes emit when plugin defines events */
 export type HostHandlerContext<TEvents extends EventMarkerMap = Record<string, never>> =
   RequestContext &
-    ([keyof TEvents & string] extends [never]
+    ([StrictKeyOf<TEvents>] extends [never]
       ? // eslint-disable-next-line @typescript-eslint/ban-types
         {}
       : {
-          emit: <K extends keyof TEvents & string>(
+          emit: <K extends StrictKeyOf<TEvents>>(
             event: K,
             payload: ExtractEventPayload<TEvents[K]>
           ) => void;
@@ -167,7 +179,7 @@ export interface PluginInstance<
 
 /** Fallback handlers using short names — typed from action markers */
 export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
-  [K in keyof TMarkers & string]: (
+  [K in StrictKeyOf<TMarkers>]: (
     payload: ExtractPayload<TMarkers[K]>
   ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
 };
@@ -205,7 +217,7 @@ export type PluginFromArray<
  *  e.g. Name='location', { updated: EventMarker<Position> }
  *     → { 'location.updated': Position } */
 export type ExpandEvents<TName extends string, TEvents extends EventMarkerMap> = {
-  [K in keyof TEvents & string as `${TName}.${K}`]: ExtractEventPayload<TEvents[K]>;
+  [K in StrictKeyOf<TEvents> as `${TName}.${K}`]: ExtractEventPayload<TEvents[K]>;
 };
 
 /** Merge event maps from multiple plugins into an intersection */
