@@ -5,6 +5,8 @@ import type {
   DefinePluginOptions,
   InterceptorMap,
   TimeoutMap,
+  RetryMap,
+  CacheMap,
   PluginInstance,
   ShortHostHandlers,
   HostPluginResult,
@@ -14,7 +16,7 @@ import type {
   ShortFallbackHandlers,
 } from './types';
 import type { Middleware } from '../types/middleware';
-import type { FallbackMap } from '../types/bridge';
+import type { FallbackMap, RetryConfig } from '../types/bridge';
 
 export function definePlugin<
   TName extends string,
@@ -62,6 +64,24 @@ export function definePlugin<
     }
   }
 
+  // Extract per-action retries from markers
+  const retries: RetryMap = {};
+  for (const short of shortNames) {
+    const marker = markers[short] as { __retry?: RetryConfig };
+    if (marker.__retry) {
+      retries[`${name}.${short}`] = marker.__retry;
+    }
+  }
+
+  // Extract per-action cache from markers
+  const caches: CacheMap = {};
+  for (const short of shortNames) {
+    const marker = markers[short] as { __cache?: number | boolean };
+    if (marker.__cache !== undefined && marker.__cache !== false) {
+      caches[`${name}.${short}`] = marker.__cache;
+    }
+  }
+
   const instance: PluginInstance<TName, TMarkers, TEvents> = {
     name,
     _types: {} as ExpandActions<TName, TMarkers>,
@@ -70,6 +90,8 @@ export function definePlugin<
     events: eventNames as EventNameMap<TName, TEvents>,
     interceptors,
     timeouts,
+    retries,
+    caches,
     fallback: undefined,
 
     host(handlers: ShortHostHandlers<TMarkers, TEvents>): HostPluginResult {

@@ -79,7 +79,7 @@ export function createBridgeVue<
     const finalConfig: BridgeConfig = { ...options?.config, fallback: finalFallback };
     const bridge = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
-    // Register interceptors and timeouts from plugins
+    // Register per-action options from plugins
     if (options?.plugins) {
       for (const plugin of options.plugins) {
         if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
@@ -87,6 +87,12 @@ export function createBridgeVue<
         }
         if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
           bridge.registerTimeouts(plugin.timeouts);
+        }
+        if (plugin.retries && Object.keys(plugin.retries).length > 0) {
+          bridge.registerRetries(plugin.retries);
+        }
+        if (plugin.caches && Object.keys(plugin.caches).length > 0) {
+          bridge.registerCaches(plugin.caches);
         }
       }
     }

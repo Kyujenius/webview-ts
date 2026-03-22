@@ -1,5 +1,5 @@
 import type { Middleware } from '../types/middleware';
-import type { BridgeCallOptions, FallbackMap } from '../types/bridge';
+import type { BridgeCallOptions, FallbackMap, RetryConfig } from '../types/bridge';
 import type { StrictKeyOf } from '../types/utils';
 import type { RoutingStrategy } from '../types/routing';
 
@@ -11,6 +11,14 @@ export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 export interface ActionOptions {
   /** Timeout in ms for this action. 0 or undefined = no timeout (default) */
   timeout?: number;
+  /** Retry configuration for this action */
+  retry?: RetryConfig;
+  /**
+   * Cache TTL for this action.
+   * - `number`: TTL in milliseconds
+   * - `true`: cache indefinitely
+   */
+  cache?: number | boolean;
   /** Routing strategy for this action */
   routing?: RoutingStrategy;
 }
@@ -23,6 +31,10 @@ export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __interceptors?: Middleware[];
   /** Per-action timeout in ms (runtime) */
   readonly __timeout?: number;
+  /** Per-action retry config (runtime) */
+  readonly __retry?: RetryConfig;
+  /** Per-action cache TTL (runtime) */
+  readonly __cache?: number | boolean;
   /** Per-action routing strategy (runtime) */
   readonly __routing?: RoutingStrategy;
   /** Chain an interceptor to this action */
@@ -37,6 +49,8 @@ export function action<TPayload = void, TResponse = void>(
   const marker: any = {
     __interceptors: interceptors,
     __timeout: options?.timeout,
+    __retry: options?.retry,
+    __cache: options?.cache,
     __routing: options?.routing,
     use(interceptor: Middleware) {
       interceptors.push(interceptor);
@@ -155,6 +169,12 @@ export type InterceptorMap = Record<string, Middleware[]>;
 /** Per-action timeout map: { 'camera.takePhoto': 5000 } */
 export type TimeoutMap = Record<string, number>;
 
+/** Per-action retry map: { 'camera.takePhoto': RetryConfig } */
+export type RetryMap = Record<string, RetryConfig>;
+
+/** Per-action cache map: { 'camera.takePhoto': 5000 | true } */
+export type CacheMap = Record<string, number | boolean>;
+
 /** Options for definePlugin */
 export interface DefinePluginOptions<TEvents extends EventMarkerMap = EmptyEventMap> {
   events?: TEvents;
@@ -175,6 +195,8 @@ export interface PluginInstance<
   readonly events: EventNameMap<TName, TEvents>;
   readonly interceptors: InterceptorMap;
   readonly timeouts: TimeoutMap;
+  readonly retries: RetryMap;
+  readonly caches: CacheMap;
   readonly fallback?: FallbackMap;
   readonly host: (handlers: ShortHostHandlers<TMarkers, TEvents>) => HostPluginResult;
   /** Attach fallback handlers to this plugin (chainable) */

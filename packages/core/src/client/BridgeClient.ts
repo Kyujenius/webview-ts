@@ -10,10 +10,12 @@ import type { ClientAdapter } from '@webview-ts/shared';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
 import { generateMessageId } from '../utils/id-generator';
-import { BridgeCallError, METADATA_KEYS, tryAutoDevTools } from '@webview-ts/shared';
+import { BridgeCallError, METADATA_KEYS, MetadataMap, tryAutoDevTools } from '@webview-ts/shared';
 import type {
   BridgeConfig,
   BridgeCallOptions,
+  UseActionOptions,
+  RetryConfig,
   BridgeMessage,
   BridgeResponse,
   BridgeEvent,
@@ -63,6 +65,10 @@ export class BridgeClient<
   private actionInterceptors = new Map<string, Middleware[]>();
   /** Per-action timeouts: { 'camera.getInfo': 5000 } */
   private actionTimeouts = new Map<string, number>();
+  /** Per-action retries from plugins */
+  private actionRetries = new Map<string, RetryConfig>();
+  /** Per-action caches from plugins */
+  private actionCaches = new Map<string, number | boolean>();
   private readonly sourceId: string;
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
@@ -132,7 +138,8 @@ export class BridgeClient<
     payload?: InferPayload<TActions, TAction>,
     options?: BridgeCallOptions
   ): Promise<InferResponse<TActions, TAction>> {
-    const retryConfig = options?.retry ?? this.config.retry;
+    const retryConfig =
+      options?.retry ?? this.actionRetries.get(action as string) ?? this.config.retry;
     const maxAttempts = (retryConfig?.maxAttempts ?? 0) + 1;
     let lastError: Error | undefined;
 
@@ -197,7 +204,7 @@ export class BridgeClient<
     const ctx: MiddlewareContext = {
       request: message,
       startTime: Date.now(),
-      metadata: new Map(),
+      metadata: new MetadataMap(),
     };
 
     // Store context so handleResponse can attach the response to it
@@ -387,19 +394,56 @@ export class BridgeClient<
   }
 
   /**
+   * Register per-action retries (from plugin definitions)
+   */
+  registerRetries(retryMap: Record<string, RetryConfig>): void {
+    for (const [action, retry] of Object.entries(retryMap)) {
+      this.actionRetries.set(action, retry);
+    }
+  }
+
+  /**
+   * Register per-action caches (from plugin definitions)
+   */
+  registerCaches(cacheMap: Record<string, number | boolean>): void {
+    for (const [action, cache] of Object.entries(cacheMap)) {
+      this.actionCaches.set(action, cache);
+    }
+  }
+
+  /**
    * Create a framework-agnostic state manager for a single action.
    * The returned manager can be consumed directly or via framework adapters.
    *
    * Pull model (React):            manager.subscribe + manager.getSnapshot
    * Push model (Vue/Svelte/Solid): manager.watch
+   *
+   * Option resolve order (shallow merge, narrower wins):
+   *   per-call (execute options) > per-action (useAction) > plugin (action marker) > global (BridgeConfig)
    */
   createActionState<TAction extends ActionNames<TActions>>(
     action: TAction,
-    defaultOptions?: BridgeCallOptions
+    defaultOptions?: UseActionOptions
   ): ActionStateManager<InferResponse<TActions, TAction>, InferPayload<TActions, TAction>> {
+    const actionKey = action as string;
+
+    // Resolve cache: per-action > plugin > (no global cache — use middleware for that)
+    const resolvedCache = defaultOptions?.cache ?? this.actionCaches.get(actionKey);
+
+    // Resolve bridge call defaults: per-action > plugin > global (applied when no per-call options)
+    const resolvedBridgeDefaults: BridgeCallOptions = {
+      timeout: defaultOptions?.timeout ?? this.actionTimeouts.get(actionKey) ?? this.config.timeout,
+      retry: defaultOptions?.retry ?? this.actionRetries.get(actionKey) ?? this.config.retry,
+    };
+
     return new ActionStateManager(
       (payload: InferPayload<TActions, TAction>, callOptions?: BridgeCallOptions) =>
-        this.call(action, payload, callOptions ?? defaultOptions)
+        this.call(
+          action,
+          payload,
+          callOptions ? { ...resolvedBridgeDefaults, ...callOptions } : resolvedBridgeDefaults
+        ),
+      resolvedCache
     );
   }
 
@@ -526,5 +570,7 @@ export class BridgeClient<
     this.eventInterceptors.clear();
     this.actionInterceptors.clear();
     this.actionTimeouts.clear();
+    this.actionRetries.clear();
+    this.actionCaches.clear();
   }
 }
