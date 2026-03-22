@@ -43,34 +43,3 @@ export interface Middleware {
   fn: MiddlewareFn;
   __skipTrace?: boolean;
 }
-
-/**
- * Logger middleware options
- */
-export interface LoggerMiddlewareOptions {
-  /** Log level */
-  level?: 'debug' | 'info' | 'warn' | 'error';
-
-  /** Include request payload in logs */
-  includePayload?: boolean;
-
-  /** Include response data in logs */
-  includeResponse?: boolean;
-
-  /** Custom logger function */
-  logger?: (level: string, message: string, data?: unknown) => void;
-}
-
-/**
- * Validator middleware options
- */
-export interface ValidatorMiddlewareOptions {
-  /** Whether to validate requests */
-  validateRequests?: boolean;
-
-  /** Whether to validate responses */
-  validateResponses?: boolean;
-
-  /** Action to take on validation failure */
-  onValidationError?: 'throw' | 'warn' | 'ignore';
-}

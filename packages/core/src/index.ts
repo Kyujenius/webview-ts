@@ -8,7 +8,6 @@
 export * from './adapters';
 export * from './client';
 export * from './host';
-export * from './middleware';
 export * from './utils';
 
 import type { ActionMapBase, BridgeConfig, EventMapBase } from '@webview-ts/shared';

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useBridge, usePlugin } from '../bridge';
-import { createLogger, createValidator } from '@webview-ts/core';
 import { device } from '@example/plugins';
 import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
+import { useEffect, useState } from 'react';
+
+import { useBridge, usePlugin } from '../bridge';
 
 /**
  * Middleware Examples Page
@@ -98,18 +98,30 @@ export default function MiddlewarePage() {
     // Order matters: outermost runs first
     // timing (outer) → logger → validator → cache (inner) → [core]
     bridge.use(timingMiddleware);
-    bridge.use(createLogger({ includePayload: true, includeResponse: true }));
-    bridge.use(createValidator({ onValidationError: 'warn' }));
+    bridge.use({
+      name: 'logger',
+      fn: async (ctx, next) => {
+        console.log(`[→] ${ctx.request.action}`, ctx.request.payload);
+        await next();
+        if (ctx.response?.success) {
+          console.log(
+            `[←] ${ctx.request.action} (${Date.now() - ctx.startTime}ms)`,
+            ctx.response.data
+          );
+        } else if (ctx.response) {
+          console.error(`[✗] ${ctx.request.action}`, ctx.response.error);
+        }
+      },
+    });
     bridge.use(cacheMiddleware);
     bridge.use(createAuthMiddleware(() => 'demo-token-12345'));
 
     setMiddlewareRegistered(true);
-    addLog('✓ Middleware registered (timing → logger → validator → cache → auth)');
+    addLog('✓ Middleware registered (timing → logger → cache → auth)');
 
     return () => {
       bridge.removeMiddleware('timing');
       bridge.removeMiddleware('logger');
-      bridge.removeMiddleware('validator');
       bridge.removeMiddleware('simple-cache');
       bridge.removeMiddleware('auth-token');
     };
@@ -148,16 +160,7 @@ export default function MiddlewarePage() {
       </p>
 
       <div className="card">
-        <h2>Built-in Middleware</h2>
-        <p>
-          <code>createLogger()</code> — logs every request/response with timing
-          <br />
-          <code>createValidator()</code> — validates message format before send
-        </p>
-      </div>
-
-      <div className="card">
-        <h2>Custom Middleware</h2>
+        <h2>Middleware</h2>
         <p>
           <strong>Cache:</strong> Short-circuits on cache hit (skips native call)
           <br />
@@ -192,11 +195,17 @@ export default function MiddlewarePage() {
       <div className="card">
         <h2>Code</h2>
         <pre style={{ fontSize: 11 }}>
-          {`// 1. Built-in: Logger + Validator
-bridge.use(createLogger({ includePayload: true }));
-bridge.use(createValidator({ onValidationError: 'warn' }));
+          {`// 1. Logger (inline middleware)
+bridge.use({
+  name: 'logger',
+  fn: async (ctx, next) => {
+    console.log('[→]', ctx.request.action);
+    await next();
+    console.log('[←]', ctx.request.action);
+  },
+});
 
-// 2. Custom: Cache (short-circuit pattern)
+// 2. Cache (short-circuit pattern)
 const cacheMiddleware: Middleware = {
   name: 'simple-cache',
   fn: async (ctx, next) => {

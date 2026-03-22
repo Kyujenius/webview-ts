@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useBridge, usePlugin } from '../bridge';
-import { createLogger, createValidator } from '@webview-ts/core';
 import { device } from '@example/plugins';
 import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
+import { ref } from 'vue';
+
+import { useBridge, usePlugin } from '../bridge';
 
 // ─── Custom Middleware: Simple Cache ───
 
@@ -75,12 +75,22 @@ function addLog(msg: string) {
 
 if (!middlewareRegistered.value) {
   bridge.use(timingMiddleware);
-  bridge.use(createLogger({ includePayload: true, includeResponse: true }));
-  bridge.use(createValidator({ onValidationError: 'warn' }));
+  bridge.use({
+    name: 'logger',
+    fn: async (ctx, next) => {
+      console.log(`[→] ${ctx.request.action}`, ctx.request.payload);
+      await next();
+      if (ctx.response?.success) {
+        console.log(`[←] ${ctx.request.action} (${Date.now() - ctx.startTime}ms)`, ctx.response.data);
+      } else if (ctx.response) {
+        console.error(`[✗] ${ctx.request.action}`, ctx.response.error);
+      }
+    },
+  });
   bridge.use(cacheMiddleware);
   bridge.use(createAuthMiddleware(() => 'demo-token-12345'));
   middlewareRegistered.value = true;
-  addLog('✓ Middleware registered (timing → logger → validator → cache → auth)');
+  addLog('✓ Middleware registered (timing → logger → cache → auth)');
 }
 
 async function handleFetchDevice() {
@@ -117,15 +127,7 @@ function handleClearCache() {
     </p>
 
     <div class="card">
-      <h2>Built-in Middleware</h2>
-      <p>
-        <code>createLogger()</code> — logs every request/response with timing<br />
-        <code>createValidator()</code> — validates message format before send
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>Custom Middleware</h2>
+      <h2>Middleware</h2>
       <p>
         <strong>Cache:</strong> Short-circuits on cache hit (skips native call)<br />
         <strong>Auth:</strong> Injects token into every request payload<br />
@@ -151,11 +153,17 @@ function handleClearCache() {
 
     <div class="card">
       <h2>Code</h2>
-      <pre style="font-size: 11px">// 1. Built-in: Logger + Validator
-bridge.use(createLogger({ includePayload: true }));
-bridge.use(createValidator({ onValidationError: 'warn' }));
+      <pre style="font-size: 11px">// 1. Logger (inline middleware)
+bridge.use({
+  name: 'logger',
+  fn: async (ctx, next) =&gt; {
+    console.log('[→]', ctx.request.action);
+    await next();
+    console.log('[←]', ctx.request.action);
+  },
+});
 
-// 2. Custom: Cache (short-circuit pattern)
+// 2. Cache (short-circuit pattern)
 const cacheMiddleware: Middleware = {
   name: 'simple-cache',
   fn: async (ctx, next) =&gt; {
