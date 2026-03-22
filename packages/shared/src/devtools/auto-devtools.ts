@@ -127,10 +127,13 @@ function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middlewar
 
 export type DevToolsRole = 'host' | 'client';
 
+const RETRY_INTERVAL = 3000;
+
 let sharedWs: WebSocket | null = null;
 let sharedRole: DevToolsRole = 'client';
 let targets = new Set<AutoDevToolsTarget>();
 let wsReady = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** Per-target event unsubscribe functions */
 const eventUnsubs = new Map<AutoDevToolsTarget, () => void>();
@@ -201,6 +204,14 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
       unsubscribeEvents(t);
     }
     sharedWs = null;
+
+    // Retry if there are still active targets
+    if (targets.size > 0 && !retryTimer) {
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        if (targets.size > 0) getOrCreateWs(sharedRole);
+      }, RETRY_INTERVAL);
+    }
   };
 
   return sharedWs;
@@ -224,15 +235,20 @@ export function tryAutoDevTools(
   if (process.env.NODE_ENV === 'production') return undefined;
   if (typeof WebSocket === 'undefined') return undefined;
 
-  const ws = getOrCreateWs(role);
-  if (!ws) return undefined;
-
   targets.add(target);
 
+  const ws = getOrCreateWs(role);
+
   // If WS is already open, register immediately
-  if (wsReady) {
+  if (ws && wsReady) {
     target.prepend(createRecordingMiddleware(ws, role));
     subscribeEvents(target, ws, role);
+  } else if (!ws && !retryTimer) {
+    // First connection failed — schedule retry
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (targets.size > 0) getOrCreateWs(sharedRole);
+    }, RETRY_INTERVAL);
   }
 
   return () => {
@@ -240,11 +256,17 @@ export function tryAutoDevTools(
     target.removeMiddleware(DEVTOOLS_MW_NAME);
     unsubscribeEvents(target);
 
-    // Close WS when no more targets
-    if (targets.size === 0 && sharedWs) {
-      sharedWs.close();
-      sharedWs = null;
-      wsReady = false;
+    // Close WS and stop retrying when no more targets
+    if (targets.size === 0) {
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+      if (sharedWs) {
+        sharedWs.close();
+        sharedWs = null;
+        wsReady = false;
+      }
     }
   };
 }
@@ -253,6 +275,10 @@ export function tryAutoDevTools(
  * Reset singleton state (for testing only).
  */
 export function _resetAutoDevTools(): void {
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
   if (sharedWs) {
     sharedWs.close();
   }
