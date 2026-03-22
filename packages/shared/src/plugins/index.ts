@@ -25,4 +25,7 @@ export type {
   PluginFromArray,
   DefinePluginOptions,
   EventNameMap,
+  AnyPluginList,
+  EmptyEventMap,
+  EventOptions,
 } from './types';

@@ -1,6 +1,7 @@
 import type {
   ActionMarkerMap,
   EventMarkerMap,
+  EmptyEventMap,
   DefinePluginOptions,
   InterceptorMap,
   TimeoutMap,
@@ -18,7 +19,7 @@ import type { FallbackMap } from '../types/bridge';
 export function definePlugin<
   TName extends string,
   const TMarkers extends ActionMarkerMap,
-  TEvents extends EventMarkerMap = Record<string, never>,
+  TEvents extends EventMarkerMap = EmptyEventMap,
 >(
   name: TName,
   markers: TMarkers,

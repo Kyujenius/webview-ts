@@ -14,7 +14,8 @@ import type {
   EventNames,
 } from '@webview-ts/shared';
 import type {
-  PluginInstance,
+  AnyPluginList,
+  EmptyEventMap,
   MergePluginActions,
   MergePluginEvents,
   TypedEventSubscriber,
@@ -35,8 +36,8 @@ export interface TypedBridgeProviderProps {
 }
 
 export interface CreateBridgeReactOptions<
-  TPlugins extends PluginInstance<any, any, any>[],
-  TCustomEvents extends EventMapBase = Record<string, never>,
+  TPlugins extends AnyPluginList,
+  TCustomEvents extends EventMapBase = EmptyEventMap,
 > {
   plugins?: TPlugins;
   config?: BridgeConfig;
@@ -45,9 +46,9 @@ export interface CreateBridgeReactOptions<
 }
 
 export function createBridgeReact<
-  TCustomActions extends ActionMapBase = Record<string, never>,
-  const TPlugins extends PluginInstance<any, any, any>[] = [],
-  TCustomEvents extends EventMapBase = Record<string, never>,
+  TCustomActions extends ActionMapBase = EmptyEventMap,
+  const TPlugins extends AnyPluginList = [],
+  TCustomEvents extends EventMapBase = EmptyEventMap,
 >(options?: CreateBridgeReactOptions<TPlugins, TCustomEvents>) {
   type TAllActions = MergePluginActions<TPlugins> & TCustomActions;
   type TAllEvents = MergePluginEvents<TPlugins> & TCustomEvents;

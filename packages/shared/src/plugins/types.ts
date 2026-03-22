@@ -122,7 +122,7 @@ export type TypedEventSubscriber<TEvents extends EventMarkerMap> = <K extends St
 /** Host handlers with short names — ctx includes emit when plugin has events */
 export type ShortHostHandlers<
   TMarkers extends ActionMarkerMap,
-  TEvents extends EventMarkerMap = Record<string, never>,
+  TEvents extends EventMarkerMap = EmptyEventMap,
 > = {
   [K in StrictKeyOf<TMarkers>]: (
     payload: ExtractPayload<TMarkers[K]>,
@@ -131,17 +131,21 @@ export type ShortHostHandlers<
 };
 
 /** Context passed to host handlers — includes emit when plugin defines events */
-export type HostHandlerContext<TEvents extends EventMarkerMap = Record<string, never>> =
-  RequestContext &
-    ([StrictKeyOf<TEvents>] extends [never]
-      ? // eslint-disable-next-line @typescript-eslint/ban-types
-        {}
-      : {
-          emit: <K extends StrictKeyOf<TEvents>>(
-            event: K,
-            payload: ExtractEventPayload<TEvents[K]>
-          ) => void;
-        });
+export type HostHandlerContext<TEvents extends EventMarkerMap = EmptyEventMap> = RequestContext &
+  ([StrictKeyOf<TEvents>] extends [never]
+    ? // eslint-disable-next-line @typescript-eslint/ban-types
+      {}
+    : {
+        emit: <K extends StrictKeyOf<TEvents>>(
+          event: K,
+          payload: ExtractEventPayload<TEvents[K]>
+        ) => void;
+      });
+
+// ─── Utility aliases ───
+
+/** Empty event map — default for plugins that declare no events */
+export type EmptyEventMap = Record<string, never>;
 
 // ─── Plugin instance ───
 
@@ -152,7 +156,7 @@ export type InterceptorMap = Record<string, Middleware[]>;
 export type TimeoutMap = Record<string, number>;
 
 /** Options for definePlugin */
-export interface DefinePluginOptions<TEvents extends EventMarkerMap = Record<string, never>> {
+export interface DefinePluginOptions<TEvents extends EventMarkerMap = EmptyEventMap> {
   events?: TEvents;
 }
 
@@ -160,7 +164,7 @@ export interface DefinePluginOptions<TEvents extends EventMarkerMap = Record<str
 export interface PluginInstance<
   TName extends string = string,
   TMarkers extends ActionMarkerMap = ActionMarkerMap,
-  TEvents extends EventMarkerMap = Record<string, never>,
+  TEvents extends EventMarkerMap = EmptyEventMap,
 > {
   readonly name: TName;
   /** Type-only property. Empty at runtime. Used for TypeScript inference. */
@@ -176,6 +180,9 @@ export interface PluginInstance<
   /** Attach fallback handlers to this plugin (chainable) */
   withFallback(handlers: ShortFallbackHandlers<TMarkers>): PluginInstance<TName, TMarkers, TEvents>;
 }
+
+/** Plugin array — shorthand for the repeated `PluginInstance<any, any, any>[]` constraint */
+export type AnyPluginList = PluginInstance<any, any, any>[];
 
 /** Fallback handlers using short names — typed from action markers */
 export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
@@ -200,16 +207,16 @@ export interface HostPluginResult {
 }
 
 /** Merge ActionMaps from multiple plugins into an intersection */
-export type MergePluginActions<T extends PluginInstance<any, any, any>[]> = T extends [
+export type MergePluginActions<T extends AnyPluginList> = T extends [
   infer First extends PluginInstance<any, any, any>,
-  ...infer Rest extends PluginInstance<any, any, any>[],
+  ...infer Rest extends AnyPluginList,
 ]
   ? First['_types'] & MergePluginActions<Rest>
   : Record<string, never>;
 
 /** Extract plugin from a plugins array by reference */
 export type PluginFromArray<
-  TPlugins extends PluginInstance<any, any, any>[],
+  TPlugins extends AnyPluginList,
   TPlugin extends PluginInstance<any, any, any>,
 > = TPlugin extends TPlugins[number] ? TPlugin : never;
 
@@ -221,9 +228,9 @@ export type ExpandEvents<TName extends string, TEvents extends EventMarkerMap> =
 };
 
 /** Merge event maps from multiple plugins into an intersection */
-export type MergePluginEvents<T extends PluginInstance<any, any, any>[]> = T extends [
+export type MergePluginEvents<T extends AnyPluginList> = T extends [
   infer First extends PluginInstance<any, any, any>,
-  ...infer Rest extends PluginInstance<any, any, any>[],
+  ...infer Rest extends AnyPluginList,
 ]
   ? ExpandEvents<First['name'], First['_eventTypes']> & MergePluginEvents<Rest>
   : Record<string, never>;
