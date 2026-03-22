@@ -9,6 +9,7 @@ import type {
 } from '@webview-ts/shared';
 import {
   MiddlewarePipeline,
+  MetadataMap,
   toBridgeErrorCode,
   createDebugLogger,
   BridgeCallError,
@@ -134,7 +135,7 @@ export class BridgeHost {
     const ctx: MiddlewareContext = {
       request: message,
       startTime: Date.now(),
-      metadata: new Map(),
+      metadata: new MetadataMap(),
     };
 
     const executeFn = () =>
@@ -152,7 +153,7 @@ export class BridgeHost {
         const requestContext: RequestContext = {
           messageId: message.id,
           timestamp: message.timestamp,
-          metadata: Object.fromEntries(ctx.metadata),
+          metadata: Object.fromEntries(ctx.metadata.entries()),
         };
 
         const data = await Promise.resolve(handler(message.payload, requestContext));

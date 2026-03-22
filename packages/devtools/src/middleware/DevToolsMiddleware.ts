@@ -5,7 +5,12 @@
 
 import { METADATA_KEYS } from '@webview-ts/shared';
 import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
-import type { DevToolsConfig, RecordedMessage, DevToolsStore } from '../types/index';
+import type {
+  DevToolsConfig,
+  RecordedMessage,
+  DevToolsStore,
+  MiddlewareTrace,
+} from '../types/index';
 import type { DevToolsTransport } from '../transport/DevToolsTransport';
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 
@@ -83,6 +88,9 @@ export class DevToolsMiddleware {
         action: request.action,
         payload: request.payload,
         timestamp: Date.now(),
+        messageId: request.id,
+        sourceId: request.sourceId,
+        targetId: request.targetId,
       };
 
       this.store.addMessage(record);
@@ -96,13 +104,11 @@ export class DevToolsMiddleware {
         await next();
 
         const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
-        const middlewareTrace = ctx.metadata.get(
-          METADATA_KEYS.MW_TRACES
-        ) as RecordedMessage['middlewareTrace'];
-        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS) as number | undefined;
-        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED) as
-          | boolean
+        const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as
+          | MiddlewareTrace[]
           | undefined;
+        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
+        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
 
         const updates: Partial<RecordedMessage> = {
           status: ctx.response?.success ? 'success' : 'error',
@@ -128,13 +134,11 @@ export class DevToolsMiddleware {
           );
       } catch (error) {
         const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
-        const middlewareTrace = ctx.metadata.get(
-          METADATA_KEYS.MW_TRACES
-        ) as RecordedMessage['middlewareTrace'];
-        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS) as number | undefined;
-        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED) as
-          | boolean
+        const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as
+          | MiddlewareTrace[]
           | undefined;
+        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
+        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
 
         const updates: Partial<RecordedMessage> = {
           status: 'error',

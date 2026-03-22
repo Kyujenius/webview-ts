@@ -3,6 +3,7 @@
  */
 
 import type { BridgeMessage, BridgeResponse } from './message';
+import type { MetadataMap } from '../metadata/MetadataMap';
 
 /**
  * Middleware context passed through the entire request-response lifecycle.
@@ -18,8 +19,8 @@ export interface MiddlewareContext {
   /** Timestamp when the call started */
   startTime: number;
 
-  /** Shared key-value store for middleware to communicate with each other */
-  metadata: Map<string, unknown>;
+  /** Type-safe key-value store for middleware to communicate with each other */
+  metadata: MetadataMap;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Middleware } from '../types/middleware';
+import { MetadataMap } from '../metadata/MetadataMap';
 import { tryAutoDevTools, _resetAutoDevTools, type AutoDevToolsTarget } from './auto-devtools';
 
 // --- Mock WebSocket ---
@@ -194,7 +195,7 @@ describe('tryAutoDevTools', () => {
         timestamp: Date.now(),
       },
       startTime: Date.now(),
-      metadata: new Map(),
+      metadata: new MetadataMap(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       response: undefined as any,
     };
@@ -235,7 +236,7 @@ describe('tryAutoDevTools', () => {
         timestamp: Date.now(),
       },
       startTime: Date.now(),
-      metadata: new Map(),
+      metadata: new MetadataMap(),
     };
 
     await expect(

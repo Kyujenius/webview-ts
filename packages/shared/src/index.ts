@@ -13,6 +13,7 @@ export * from './plugins/index';
 export * from './state/index';
 export * from './connection/index';
 export { METADATA_KEYS } from './constants/metadata-keys';
+export { MetadataMap, createMetadataKey, type MetadataKey } from './metadata/index';
 export { tryAutoDevTools } from './devtools/auto-devtools';
 export type { AutoDevToolsTarget } from './devtools/auto-devtools';
 export { generateSourceId } from './utils/source-id';

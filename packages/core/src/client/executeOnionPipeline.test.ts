@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { MetadataMap } from '@webview-ts/shared';
 import { executeOnionPipeline } from './executeOnionPipeline';
 
 describe('executeOnionPipeline', () => {
@@ -22,7 +23,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     await executeOnionPipeline(middlewares, ctx as any, async () => {
       order.push('core');
     });
@@ -38,7 +39,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
     });
@@ -58,7 +59,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
     });
@@ -81,7 +82,7 @@ describe('executeOnionPipeline', () => {
         __skipTrace: true,
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
     });
@@ -104,7 +105,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
       skipTraceFor: new Set(['skipped']),
@@ -122,14 +123,14 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     await expect(
       executeOnionPipeline(middlewares, ctx as any, async () => {}, { tracing: true })
     ).rejects.toThrow('boom');
   });
 
   it('should return empty traces when no middlewares', async () => {
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline([], ctx as any, async () => {});
     expect(traces).toEqual([]);
   });
@@ -143,7 +144,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
       layer: 'plugin',
@@ -163,7 +164,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     const traces = await executeOnionPipeline(middlewares, ctx as any, async () => {}, {
       tracing: true,
     });
@@ -180,7 +181,7 @@ describe('executeOnionPipeline', () => {
         },
       },
     ];
-    const ctx = { action: 'test', payload: {}, metadata: new Map(), response: undefined };
+    const ctx = { action: 'test', payload: {}, metadata: new MetadataMap(), response: undefined };
     await expect(executeOnionPipeline(middlewares, ctx as any, async () => {})).rejects.toThrow(
       'next() called multiple times'
     );

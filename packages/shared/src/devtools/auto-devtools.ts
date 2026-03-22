@@ -41,6 +41,9 @@ interface RecordPayload {
   handlerMs?: number;
   handlerSkipped?: boolean;
   source?: DevToolsRole;
+  messageId?: string;
+  sourceId?: string;
+  targetId?: string;
 }
 
 function generateRecordId(): string {
@@ -62,6 +65,9 @@ function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middlewar
       payload: ctx.request.payload,
       timestamp: Date.now(),
       source: role,
+      messageId: ctx.request.id,
+      sourceId: ctx.request.sourceId,
+      targetId: ctx.request.targetId,
     };
 
     sendRecord(ws, record);
@@ -71,9 +77,9 @@ function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middlewar
       await next();
 
       const duration = Date.now() - startTime;
-      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as unknown[] | undefined;
-      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS) as number | undefined;
-      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED) as boolean | undefined;
+      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES);
+      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
+      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
 
       const updated: RecordPayload = {
         ...record,
@@ -93,9 +99,9 @@ function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middlewar
       sendRecord(ws, updated);
     } catch (error) {
       const duration = Date.now() - startTime;
-      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as unknown[] | undefined;
-      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS) as number | undefined;
-      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED) as boolean | undefined;
+      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES);
+      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
+      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
 
       sendRecord(ws, {
         ...record,

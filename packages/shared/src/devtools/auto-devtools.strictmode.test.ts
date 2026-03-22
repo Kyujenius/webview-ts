@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { Middleware } from '../types/middleware';
+import { MetadataMap } from '../metadata/MetadataMap';
 import { tryAutoDevTools, _resetAutoDevTools, type AutoDevToolsTarget } from './auto-devtools';
 
 // --- Mock WebSocket ---
@@ -298,7 +299,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
           timestamp: Date.now(),
         },
         startTime: Date.now(),
-        metadata: new Map(),
+        metadata: new MetadataMap(),
         response: undefined as any,
       };
 

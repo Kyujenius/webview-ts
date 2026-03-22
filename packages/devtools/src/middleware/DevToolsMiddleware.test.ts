@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DevToolsMiddleware } from './DevToolsMiddleware';
-import type { MiddlewareContext } from '@webview-ts/shared';
+import { MetadataMap, type MiddlewareContext } from '@webview-ts/shared';
 import type { TransportMessage } from '../transport/DevToolsTransport';
 import type { MessageStatus } from '../types/index';
 
@@ -16,7 +16,7 @@ function makeCtx(action: string, payload?: unknown): MiddlewareContext {
     },
     response: undefined,
     startTime: Date.now(),
-    metadata: new Map(),
+    metadata: new MetadataMap(),
   };
 }
 
