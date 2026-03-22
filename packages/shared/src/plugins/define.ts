@@ -1,22 +1,22 @@
+import type { FallbackMap, RetryConfig } from '../types/bridge';
+import type { Middleware } from '../types/middleware';
 import type {
   ActionMarkerMap,
-  EventMarkerMap,
-  EmptyEventMap,
-  DefinePluginOptions,
-  InterceptorMap,
-  TimeoutMap,
-  RetryMap,
-  CacheMap,
-  PluginInstance,
-  ShortHostHandlers,
-  HostPluginResult,
   ActionNameMap,
+  CacheMap,
+  DefinePluginOptions,
+  EmptyEventMap,
+  EventMarkerMap,
   EventNameMap,
   ExpandActions,
+  HostPluginResult,
+  InterceptorMap,
+  PluginInstance,
+  RetryMap,
   ShortFallbackHandlers,
+  ShortHostHandlers,
+  TimeoutMap,
 } from './types';
-import type { Middleware } from '../types/middleware';
-import type { FallbackMap, RetryConfig } from '../types/bridge';
 
 export function definePlugin<
   TName extends string,

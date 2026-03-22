@@ -1,6 +1,7 @@
-import { describe, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import React from 'react';
+import { describe, it, vi } from 'vitest';
+
 import { BridgeProvider, useEvent } from './index';
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (

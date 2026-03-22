@@ -1,10 +1,11 @@
-import { definePlugin, action } from '@webview-ts/shared';
+import { action, definePlugin } from '@webview-ts/shared';
+
 import type {
-  SetItemPayload,
+  GetAllKeysResponse,
   GetItemPayload,
   GetItemResponse,
   RemoveItemPayload,
-  GetAllKeysResponse,
+  SetItemPayload,
 } from './types';
 
 const memoryStore = new Map<string, string>();

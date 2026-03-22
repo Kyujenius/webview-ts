@@ -1,8 +1,8 @@
-export { createBridgeVue } from './createBridgeVue';
-export type { CreateBridgeVueOptions } from './createBridgeVue';
-export { BRIDGE_KEY } from './bridgeKey';
 export type { BridgeContext } from './bridgeKey';
-export { useBridge } from './composables/useBridge';
+export { BRIDGE_KEY } from './bridgeKey';
 export { useAction } from './composables/useAction';
-export { usePlugin } from './composables/usePlugin';
+export { useBridge } from './composables/useBridge';
 export { useEvent } from './composables/useEvent';
+export { usePlugin } from './composables/usePlugin';
+export type { CreateBridgeVueOptions } from './createBridgeVue';
+export { createBridgeVue } from './createBridgeVue';

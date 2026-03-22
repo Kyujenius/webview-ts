@@ -4,8 +4,8 @@
 
 import type {
   Middleware,
-  MiddlewareFn,
   MiddlewareContext,
+  MiddlewareFn,
   ValidatorMiddlewareOptions,
 } from '@webview-ts/shared';
 import { isBridgeMessage, isBridgeResponse } from '@webview-ts/shared';

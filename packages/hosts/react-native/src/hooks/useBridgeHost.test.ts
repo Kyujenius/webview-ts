@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react', () => ({
   useRef: vi.fn((val) => ({ current: val })),
@@ -12,8 +12,9 @@ vi.mock('react', () => ({
 vi.mock('react-native', () => ({}));
 vi.mock('react-native-webview', () => ({}));
 
+import { action, definePlugin } from '@webview-ts/shared';
+
 import { createSimpleBridgeHost } from './useBridgeHost';
-import { definePlugin, action } from '@webview-ts/shared';
 
 type TestActions = {
   'test.echo': { payload: { message: string }; response: { echoed: string } };

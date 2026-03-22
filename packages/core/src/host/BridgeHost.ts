@@ -1,20 +1,20 @@
 import type {
-  BridgeMessage,
-  BridgeResponse,
   BridgeError,
   BridgeEvent,
+  BridgeMessage,
+  BridgeResponse,
+  HostAdapter,
   Middleware,
   MiddlewareContext,
-  HostAdapter,
 } from '@webview-ts/shared';
 import {
-  MiddlewarePipeline,
-  MetadataMap,
-  ConnectionRegistry,
-  toBridgeErrorCode,
   BridgeCallError,
+  ConnectionRegistry,
   isBridgeMessage,
+  MetadataMap,
+  MiddlewarePipeline,
   TARGET,
+  toBridgeErrorCode,
 } from '@webview-ts/shared';
 
 /**

@@ -1,6 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { createLoopbackPair } from './helpers/create-loopback-pair';
 import type { Middleware } from '@webview-ts/shared';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { createLoopbackPair } from './helpers/create-loopback-pair';
 
 function createLogMiddleware(name: string, log: string[]): Middleware {
   return {

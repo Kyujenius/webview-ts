@@ -12,8 +12,8 @@
  * by bundlers via the `process.env.NODE_ENV` guard.
  */
 
-import type { Middleware, MiddlewareContext } from '../types/middleware';
 import { METADATA_KEYS } from '../constants/metadata-keys';
+import type { Middleware, MiddlewareContext } from '../types/middleware';
 
 const DEVTOOLS_PORT = 4000;
 const DEVTOOLS_MW_NAME = '__auto_devtools';

@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@webview-ts/core';
 import type { BridgeConfig } from '@webview-ts/shared';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import { BridgeContext } from './BridgeContext';
 
 export interface BridgeProviderProps {

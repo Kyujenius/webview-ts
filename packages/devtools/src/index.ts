@@ -5,20 +5,19 @@
 
 // Types
 export type {
-  MiddlewareTrace,
-  RecordedMessage,
-  PerformanceMetrics,
   DevToolsConfig,
   DevToolsStore,
+  MiddlewareTrace,
+  PerformanceMetrics,
+  RecordedMessage,
 } from './types/index';
-
 export type { MessageStatus } from './types/index';
 
 // Middleware
-export { DevToolsMiddleware, createDevToolsMiddleware } from './middleware/DevToolsMiddleware';
-export { createTimeTracker } from './middleware/TimeTracker';
+export { createDevToolsMiddleware, DevToolsMiddleware } from './middleware/DevToolsMiddleware';
 export type { PerformanceEntry } from './middleware/TimeTracker';
+export { createTimeTracker } from './middleware/TimeTracker';
 
 // Logger
-export { createStructuredLogger, LogLevel } from './logger/StructuredLogger';
 export type { LogEntry, LoggerConfig } from './logger/StructuredLogger';
+export { createStructuredLogger, LogLevel } from './logger/StructuredLogger';

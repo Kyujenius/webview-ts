@@ -1,11 +1,11 @@
 import type {
   BridgeMessage,
   BridgeResponse,
-  FallbackMap,
   ConnectionMode,
+  FallbackMap,
 } from '@webview-ts/shared';
-import { Platform } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
+import { Platform } from '@webview-ts/shared';
 
 export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;

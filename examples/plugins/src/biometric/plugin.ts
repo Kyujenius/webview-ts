@@ -1,5 +1,6 @@
-import { definePlugin, action } from '@webview-ts/shared';
-import type { CheckAvailabilityResponse, AuthenticatePayload, AuthenticateResponse } from './types';
+import { action, definePlugin } from '@webview-ts/shared';
+
+import type { AuthenticatePayload, AuthenticateResponse, CheckAvailabilityResponse } from './types';
 
 export const biometric = definePlugin('biometric', {
   checkAvailability: action<void, CheckAvailabilityResponse>(),

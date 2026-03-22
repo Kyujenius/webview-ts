@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StructuredLogger, createStructuredLogger, LogLevel } from './StructuredLogger';
 import { MetadataMap } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createStructuredLogger, LogLevel, StructuredLogger } from './StructuredLogger';
 
 function makeCtx() {
   return {

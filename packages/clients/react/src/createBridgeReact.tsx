@@ -1,17 +1,14 @@
-import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
 import { BridgeClient } from '@webview-ts/core';
-import { ActionStateManager, mergeFallbacks } from '@webview-ts/shared';
 import type { ActionState } from '@webview-ts/shared';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
-  BridgeConfig,
-  UseActionOptions,
-  ConnectionMode,
   ActionMapBase,
-  EventMapBase,
   ActionNames,
+  BridgeConfig,
+  ConnectionMode,
+  EventMapBase,
   EventNames,
   Middleware,
+  UseActionOptions,
 } from '@webview-ts/shared';
 import type {
   AnyPluginList,
@@ -20,8 +17,12 @@ import type {
   MergePluginEvents,
   TypedEventSubscriber,
 } from '@webview-ts/shared';
-import { useBridgeCore } from './internal/useBridgeCore';
+import { ActionStateManager, mergeFallbacks } from '@webview-ts/shared';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
+
 import { useActionCore } from './internal/useActionCore';
+import { useBridgeCore } from './internal/useBridgeCore';
 import { useEventCore } from './internal/useEventCore';
 
 interface BridgeContextValue<TActions extends ActionMapBase, TEvents extends EventMapBase> {

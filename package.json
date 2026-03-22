@@ -30,6 +30,7 @@
     "@typescript-eslint/parser": "catalog:",
     "@vitest/coverage-v8": "^1.6.1",
     "eslint": "catalog:",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "catalog:",
     "lint-staged": "catalog:",
     "prettier": "catalog:",

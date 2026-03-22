@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import { MiddlewarePipeline } from './MiddlewarePipeline';
-import type { Middleware, MiddlewareContext } from '../types/middleware';
+import { describe, expect, it, vi } from 'vitest';
+
 import { MetadataMap } from '../metadata/MetadataMap';
+import type { Middleware, MiddlewareContext } from '../types/middleware';
+import { MiddlewarePipeline } from './MiddlewarePipeline';
 
 function createCtx(action = 'test.action'): MiddlewareContext {
   return {

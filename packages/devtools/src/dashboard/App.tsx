@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { RecordedMessage } from '../types';
-import { Toolbar } from './components/Toolbar';
-import { FilterBar, type Filter } from './components/FilterBar';
-import { Timeline } from './components/Timeline';
-import { EventInspector } from './components/EventInspector';
-import { CallInspector, type InspectorTab } from './components/CallInspector';
 import './app.css';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import type { RecordedMessage } from '../types';
+import { CallInspector, type InspectorTab } from './components/CallInspector';
+import { EventInspector } from './components/EventInspector';
+import { type Filter, FilterBar } from './components/FilterBar';
+import { Timeline } from './components/Timeline';
+import { Toolbar } from './components/Toolbar';
 
 export function App() {
   const [records, setRecords] = useState<Map<string, RecordedMessage>>(new Map());

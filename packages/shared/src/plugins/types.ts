@@ -1,7 +1,7 @@
-import type { Middleware } from '../types/middleware';
 import type { BridgeCallOptions, FallbackMap, RetryConfig } from '../types/bridge';
-import type { StrictKeyOf } from '../types/utils';
+import type { Middleware } from '../types/middleware';
 import type { RoutingStrategy } from '../types/routing';
+import type { StrictKeyOf } from '../types/utils';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 

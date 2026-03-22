@@ -1,5 +1,6 @@
-import { definePlugin, action, event } from '@webview-ts/shared';
-import type { DeviceInfoResponse, AppStateStatus } from './types';
+import { action, definePlugin, event } from '@webview-ts/shared';
+
+import type { AppStateStatus, DeviceInfoResponse } from './types';
 
 export const device = definePlugin(
   'device',

@@ -1,10 +1,7 @@
-import type { App, Plugin } from 'vue';
-import { inject, onScopeDispose } from 'vue';
 import { BridgeClient } from '@webview-ts/core';
-import { mergeFallbacks } from '@webview-ts/shared';
 import type {
-  BridgeConfig,
   ActionMapBase,
+  BridgeConfig,
   EventMapBase,
   EventNames,
   Middleware,
@@ -15,9 +12,13 @@ import type {
   MergePluginActions,
   MergePluginEvents,
 } from '@webview-ts/shared';
+import { mergeFallbacks } from '@webview-ts/shared';
+import type { App, Plugin } from 'vue';
+import { inject, onScopeDispose } from 'vue';
+
 import { BRIDGE_KEY } from './bridgeKey';
-import { useBridge } from './composables/useBridge';
 import { useAction } from './composables/useAction';
+import { useBridge } from './composables/useBridge';
 import { usePlugin } from './composables/usePlugin';
 
 export interface CreateBridgeVueOptions<

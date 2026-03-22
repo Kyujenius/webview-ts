@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
+import { defineComponent, h, nextTick } from 'vue';
+
 import { BRIDGE_KEY, type BridgeContext } from '../bridgeKey';
 import { usePlugin } from '../composables/usePlugin';
 

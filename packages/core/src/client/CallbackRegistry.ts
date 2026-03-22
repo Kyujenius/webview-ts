@@ -2,8 +2,8 @@
  * Registry for managing callbacks and matching requests to responses
  */
 
-import { BridgeCallError } from '@webview-ts/shared';
 import type { BridgeResponse } from '@webview-ts/shared';
+import { BridgeCallError } from '@webview-ts/shared';
 
 /**
  * Callback entry with timeout handling

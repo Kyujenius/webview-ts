@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type { BridgeClient } from '@webview-ts/core';
 import type { ActionMapBase, ActionNames, UseActionOptions } from '@webview-ts/shared';
+import { useMemo } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
 export function useActionCore<
   TActions extends ActionMapBase,

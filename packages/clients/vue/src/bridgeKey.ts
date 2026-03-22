@@ -1,6 +1,6 @@
-import type { InjectionKey } from 'vue';
 import type { BridgeClient } from '@webview-ts/core';
 import type { ConnectionMode } from '@webview-ts/shared';
+import type { InjectionKey } from 'vue';
 
 export interface BridgeContext {
   bridge: BridgeClient<any>;

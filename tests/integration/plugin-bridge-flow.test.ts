@@ -12,11 +12,11 @@
  * Uses BridgeClient's fallback mechanism to route messages through
  * a real BridgeHost instance, testing actual handler dispatch.
  */
-import { describe, it, expect, vi } from 'vitest';
-import { BridgeHost } from '@webview-ts/react-native';
 import { createClient } from '@webview-ts/core';
-import { definePlugin, action } from '@webview-ts/shared';
+import { BridgeHost } from '@webview-ts/react-native';
 import type { BridgeMessage } from '@webview-ts/shared';
+import { action, definePlugin } from '@webview-ts/shared';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Define plugins ───
 

@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { action, definePlugin } from '@webview-ts/shared';
 import React from 'react';
+import { describe, expect, it } from 'vitest';
+
 import { createBridgeReact } from './createBridgeReact';
-import { definePlugin, action } from '@webview-ts/shared';
 
 // Define a typed action contract
 type TestActions = {

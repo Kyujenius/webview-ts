@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createApp, defineComponent, h, inject } from 'vue';
 import { mount } from '@vue/test-utils';
-import { createBridgeVue } from '../createBridgeVue';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createApp, defineComponent, h, inject } from 'vue';
+
 import { BRIDGE_KEY, type BridgeContext } from '../bridgeKey';
 import { useBridge } from '../composables/useBridge';
+import { createBridgeVue } from '../createBridgeVue';
 
 // Mock BridgeClient so tests don't need a real WebView environment
 vi.mock('@webview-ts/core', () => {

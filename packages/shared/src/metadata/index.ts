@@ -1,1 +1,1 @@
-export { MetadataMap, createMetadataKey, type MetadataKey } from './MetadataMap';
+export { createMetadataKey, type MetadataKey, MetadataMap } from './MetadataMap';

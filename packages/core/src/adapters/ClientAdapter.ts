@@ -2,9 +2,10 @@
  * Client adapter factory
  */
 
-import type { BridgeMessage, ConnectionMode, ClientAdapter } from '@webview-ts/shared';
+import type { BridgeMessage, ClientAdapter, ConnectionMode } from '@webview-ts/shared';
 import { Platform } from '@webview-ts/shared';
-import { ReactNativeWebViewAdapter, isReactNativeWebView } from './ReactNativeWebViewAdapter';
+
+import { isReactNativeWebView, ReactNativeWebViewAdapter } from './ReactNativeWebViewAdapter';
 
 /**
  * Create appropriate adapter for current platform.

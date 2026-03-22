@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import { action, definePlugin, event } from '@webview-ts/shared';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
 import { createBridgeReact } from './createBridgeReact';
-import { definePlugin, action, event } from '@webview-ts/shared';
 
 // --- Plugin with events ---
 const testPlugin = definePlugin(

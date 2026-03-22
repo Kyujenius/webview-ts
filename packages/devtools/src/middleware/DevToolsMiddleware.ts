@@ -3,16 +3,17 @@
  * One record per call: PENDING → SUCCESS/ERROR.
  */
 
-import { METADATA_KEYS } from '@webview-ts/shared';
 import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
+import { METADATA_KEYS } from '@webview-ts/shared';
+
+import { DevToolsStoreImpl } from '../logger/DevToolsStore';
+import type { DevToolsTransport } from '../transport/DevToolsTransport';
 import type {
   DevToolsConfig,
-  RecordedMessage,
   DevToolsStore,
   MiddlewareTrace,
+  RecordedMessage,
 } from '../types/index';
-import type { DevToolsTransport } from '../transport/DevToolsTransport';
-import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 
 type ResolvedConfig = Omit<Required<DevToolsConfig>, 'transport'> & {
   transport?: DevToolsTransport;

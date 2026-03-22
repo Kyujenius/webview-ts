@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
 import type { BridgeClient } from '@webview-ts/core';
 import type { ActionMapBase, EventMapBase } from '@webview-ts/shared';
+import { useEffect, useRef } from 'react';
 
 export function useEventCore<
   TActions extends ActionMapBase,

@@ -4,28 +4,29 @@
  */
 
 // Adapter
-export { ReactNativeHostAdapter } from './adapters/ReactNativeHostAdapter';
 export type { WebViewMessageEvent } from './adapters/ReactNativeHostAdapter';
+export { ReactNativeHostAdapter } from './adapters/ReactNativeHostAdapter';
 
 // Permissions
-export { PermissionManager } from './permissions/PermissionManager';
 export type {
+  PermissionHandler,
   PermissionManagerConfig,
   PermissionResult,
-  PermissionHandler,
 } from './permissions/PermissionManager';
+export { PermissionManager } from './permissions/PermissionManager';
 
 // Hooks
-export { createSimpleBridgeHost, useBridgeHost } from './hooks/useBridgeHost';
 export type {
   SimpleBridgeHostOptions,
   SimpleBridgeHostResult,
-  UseBridgeHostReturn,
   TypedHandlers,
+  UseBridgeHostReturn,
 } from './hooks/useBridgeHost';
+export { createSimpleBridgeHost, useBridgeHost } from './hooks/useBridgeHost';
 
 // Convenience factory
 import { BridgeHost, type BridgeHostConfig } from '@webview-ts/core';
+
 import { ReactNativeHostAdapter } from './adapters/ReactNativeHostAdapter';
 import { PermissionManager, type PermissionManagerConfig } from './permissions/PermissionManager';
 

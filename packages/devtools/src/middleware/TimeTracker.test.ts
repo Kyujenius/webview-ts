@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createTimeTracker, TimeTracker } from './TimeTracker';
 import { MetadataMap } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { createTimeTracker, TimeTracker } from './TimeTracker';
 
 function makeCtx(action = 'test.action', id = 'msg-1') {
   return {

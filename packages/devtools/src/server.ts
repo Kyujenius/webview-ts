@@ -1,10 +1,11 @@
-import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
 import { exec } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { WebSocketServer, type WebSocket } from 'ws';
+
+import { type WebSocket, WebSocketServer } from 'ws';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '4000', 10);

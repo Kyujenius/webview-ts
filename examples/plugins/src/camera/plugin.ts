@@ -1,11 +1,12 @@
-import { definePlugin, action } from '@webview-ts/shared';
+import { action, definePlugin } from '@webview-ts/shared';
+
 import type {
-  TakePhotoPayload,
-  TakePhotoResponse,
   PickImagePayload,
   PickImageResponse,
   RecordVideoPayload,
   RecordVideoResponse,
+  TakePhotoPayload,
+  TakePhotoResponse,
 } from './types';
 
 export const camera = definePlugin('camera', {

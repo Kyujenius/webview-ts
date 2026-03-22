@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createValidator } from './Validator';
-import { MetadataMap } from '@webview-ts/shared';
 import type { MiddlewareContext } from '@webview-ts/shared';
+import { MetadataMap } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createValidator } from './Validator';
 
 function createValidRequest() {
   return {

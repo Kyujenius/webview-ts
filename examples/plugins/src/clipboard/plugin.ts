@@ -1,5 +1,6 @@
-import { definePlugin, action } from '@webview-ts/shared';
-import type { SetClipboardPayload, GetClipboardResponse } from './types';
+import { action, definePlugin } from '@webview-ts/shared';
+
+import type { GetClipboardResponse, SetClipboardPayload } from './types';
 
 let clipboardText: string | null = null;
 

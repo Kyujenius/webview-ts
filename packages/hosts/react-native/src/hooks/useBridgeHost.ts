@@ -1,8 +1,9 @@
-import type { ActionMapBase, StrictKeyOf, Middleware } from '@webview-ts/shared';
+import type { ActionHandler, BridgeHostConfig } from '@webview-ts/core';
+import { BridgeHost } from '@webview-ts/core';
+import type { ActionMapBase, Middleware, StrictKeyOf } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
 import { ConnectionRegistry, generateSourceId } from '@webview-ts/shared';
-import type { BridgeHostConfig, ActionHandler } from '@webview-ts/core';
-import { BridgeHost } from '@webview-ts/core';
+
 import { ReactNativeHostAdapter } from '../adapters/ReactNativeHostAdapter';
 
 // ---- Typed handler map ----
@@ -128,7 +129,7 @@ export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMa
 
 // ---- React hook ----
 
-import { useMemo, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 export interface UseBridgeHostReturn {
   /** Spread onto your WebView: `<WebView {...webViewProps} source={...} />` */

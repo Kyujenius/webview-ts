@@ -1,43 +1,44 @@
 /**
  * Main bridge client - orchestrates all bridge operations
  */
-import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared';
-import { CallbackRegistry } from './CallbackRegistry';
-import { MessageQueue } from './MessageQueue';
-import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
-import { createClientAdapter } from '../adapters/index';
 import type { ClientAdapter } from '@webview-ts/shared';
-import { FallbackAdapter } from '../adapters/FallbackAdapter';
+import type {
+  ActionMapBase,
+  ActionNames,
+  AnyPlugin,
+  BridgeCallOptions,
+  BridgeConfig,
+  BridgeError,
+  BridgeEvent,
+  BridgeMessage,
+  BridgeResponse,
+  ConnectionMode,
+  EventMapBase,
+  FallbackMap,
+  InferPayload,
+  InferResponse,
+  Middleware,
+  MiddlewareContext,
+  RetryConfig,
+  UseActionOptions,
+} from '@webview-ts/shared';
+import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared';
 import { MiddlewarePipeline } from '@webview-ts/shared';
-import { generateMessageId } from '../utils/id-generator';
 import {
   BridgeCallError,
+  isBridgeEvent,
+  isBridgeResponse,
   METADATA_KEYS,
   MetadataMap,
   tryAutoDevTools,
-  isBridgeResponse,
-  isBridgeEvent,
 } from '@webview-ts/shared';
-import type {
-  BridgeConfig,
-  BridgeCallOptions,
-  UseActionOptions,
-  RetryConfig,
-  BridgeMessage,
-  BridgeResponse,
-  BridgeEvent,
-  BridgeError,
-  Middleware,
-  MiddlewareContext,
-  ActionMapBase,
-  EventMapBase,
-  ActionNames,
-  InferPayload,
-  InferResponse,
-  ConnectionMode,
-  FallbackMap,
-  AnyPlugin,
-} from '@webview-ts/shared';
+
+import { FallbackAdapter } from '../adapters/FallbackAdapter';
+import { createClientAdapter } from '../adapters/index';
+import { generateMessageId } from '../utils/id-generator';
+import { CallbackRegistry } from './CallbackRegistry';
+import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
+import { MessageQueue } from './MessageQueue';
 /**
  * Event handler type
  */

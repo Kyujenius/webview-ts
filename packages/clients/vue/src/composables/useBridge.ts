@@ -1,4 +1,5 @@
-import { inject, computed } from 'vue';
+import { computed, inject } from 'vue';
+
 import { BRIDGE_KEY, type BridgeContext } from '../bridgeKey';
 
 export function useBridge() {

@@ -1,5 +1,5 @@
 import type { RecordedMessage } from '../../types';
-import { statusColor, errorCodeColor } from './StatusUtils';
+import { errorCodeColor, statusColor } from './StatusUtils';
 
 export type InspectorTab = 'payload' | 'response' | 'routing' | 'raw';
 

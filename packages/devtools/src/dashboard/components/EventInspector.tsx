@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import type { RecordedMessage } from '../../types';
 
 type EventTab = 'payload' | 'stream' | 'raw';

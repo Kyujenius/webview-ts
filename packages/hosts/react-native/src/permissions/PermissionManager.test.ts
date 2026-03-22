@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PermissionStatus } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { PermissionManager } from './PermissionManager';
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }));

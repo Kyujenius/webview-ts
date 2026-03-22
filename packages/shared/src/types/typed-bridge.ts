@@ -1,6 +1,6 @@
 import type { ActionMapBase, ActionNames, InferPayload, InferResponse } from './action-map';
+import type { BridgeCallOptions, BridgeConfig } from './bridge';
 import type { EventMapBase, EventNames } from './event-map';
-import type { BridgeConfig, BridgeCallOptions } from './bridge';
 
 export interface TypedBridge<
   TActions extends ActionMapBase,

@@ -1,5 +1,5 @@
 import type { RecordedMessage } from '../../types';
-import { statusColor, statusIcon, errorCodeColor } from './StatusUtils';
+import { errorCodeColor, statusColor, statusIcon } from './StatusUtils';
 
 interface TimelineProps {
   records: RecordedMessage[];

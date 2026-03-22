@@ -1,6 +1,6 @@
-import { describe, it, expect, afterEach } from 'vitest';
 import { BridgeHost } from '@webview-ts/core';
 import type { HostAdapter } from '@webview-ts/shared';
+import { afterEach, describe, expect, it } from 'vitest';
 
 function createMockAdapter() {
   const listeners = new Set<(json: string) => void>();

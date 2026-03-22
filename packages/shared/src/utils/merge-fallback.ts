@@ -1,5 +1,5 @@
-import type { BridgeConfig, FallbackMap } from '../types/bridge';
 import type { AnyPlugin } from '../plugins/types';
+import type { BridgeConfig, FallbackMap } from '../types/bridge';
 
 /**
  * Collect fallback handlers from plugins and merge with config fallback.

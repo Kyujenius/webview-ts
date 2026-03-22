@@ -1,5 +1,5 @@
-import { BridgeHost, BridgeClient } from '@webview-ts/core';
-import type { BridgeMessage, Middleware, HostAdapter } from '@webview-ts/shared';
+import { BridgeClient, BridgeHost } from '@webview-ts/core';
+import type { BridgeMessage, HostAdapter, Middleware } from '@webview-ts/shared';
 
 export interface LoopbackPairOptions {
   clientMiddleware?: Middleware[];

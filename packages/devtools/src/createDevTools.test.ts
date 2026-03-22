@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
 import { createDevTools } from './createDevTools';
+import { LogLevel, StructuredLogger } from './logger/StructuredLogger';
 import { DevToolsMiddleware } from './middleware/DevToolsMiddleware';
 import { TimeTracker } from './middleware/TimeTracker';
-import { StructuredLogger, LogLevel } from './logger/StructuredLogger';
 
 describe('createDevTools', () => {
   it('returns a bundle with middleware, timeTracker, and logger', () => {

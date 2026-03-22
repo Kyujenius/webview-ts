@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import type { BridgeMessage, BridgeResponse, BridgeError, BridgeEvent } from './message';
+import { describe, expect, it } from 'vitest';
+
 import type { BridgeErrorCode } from './errors';
+import type { BridgeError, BridgeEvent, BridgeMessage, BridgeResponse } from './message';
 import { MessageType } from './message';
 
 describe('Message Types', () => {

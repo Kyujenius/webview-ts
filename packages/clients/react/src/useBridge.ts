@@ -1,10 +1,11 @@
 import type {
   ActionMapBase,
   ActionNames,
+  BridgeCallOptions,
   InferPayload,
   InferResponse,
-  BridgeCallOptions,
 } from '@webview-ts/shared';
+
 import { useBridgeContext } from './BridgeContext';
 import { useBridgeCore } from './internal/useBridgeCore';
 

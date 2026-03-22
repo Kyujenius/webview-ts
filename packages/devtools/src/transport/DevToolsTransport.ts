@@ -1,4 +1,4 @@
-import type { RecordedMessage, PerformanceMetrics } from '../types/index';
+import type { PerformanceMetrics, RecordedMessage } from '../types/index';
 
 export type TransportMessage =
   | { type: 'record'; record: RecordedMessage }

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CallbackRegistry } from './CallbackRegistry';
 import { BridgeCallError } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { CallbackRegistry } from './CallbackRegistry';
 
 describe('CallbackRegistry', () => {
   let registry: CallbackRegistry;

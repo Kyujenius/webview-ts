@@ -1,7 +1,7 @@
-export { BridgeHost } from './BridgeHost';
 export type {
-  BridgeHostConfig,
   ActionHandler,
+  BridgeHostConfig,
   RequestContext,
   SendEventOptions,
 } from './BridgeHost';
+export { BridgeHost } from './BridgeHost';

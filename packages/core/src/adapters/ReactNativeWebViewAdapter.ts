@@ -7,8 +7,8 @@
  */
 
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
-import { Platform } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
+import { Platform } from '@webview-ts/shared';
 
 interface ReactNativeWebViewInterface {
   postMessage(message: string): void;

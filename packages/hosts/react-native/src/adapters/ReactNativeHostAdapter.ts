@@ -1,5 +1,5 @@
-import type { WebView } from 'react-native-webview';
 import type { HostAdapter } from '@webview-ts/shared';
+import type { WebView } from 'react-native-webview';
 
 export interface WebViewMessageEvent {
   nativeEvent: {

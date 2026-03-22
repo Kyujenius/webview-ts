@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type { Middleware } from '../types/middleware';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { MetadataMap } from '../metadata/MetadataMap';
-import { tryAutoDevTools, _resetAutoDevTools, type AutoDevToolsTarget } from './auto-devtools';
+import type { Middleware } from '../types/middleware';
+import { _resetAutoDevTools, type AutoDevToolsTarget, tryAutoDevTools } from './auto-devtools';
 
 // --- Mock WebSocket ---
 

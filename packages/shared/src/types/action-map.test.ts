@@ -1,5 +1,6 @@
-import { describe, it, expectTypeOf } from 'vitest';
-import type { InferPayload, InferResponse, ActionNames } from './action-map';
+import { describe, expectTypeOf, it } from 'vitest';
+
+import type { ActionNames, InferPayload, InferResponse } from './action-map';
 
 type TestActions = {
   'camera.take': {

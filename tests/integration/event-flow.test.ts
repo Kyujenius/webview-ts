@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+
 import { createLoopbackPair } from './helpers/create-loopback-pair';
 
 describe('Event flow: Host → Client', () => {

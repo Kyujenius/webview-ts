@@ -2,8 +2,8 @@
  * Middleware types for bridge pipeline (Koa-style onion model)
  */
 
-import type { BridgeMessage, BridgeResponse } from './message';
 import type { MetadataMap } from '../metadata/MetadataMap';
+import type { BridgeMessage, BridgeResponse } from './message';
 
 /**
  * Middleware context passed through the entire request-response lifecycle.

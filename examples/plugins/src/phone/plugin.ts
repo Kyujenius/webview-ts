@@ -1,4 +1,5 @@
-import { definePlugin, action } from '@webview-ts/shared';
+import { action, definePlugin } from '@webview-ts/shared';
+
 import type { CallPayload, CallResponse } from './types';
 
 export const phone = definePlugin('phone', {

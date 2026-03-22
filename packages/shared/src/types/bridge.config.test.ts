@@ -1,5 +1,6 @@
-import { describe, it, expectTypeOf } from 'vitest';
-import type { BridgeConfig, RetryConfig, ErrorContext } from './bridge';
+import { describe, expectTypeOf, it } from 'vitest';
+
+import type { BridgeConfig, ErrorContext, RetryConfig } from './bridge';
 import type { BridgeError } from './message';
 
 describe('Extended BridgeConfig', () => {

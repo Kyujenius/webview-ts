@@ -5,14 +5,15 @@
  * Provides the main bridge API, middleware pipeline, and platform adapters.
  */
 
-export * from './client';
 export * from './adapters';
+export * from './client';
+export * from './host';
 export * from './middleware';
 export * from './utils';
-export * from './host';
+
+import type { ActionMapBase, BridgeConfig, EventMapBase } from '@webview-ts/shared';
 
 import { BridgeClient } from './client/BridgeClient';
-import type { BridgeConfig, ActionMapBase, EventMapBase } from '@webview-ts/shared';
 
 /**
  * Create and initialize a new bridge instance.

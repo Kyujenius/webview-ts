@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import { action, event } from './types';
-import { definePlugin } from './define';
+import { describe, expect, it, vi } from 'vitest';
+
 import type { Middleware } from '../types/middleware';
+import { definePlugin } from './define';
+import { action, event } from './types';
 
 const mockMiddleware = (label: string): Middleware => ({
   name: label,

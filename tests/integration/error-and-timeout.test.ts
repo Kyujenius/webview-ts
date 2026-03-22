@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { createLoopbackPair } from './helpers/create-loopback-pair';
 
 describe('Error propagation', () => {

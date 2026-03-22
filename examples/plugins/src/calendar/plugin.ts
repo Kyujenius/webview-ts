@@ -1,10 +1,11 @@
-import { definePlugin, action } from '@webview-ts/shared';
+import { action, definePlugin } from '@webview-ts/shared';
+
 import type {
   AddEventPayload,
   AddEventResponse,
+  CalendarEvent,
   GetEventsPayload,
   GetEventsResponse,
-  CalendarEvent,
 } from './types';
 
 const events: CalendarEvent[] = [];

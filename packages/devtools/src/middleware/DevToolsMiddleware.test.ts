@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { DevToolsMiddleware } from './DevToolsMiddleware';
 import { MetadataMap, type MiddlewareContext } from '@webview-ts/shared';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import type { TransportMessage } from '../transport/DevToolsTransport';
 import type { MessageStatus } from '../types/index';
+import { DevToolsMiddleware } from './DevToolsMiddleware';
 
 function makeCtx(action: string, payload?: unknown): MiddlewareContext {
   return {

@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { BridgeClient } from './BridgeClient';
 
 describe('BridgeClient - Cleanup', () => {

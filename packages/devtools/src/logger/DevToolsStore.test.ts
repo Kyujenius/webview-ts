@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { DevToolsStoreImpl } from './DevToolsStore';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import type { RecordedMessage } from '../types/index';
+import { DevToolsStoreImpl } from './DevToolsStore';
 
 function makeRecord(overrides: Partial<RecordedMessage> = {}): RecordedMessage {
   return {

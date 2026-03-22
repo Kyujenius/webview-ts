@@ -1,7 +1,8 @@
-import { ref, onScopeDispose, inject } from 'vue';
-import { BRIDGE_KEY } from '../bridgeKey';
 import type { ActionState } from '@webview-ts/shared';
 import type { TypedEventSubscriber } from '@webview-ts/shared';
+import { inject, onScopeDispose, ref } from 'vue';
+
+import { BRIDGE_KEY } from '../bridgeKey';
 
 export function usePlugin(plugin: any) {
   const ctx = inject(BRIDGE_KEY);

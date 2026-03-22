@@ -2,7 +2,7 @@
  * Logger middleware — logs request, response, and errors in a single onion layer.
  */
 
-import type { Middleware, MiddlewareFn, LoggerMiddlewareOptions } from '@webview-ts/shared';
+import type { LoggerMiddlewareOptions, Middleware, MiddlewareFn } from '@webview-ts/shared';
 
 type LoggerFn = (level: string, message: string, data?: unknown) => void;
 

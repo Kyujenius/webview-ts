@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   BridgeCallError,
   getErrorCategory,
-  isRetryable,
   isAuthError,
+  isRetryable,
   toBridgeErrorCode,
 } from './errors';
 

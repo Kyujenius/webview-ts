@@ -2,7 +2,7 @@
  * DevToolsStore - Stores and manages recorded messages
  */
 
-import type { DevToolsStore, RecordedMessage, PerformanceMetrics } from '../types/index';
+import type { DevToolsStore, PerformanceMetrics, RecordedMessage } from '../types/index';
 
 /**
  * In-memory store for DevTools messages

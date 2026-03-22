@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { MetadataMap } from '@webview-ts/shared';
+import { describe, expect, it } from 'vitest';
+
 import { executeOnionPipeline } from './executeOnionPipeline';
 
 describe('executeOnionPipeline', () => {

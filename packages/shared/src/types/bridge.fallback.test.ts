@@ -1,4 +1,5 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
+
 import type { BridgeConfig, FallbackHandler } from './bridge';
 
 describe('Fallback config types', () => {

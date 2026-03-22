@@ -1,7 +1,7 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'simple-import-sort'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   env: {
     node: true,
@@ -20,5 +20,7 @@ module.exports = {
         varsIgnorePattern: '^_',
       },
     ],
+    'simple-import-sort/imports': 'error',
+    'simple-import-sort/exports': 'error',
   },
 };

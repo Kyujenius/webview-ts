@@ -1,5 +1,5 @@
+import type { ConnectionMode, Platform } from './bridge';
 import type { BridgeMessage } from './message';
-import type { Platform, ConnectionMode } from './bridge';
 
 /**
  * Client-side adapter interface for platform-specific message transport.

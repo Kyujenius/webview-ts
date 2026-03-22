@@ -1,4 +1,5 @@
 import { inject, onScopeDispose } from 'vue';
+
 import { BRIDGE_KEY } from '../bridgeKey';
 
 export function useEvent<TPayload = unknown>(
