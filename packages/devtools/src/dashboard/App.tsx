@@ -73,7 +73,7 @@ export function App() {
     let arr = all;
     if (filter !== 'all') arr = arr.filter((m) => m.status === filter);
     if (search) arr = arr.filter((m) => m.action.toLowerCase().includes(search.toLowerCase()));
-    if (sourceFilter) arr = arr.filter((m) => m.sourceId === sourceFilter);
+    if (sourceFilter) arr = arr.filter((m) => m.sourceId === sourceFilter || m.status === 'event');
     return arr.reverse();
   }, [all, filter, search, sourceFilter]);
 
