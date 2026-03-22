@@ -110,8 +110,8 @@ describe('createBridgeVue', () => {
     it('calls bridge.use() for each middleware passed in options', async () => {
       const { BridgeClient } = await import('@webview-ts/core');
 
-      const mw1 = vi.fn((_ctx: unknown, next: () => Promise<void>) => next());
-      const mw2 = vi.fn((_ctx: unknown, next: () => Promise<void>) => next());
+      const mw1 = { name: 'mw1', fn: vi.fn((_ctx: unknown, next: () => Promise<void>) => next()) };
+      const mw2 = { name: 'mw2', fn: vi.fn((_ctx: unknown, next: () => Promise<void>) => next()) };
 
       const plugin = createBridgeVue({ middleware: [mw1, mw2] });
       mount(defineComponent({ setup: () => () => h('div') }), {
