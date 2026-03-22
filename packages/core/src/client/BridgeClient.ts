@@ -33,8 +33,8 @@ import {
   tryAutoDevTools,
 } from '@webview-ts/shared';
 
+import { createClientAdapter } from '../adapters/createClientAdapter';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
-import { createClientAdapter } from '../adapters/index';
 import { generateMessageId } from '../utils/id-generator';
 import { CallbackRegistry } from './CallbackRegistry';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';

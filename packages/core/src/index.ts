@@ -5,7 +5,6 @@
  * Provides the main bridge API, middleware pipeline, and platform adapters.
  */
 
-export * from './adapters';
 export * from './client';
 export * from './host';
 export * from './utils';
