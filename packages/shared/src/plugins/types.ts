@@ -181,8 +181,11 @@ export interface PluginInstance<
   withFallback(handlers: ShortFallbackHandlers<TMarkers>): PluginInstance<TName, TMarkers, TEvents>;
 }
 
-/** Plugin array — shorthand for the repeated `PluginInstance<any, any, any>[]` constraint */
-export type AnyPluginList = PluginInstance<any, any, any>[];
+/** Single plugin — shorthand for `PluginInstance<any, any, any>` */
+export type AnyPlugin = PluginInstance<any, any, any>;
+
+/** Plugin array — shorthand for the repeated constraint */
+export type AnyPluginList = AnyPlugin[];
 
 /** Fallback handlers using short names — typed from action markers */
 export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
@@ -208,7 +211,7 @@ export interface HostPluginResult {
 
 /** Merge ActionMaps from multiple plugins into an intersection */
 export type MergePluginActions<T extends AnyPluginList> = T extends [
-  infer First extends PluginInstance<any, any, any>,
+  infer First extends AnyPlugin,
   ...infer Rest extends AnyPluginList,
 ]
   ? First['_types'] & MergePluginActions<Rest>
@@ -217,7 +220,7 @@ export type MergePluginActions<T extends AnyPluginList> = T extends [
 /** Extract plugin from a plugins array by reference */
 export type PluginFromArray<
   TPlugins extends AnyPluginList,
-  TPlugin extends PluginInstance<any, any, any>,
+  TPlugin extends AnyPlugin,
 > = TPlugin extends TPlugins[number] ? TPlugin : never;
 
 /** Expand short-name event markers to fully-qualified event map.
@@ -229,7 +232,7 @@ export type ExpandEvents<TName extends string, TEvents extends EventMarkerMap> =
 
 /** Merge event maps from multiple plugins into an intersection */
 export type MergePluginEvents<T extends AnyPluginList> = T extends [
-  infer First extends PluginInstance<any, any, any>,
+  infer First extends AnyPlugin,
   ...infer Rest extends AnyPluginList,
 ]
   ? ExpandEvents<First['name'], First['_eventTypes']> & MergePluginEvents<Rest>

@@ -25,6 +25,7 @@ export type {
   PluginFromArray,
   DefinePluginOptions,
   EventNameMap,
+  AnyPlugin,
   AnyPluginList,
   EmptyEventMap,
   EventOptions,
