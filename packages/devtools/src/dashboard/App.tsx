@@ -97,15 +97,23 @@ export function App() {
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
       : '-';
-    const clients = sourceIds.length;
+    const sources = { hosts: 0, clients: 0 };
+    const seenSources = new Set<string>();
+    for (const m of all) {
+      if (m.source && !seenSources.has(`${m.source}:${m.sourceId ?? ''}`)) {
+        seenSources.add(`${m.source}:${m.sourceId ?? ''}`);
+        if (m.source === 'host') sources.hosts++;
+        else sources.clients++;
+      }
+    }
     const errorBreakdown: Record<string, number> = {};
     for (const m of all) {
       if (m.error?.code) {
         errorBreakdown[m.error.code] = (errorBreakdown[m.error.code] ?? 0) + 1;
       }
     }
-    return { total, errs, events, rate, avg, clients, errorBreakdown };
-  }, [all, sourceIds]);
+    return { total, errs, events, rate, avg, sources, errorBreakdown };
+  }, [all]);
 
   const eventStream = useMemo(() => {
     if (!selected || selected.status !== 'event') return [];
