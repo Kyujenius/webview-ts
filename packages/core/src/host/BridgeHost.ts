@@ -13,6 +13,7 @@ import {
   ConnectionRegistry,
   toBridgeErrorCode,
   BridgeCallError,
+  isBridgeMessage,
   TARGET,
 } from '@webview-ts/shared';
 
@@ -214,8 +215,14 @@ export class BridgeHost {
 
   async handleMessageString(messageJson: string): Promise<void> {
     try {
-      const message = JSON.parse(messageJson) as BridgeMessage;
-      const response = await this.handleMessage(message);
+      const parsed: unknown = JSON.parse(messageJson);
+      if (!isBridgeMessage(parsed)) {
+        this.config.onError(new Error('Invalid BridgeMessage: missing required fields'), {
+          messageJson,
+        });
+        return;
+      }
+      const response = await this.handleMessage(parsed);
       this.sendResponse(response);
     } catch (error) {
       this.config.onError(error instanceof Error ? error : new Error(String(error)), {

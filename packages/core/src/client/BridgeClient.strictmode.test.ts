@@ -106,7 +106,12 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     // Simulate receiving a single event via postMessage
     window.dispatchEvent(
       new MessageEvent('message', {
-        data: JSON.stringify({ event: 'test.updated', payload: { x: 1 }, timestamp: Date.now() }),
+        data: JSON.stringify({
+          event: 'test.updated',
+          payload: { x: 1 },
+          timestamp: Date.now(),
+          sourceId: 'host',
+        }),
       })
     );
 
@@ -124,7 +129,12 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
 
     window.dispatchEvent(
       new MessageEvent('message', {
-        data: JSON.stringify({ event: 'test.updated', payload: { x: 1 }, timestamp: Date.now() }),
+        data: JSON.stringify({
+          event: 'test.updated',
+          payload: { x: 1 },
+          timestamp: Date.now(),
+          sourceId: 'host',
+        }),
       })
     );
 

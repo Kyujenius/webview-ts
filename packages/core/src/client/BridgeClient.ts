@@ -10,7 +10,14 @@ import type { ClientAdapter } from '@webview-ts/shared';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { MiddlewarePipeline } from '@webview-ts/shared';
 import { generateMessageId } from '../utils/id-generator';
-import { BridgeCallError, METADATA_KEYS, MetadataMap, tryAutoDevTools } from '@webview-ts/shared';
+import {
+  BridgeCallError,
+  METADATA_KEYS,
+  MetadataMap,
+  tryAutoDevTools,
+  isBridgeResponse,
+  isBridgeEvent,
+} from '@webview-ts/shared';
 import type {
   BridgeConfig,
   BridgeCallOptions,
@@ -503,14 +510,10 @@ export class BridgeClient<
           return; // Not a JSON message — ignore
         }
 
-        if (typeof parsed !== 'object' || parsed === null) return;
-
-        const msg = parsed as Record<string, unknown>;
-
-        if ('event' in msg) {
-          this.handleEvent(msg as unknown as BridgeEvent);
-        } else if ('id' in msg && 'success' in msg) {
-          this.handleResponse(msg as unknown as BridgeResponse);
+        if (isBridgeEvent(parsed)) {
+          this.handleEvent(parsed);
+        } else if (isBridgeResponse(parsed)) {
+          this.handleResponse(parsed);
         }
       };
 
