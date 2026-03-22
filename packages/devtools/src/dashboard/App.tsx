@@ -98,16 +98,13 @@ export function App() {
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
       : '-';
-    const hasHost = all.some((m) => m.source === 'host');
-    const hasClient = all.some((m) => m.source === 'client');
-    const sources = { hosts: hasHost ? 1 : 0, clients: hasClient ? 1 : 0 };
     const errorBreakdown: Record<string, number> = {};
     for (const m of all) {
       if (m.error?.code) {
         errorBreakdown[m.error.code] = (errorBreakdown[m.error.code] ?? 0) + 1;
       }
     }
-    return { total, errs, events, rate, avg, sources, errorBreakdown };
+    return { total, errs, events, rate, avg, errorBreakdown };
   }, [all]);
 
   const eventStream = useMemo(() => {

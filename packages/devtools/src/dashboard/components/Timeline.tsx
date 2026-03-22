@@ -36,23 +36,6 @@ export function Timeline({ records, selectedId, hasAnyRecords, onSelect }: Timel
             <span className="msg-icon" style={{ color }}>
               {statusIcon(m.status)}
             </span>
-            {m.source && (
-              <span
-                className="msg-source"
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  padding: '1px 4px',
-                  borderRadius: 3,
-                  background: m.source === 'host' ? '#6366f1' : '#0ea5e9',
-                  color: '#fff',
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                }}
-              >
-                {m.source}
-              </span>
-            )}
             {m.sourceId && (
               <span
                 style={{

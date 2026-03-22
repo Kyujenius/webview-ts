@@ -211,20 +211,6 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       cleanup2();
     });
-
-    it('event source is correctly inverted (client records host events)', async () => {
-      const target = createTarget();
-      tryAutoDevTools(target, 'client');
-      await new Promise<void>((r) => queueMicrotask(r));
-
-      const ws = MockWebSocket.instances[0];
-      ws.sent = [];
-
-      target.eventHandlers[0]('location.updated', { lat: 37 });
-
-      const record = JSON.parse(ws.sent[0]);
-      expect(record.record.source).toBe('host'); // inverted from 'client'
-    });
   });
 
   describe('multiple targets — Strict Mode isolation', () => {

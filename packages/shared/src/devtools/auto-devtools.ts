@@ -40,7 +40,6 @@ interface RecordPayload {
   middlewareTrace?: unknown[];
   handlerMs?: number;
   handlerSkipped?: boolean;
-  source?: DevToolsRole;
   messageId?: string;
   sourceId?: string;
   targetId?: string;
@@ -56,7 +55,7 @@ function sendRecord(ws: WebSocket | null, record: RecordPayload): void {
   }
 }
 
-function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middleware {
+function createRecordingMiddleware(ws: WebSocket): Middleware {
   const fn = async (ctx: MiddlewareContext, next: () => Promise<void>) => {
     const record: RecordPayload = {
       recordId: generateRecordId(),
@@ -64,7 +63,6 @@ function createRecordingMiddleware(ws: WebSocket, role: DevToolsRole): Middlewar
       action: ctx.request.action,
       payload: ctx.request.payload,
       timestamp: Date.now(),
-      source: role,
       messageId: ctx.request.id,
       sourceId: ctx.request.sourceId,
       targetId: ctx.request.targetId,
@@ -138,12 +136,10 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 /** Per-target event unsubscribe functions */
 const eventUnsubs = new Map<AutoDevToolsTarget, () => void>();
 
-function subscribeEvents(target: AutoDevToolsTarget, ws: WebSocket, role: DevToolsRole): void {
+function subscribeEvents(target: AutoDevToolsTarget, ws: WebSocket): void {
   if (!target.onAnyEvent) return;
   if (eventUnsubs.has(target)) return; // prevent duplicate subscription
 
-  // Events always flow host → client, so invert the source
-  const eventSource = role === 'client' ? 'host' : 'client';
   const unsub = target.onAnyEvent((event: string, payload: unknown) => {
     sendRecord(ws, {
       recordId: generateRecordId(),
@@ -151,7 +147,6 @@ function subscribeEvents(target: AutoDevToolsTarget, ws: WebSocket, role: DevToo
       action: event,
       payload,
       timestamp: Date.now(),
-      source: eventSource,
     });
   });
 
@@ -186,8 +181,8 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
     if (sharedWs !== thisWs) return;
     wsReady = true;
     for (const t of targets) {
-      t.prepend(createRecordingMiddleware(sharedWs!, sharedRole));
-      subscribeEvents(t, sharedWs!, sharedRole);
+      t.prepend(createRecordingMiddleware(sharedWs!));
+      subscribeEvents(t, sharedWs!);
     }
   };
 
@@ -241,8 +236,8 @@ export function tryAutoDevTools(
 
   // If WS is already open, register immediately
   if (ws && wsReady) {
-    target.prepend(createRecordingMiddleware(ws, role));
-    subscribeEvents(target, ws, role);
+    target.prepend(createRecordingMiddleware(ws));
+    subscribeEvents(target, ws);
   } else if (!ws && !retryTimer) {
     // First connection failed — schedule retry
     retryTimer = setTimeout(() => {

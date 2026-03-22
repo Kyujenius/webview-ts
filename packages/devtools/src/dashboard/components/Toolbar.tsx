@@ -6,7 +6,6 @@ interface Stats {
   errs: number;
   events: number;
   avg: string;
-  sources: { hosts: number; clients: number };
   errorBreakdown: Record<string, number>;
 }
 
@@ -45,22 +44,6 @@ export function Toolbar({ stats, connected, onClear }: ToolbarProps) {
         <span>
           Avg: <span className="stat-val">{stats.avg}ms</span>
         </span>
-        {stats.sources.hosts > 0 && (
-          <span>
-            Hosts:{' '}
-            <span className="stat-val" style={{ color: '#6366f1' }}>
-              {stats.sources.hosts}
-            </span>
-          </span>
-        )}
-        {stats.sources.clients > 0 && (
-          <span>
-            Clients:{' '}
-            <span className="stat-val" style={{ color: '#0ea5e9' }}>
-              {stats.sources.clients}
-            </span>
-          </span>
-        )}
       </div>
       {Object.keys(stats.errorBreakdown).length > 0 && (
         <div style={{ display: 'flex', gap: 6, fontSize: 10, marginLeft: 12 }}>
