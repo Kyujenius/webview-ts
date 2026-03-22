@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createValidator } from './Validator';
+import { createValidator, ValidatorMiddleware } from './Validator';
 import { MetadataMap } from '@webview-ts/shared';
 import type { MiddlewareContext } from '@webview-ts/shared';
 
@@ -192,5 +192,13 @@ describe('createValidator', () => {
       // next() does not set ctx.response
       await expect(mw.fn(ctx, noop)).resolves.toBeUndefined();
     });
+  });
+});
+
+describe('ValidatorMiddleware (deprecated)', () => {
+  it('wraps createValidator and exposes name and fn', () => {
+    const mw = new ValidatorMiddleware();
+    expect(mw.name).toBe('validator');
+    expect(typeof mw.fn).toBe('function');
   });
 });

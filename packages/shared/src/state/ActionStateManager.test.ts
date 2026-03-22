@@ -206,4 +206,22 @@ describe('ActionStateManager cache', () => {
     await manager.execute({ id: 1 });
     expect(callFn).toHaveBeenCalledTimes(2);
   });
+
+  it('wraps non-BridgeCallError as UNKNOWN_ERROR', async () => {
+    const manager = new ActionStateManager(async () => {
+      throw 'string error';
+    });
+    await expect(manager.execute(undefined as any)).rejects.toThrow();
+    expect(manager.getSnapshot().error?.code).toBe('UNKNOWN_ERROR');
+  });
+
+  it('handles unstringifiable payload for cache key', async () => {
+    const callFn = vi.fn().mockResolvedValue('ok');
+    const manager = new ActionStateManager(callFn, true);
+    const circular: any = {};
+    circular.self = circular;
+    // Should not throw — falls back to '__unstringifiable__'
+    await manager.execute(circular);
+    expect(callFn).toHaveBeenCalledTimes(1);
+  });
 });
