@@ -7,7 +7,12 @@ import type {
   MiddlewareContext,
   HostAdapter,
 } from '@webview-ts/shared';
-import { MiddlewarePipeline, toBridgeErrorCode, createDebugLogger } from '@webview-ts/shared';
+import {
+  MiddlewarePipeline,
+  toBridgeErrorCode,
+  createDebugLogger,
+  BridgeCallError,
+} from '@webview-ts/shared';
 
 /**
  * Configuration for the BridgeHost
@@ -137,7 +142,11 @@ export class BridgeHost {
         // Core: find and execute the action handler
         const handler = this.handlers.get(message.action);
         if (!handler) {
-          throw new Error(`No handler registered for action: ${message.action}`);
+          throw new BridgeCallError(
+            `No handler registered for action: ${message.action}`,
+            'HANDLER_NOT_FOUND',
+            { action: message.action }
+          );
         }
 
         const requestContext: RequestContext = {
@@ -173,7 +182,12 @@ export class BridgeHost {
       return ctx.response!;
     } catch (error) {
       const bridgeError: BridgeError = {
-        code: toBridgeErrorCode(error instanceof Error && 'code' in error ? error.code : undefined),
+        code:
+          error instanceof BridgeCallError
+            ? error.code
+            : toBridgeErrorCode(
+                error instanceof Error && 'code' in error ? error.code : 'HANDLER_ERROR'
+              ),
         message: error instanceof Error ? error.message : String(error),
         details: error instanceof Error ? { stack: error.stack } : undefined,
       };
