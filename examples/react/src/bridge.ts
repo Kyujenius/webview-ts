@@ -1,4 +1,5 @@
 import { createBridgeReact } from '@webview-ts/react';
+import { createLogger } from '@webview-ts/core';
 import {
   camera,
   location,
@@ -12,4 +13,5 @@ import {
 
 export const { BridgeProvider, useBridge, useAction, useEvent, usePlugin } = createBridgeReact({
   plugins: [camera, location, biometric, haptics, phone, calendar, device, share],
+  middleware: [createLogger({ includePayload: true, includeResponse: true })],
 });

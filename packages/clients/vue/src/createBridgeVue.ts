@@ -7,6 +7,7 @@ import type {
   ActionMapBase,
   EventMapBase,
   EventNames,
+  Middleware,
 } from '@webview-ts/shared';
 import type {
   AnyPluginList,
@@ -25,6 +26,8 @@ export interface CreateBridgeVueOptions<
 > {
   config?: BridgeConfig;
   plugins?: TPlugins;
+  /** Global middleware — registered in order (outermost first). */
+  middleware?: Middleware[];
   /** Zero-cost event type marker for custom events. Use `{} as MyEvents`. */
   events?: TCustomEvents;
 }
@@ -85,6 +88,13 @@ export function createBridgeVue<
         if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
           bridge.registerTimeouts(plugin.timeouts);
         }
+      }
+    }
+
+    // Register global middleware from options
+    if (options?.middleware) {
+      for (const mw of options.middleware) {
+        bridge.use(mw);
       }
     }
 
