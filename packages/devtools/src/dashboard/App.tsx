@@ -97,15 +97,9 @@ export function App() {
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
       : '-';
-    const sources = { hosts: 0, clients: 0 };
-    const seenSources = new Set<string>();
-    for (const m of all) {
-      if (m.source && !seenSources.has(`${m.source}:${m.sourceId ?? ''}`)) {
-        seenSources.add(`${m.source}:${m.sourceId ?? ''}`);
-        if (m.source === 'host') sources.hosts++;
-        else sources.clients++;
-      }
-    }
+    const hasHost = all.some((m) => m.source === 'host');
+    const hasClient = all.some((m) => m.source === 'client');
+    const sources = { hosts: hasHost ? 1 : 0, clients: hasClient ? 1 : 0 };
     const errorBreakdown: Record<string, number> = {};
     for (const m of all) {
       if (m.error?.code) {
