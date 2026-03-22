@@ -90,8 +90,8 @@ function createRecordingMiddleware(ws: WebSocket): Middleware {
 
       if (ctx.response?.success) {
         updated.responseData = ctx.response.data;
-      } else if (ctx.response) {
-        updated.error = ctx.response.error as RecordPayload['error'];
+      } else if (ctx.response && !ctx.response.success) {
+        updated.error = ctx.response.error;
       }
 
       sendRecord(ws, updated);
@@ -107,7 +107,7 @@ function createRecordingMiddleware(ws: WebSocket): Middleware {
         duration,
         error: {
           code: 'MIDDLEWARE_ERROR',
-          message: (error as Error).message,
+          message: error instanceof Error ? error.message : String(error),
         },
         middlewareTrace,
         handlerMs,

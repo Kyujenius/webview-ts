@@ -120,8 +120,8 @@ export class DevToolsMiddleware {
 
         if (ctx.response?.success) {
           updates.responseData = ctx.response.data;
-        } else if (ctx.response) {
-          updates.error = ctx.response.error as RecordedMessage['error'];
+        } else if (ctx.response && !ctx.response.success) {
+          updates.error = ctx.response.error;
         }
 
         this.store.updateMessage(record.recordId, updates);
@@ -140,14 +140,15 @@ export class DevToolsMiddleware {
         const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
         const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
 
+        const err = error instanceof Error ? error : new Error(String(error));
         const updates: Partial<RecordedMessage> = {
           status: 'error',
           duration,
           error: {
             code: 'MIDDLEWARE_ERROR',
-            message: (error as Error).message,
+            message: err.message,
           },
-          stackTrace: this.config.captureStackTraces ? (error as Error).stack : undefined,
+          stackTrace: this.config.captureStackTraces ? err.stack : undefined,
           middlewareTrace,
           handlerMs,
           handlerSkipped,
@@ -157,8 +158,7 @@ export class DevToolsMiddleware {
         Object.assign(record, updates);
         this.config.onMessage(record);
         this.config.transport?.send({ type: 'record', record: { ...record } });
-        if (this.config.debug)
-          console.log(`[devtools] ✗ ${record.action} (error: ${(error as Error).message})`);
+        if (this.config.debug) console.log(`[devtools] ✗ ${record.action} (error: ${err.message})`);
 
         throw error;
       }

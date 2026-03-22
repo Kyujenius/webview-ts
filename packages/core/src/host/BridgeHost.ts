@@ -240,9 +240,20 @@ export class BridgeHost {
     this.adapter.send(messageJson);
   }
 
+  /**
+   * Detach adapter (runtime cleanup). Handlers and middleware are preserved
+   * so the instance can be reattached.
+   */
   destroy(): void {
+    this.adapter = undefined;
+  }
+
+  /**
+   * Full disposal — clears everything including handlers and middleware.
+   */
+  dispose(): void {
+    this.destroy();
     this.handlers.clear();
     this.pipeline.clear();
-    this.adapter = undefined;
   }
 }

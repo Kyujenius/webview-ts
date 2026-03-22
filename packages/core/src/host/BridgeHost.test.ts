@@ -162,13 +162,27 @@ describe('BridgeHost', () => {
   });
 
   describe('destroy', () => {
-    it('should clean up resources', () => {
+    it('should detach adapter but preserve handlers', () => {
       const handler = vi.fn();
       bridgeHost.registerAction('testAction', handler);
 
       bridgeHost.destroy();
 
-      // After destroy, should be able to register same action again
+      // Handlers preserved — re-registering same action should throw
+      expect(() => {
+        bridgeHost.registerAction('testAction', handler);
+      }).toThrow("Action 'testAction' is already registered");
+    });
+  });
+
+  describe('dispose', () => {
+    it('should clean up everything including handlers', () => {
+      const handler = vi.fn();
+      bridgeHost.registerAction('testAction', handler);
+
+      bridgeHost.dispose();
+
+      // After dispose, should be able to register same action again
       expect(() => {
         bridgeHost.registerAction('testAction', handler);
       }).not.toThrow();

@@ -89,6 +89,7 @@ export class BridgeClient<
 
     const normalized = this.normalizeFallback(this.config.fallback);
     if (!this.adapter.isAvailable() && normalized.enabled) {
+      // if adapter is notAvailable, adapter use FallbackAdapter.
       this.adapter = new FallbackAdapter(
         normalized.handlers ?? true,
         (response) => this.handleResponse(response),
@@ -119,7 +120,7 @@ export class BridgeClient<
    * Stop listening and disconnect DevTools, but preserve configuration
    * (middleware, handlers, interceptors). Safe to call connect() again after.
    */
-  disconnect(): void {
+  private disconnect(): void {
     this._devtoolsCleanup?.();
     this._devtoolsCleanup = undefined;
     if (typeof window !== 'undefined' && this.messageListener) {
@@ -482,7 +483,7 @@ export class BridgeClient<
   } {
     if (raw === true) return { enabled: true };
     if (raw === false || raw === undefined) return { enabled: false };
-    return { enabled: true, handlers: raw as FallbackMap };
+    return { enabled: true, handlers: raw };
   }
 
   /**

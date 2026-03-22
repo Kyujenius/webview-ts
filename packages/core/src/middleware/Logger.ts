@@ -69,12 +69,13 @@ export function createLogger(options: LoggerMiddlewareOptions = {}): Middleware 
         logger(resLevel, `[Bridge Response] ${request.action} (${duration}ms)`, resData);
       }
     } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       logger('error', `[Bridge Error] ${request.action}`, {
         id: request.id,
         action: request.action,
         error: {
-          message: (error as Error).message,
-          stack: (error as Error).stack,
+          message: err.message,
+          stack: err.stack,
         },
       });
       throw error;

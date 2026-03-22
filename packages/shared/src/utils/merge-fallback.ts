@@ -23,7 +23,7 @@ export function mergeFallbacks(
   }
 
   const configHandlers =
-    configFallback && typeof configFallback === 'object' ? (configFallback as FallbackMap) : {};
+    configFallback && typeof configFallback !== 'boolean' ? configFallback : {};
 
   return { ...pluginFallback, ...configHandlers };
 }

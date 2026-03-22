@@ -27,7 +27,7 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     const removeSpy = vi.spyOn(window, 'removeEventListener');
     bridge = new BridgeClient({ fallback: true });
     bridge.connect();
-    bridge.disconnect();
+    bridge['disconnect']();
 
     const removeCalls = removeSpy.mock.calls.filter((c) => c[0] === 'message');
     expect(removeCalls).toHaveLength(1);
@@ -49,8 +49,8 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
 
   it('disconnect() is idempotent — safe to call without connect', () => {
     bridge = new BridgeClient({ fallback: true });
-    expect(() => bridge.disconnect()).not.toThrow();
-    expect(() => bridge.disconnect()).not.toThrow();
+    expect(() => bridge['disconnect']()).not.toThrow();
+    expect(() => bridge['disconnect']()).not.toThrow();
   });
 
   it('Strict Mode cycle: connect → destroy → connect leaves exactly one listener', () => {
@@ -120,7 +120,7 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     bridge.on('test.updated', handler);
 
     bridge.connect();
-    bridge.disconnect();
+    bridge['disconnect']();
 
     window.dispatchEvent(
       new MessageEvent('message', {
