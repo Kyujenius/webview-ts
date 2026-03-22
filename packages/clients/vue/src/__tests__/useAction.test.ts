@@ -151,7 +151,7 @@ describe('useAction', () => {
       global: { provide: { [BRIDGE_KEY as symbol]: ctx } },
     });
 
-    expect(ctx.bridge.createActionState).toHaveBeenCalledWith('my.action');
+    expect(ctx.bridge.createActionState).toHaveBeenCalledWith('my.action', undefined);
   });
 
   it('subscribes via watch and cleans up on unmount', () => {

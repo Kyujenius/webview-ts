@@ -98,6 +98,25 @@ export interface BridgeCallOptions {
 }
 
 /**
+ * Options for useAction hook (extends BridgeCallOptions with action-level concerns).
+ *
+ * Merge priority (shallow merge, narrower wins):
+ *   per-call (execute options) > per-action (useAction) > plugin (action marker) > global (BridgeConfig)
+ */
+export interface UseActionOptions extends BridgeCallOptions {
+  /**
+   * Simple TTL cache for action results.
+   * - `number`: TTL in milliseconds
+   * - `true`: cache indefinitely (until reset)
+   * - `false | undefined`: no cache (default)
+   *
+   * Cache key is derived from the serialized payload.
+   * Note: if a global cache middleware is also active, both layers will cache.
+   */
+  cache?: number | boolean;
+}
+
+/**
  * Type-safe action definition
  */
 export interface ActionDefinition<TPayload = unknown, TResponse = unknown> {

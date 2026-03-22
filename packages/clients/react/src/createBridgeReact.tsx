@@ -5,7 +5,7 @@ import type { ActionState } from '@webview-ts/shared';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
   BridgeConfig,
-  BridgeCallOptions,
+  UseActionOptions,
   ConnectionMode,
   ActionMapBase,
   EventMapBase,
@@ -100,7 +100,7 @@ export function createBridgeReact<
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
       const b = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
-      // Register per-action interceptors from plugin definitions
+      // Register per-action options from plugin definitions
       if (options?.plugins) {
         for (const plugin of options.plugins) {
           if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
@@ -108,6 +108,12 @@ export function createBridgeReact<
           }
           if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
             b.registerTimeouts(plugin.timeouts);
+          }
+          if (plugin.retries && Object.keys(plugin.retries).length > 0) {
+            b.registerRetries(plugin.retries);
+          }
+          if (plugin.caches && Object.keys(plugin.caches).length > 0) {
+            b.registerCaches(plugin.caches);
           }
         }
       }
@@ -153,7 +159,7 @@ export function createBridgeReact<
 
   function useAction<TAction extends ActionNames<TAllActions>>(
     action: TAction,
-    defaultOptions?: BridgeCallOptions
+    defaultOptions?: UseActionOptions
   ) {
     const { bridge } = useTypedContext();
     return useActionCore(bridge, action, defaultOptions);

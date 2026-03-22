@@ -1,8 +1,8 @@
 import { ref, onScopeDispose, inject } from 'vue';
 import { BRIDGE_KEY } from '../bridgeKey';
-import type { ActionState } from '@webview-ts/shared';
+import type { ActionState, UseActionOptions } from '@webview-ts/shared';
 
-export function useAction(action: string) {
+export function useAction(action: string, defaultOptions?: UseActionOptions) {
   const ctx = inject(BRIDGE_KEY);
   if (!ctx) {
     throw new Error(
@@ -10,7 +10,7 @@ export function useAction(action: string) {
     );
   }
 
-  const manager = ctx.bridge.createActionState(action);
+  const manager = ctx.bridge.createActionState(action, defaultOptions);
   const initial = manager.getSnapshot();
 
   const status = ref(initial.status);
@@ -34,5 +34,6 @@ export function useAction(action: string) {
     isLoading,
     execute: manager.execute,
     reset: manager.reset,
+    invalidateCache: manager.invalidateCache,
   };
 }

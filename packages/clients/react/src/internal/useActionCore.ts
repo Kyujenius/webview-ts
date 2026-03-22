@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type { BridgeClient } from '@webview-ts/core';
-import type { ActionMapBase, ActionNames, BridgeCallOptions } from '@webview-ts/shared';
+import type { ActionMapBase, ActionNames, UseActionOptions } from '@webview-ts/shared';
 
 export function useActionCore<
   TActions extends ActionMapBase,
   TAction extends ActionNames<TActions>,
->(bridge: BridgeClient<TActions>, action: TAction, defaultOptions?: BridgeCallOptions) {
+>(bridge: BridgeClient<TActions>, action: TAction, defaultOptions?: UseActionOptions) {
   const manager = useMemo(
     () => bridge.createActionState(action, defaultOptions),
     [bridge, action, defaultOptions]
@@ -22,5 +22,6 @@ export function useActionCore<
     isLoading: state.isLoading,
     execute: manager.execute,
     reset: manager.reset,
+    invalidateCache: manager.invalidateCache,
   };
 }
