@@ -3,13 +3,13 @@ import type {
   BridgeEvent,
   BridgeMessage,
   BridgeResponse,
+  ConnectionRegistry,
   HostAdapter,
   Middleware,
   MiddlewareContext,
 } from '@webview-ts/shared';
 import {
   BridgeCallError,
-  ConnectionRegistry,
   isBridgeMessage,
   MetadataMap,
   MiddlewarePipeline,

@@ -1,8 +1,13 @@
 import type { ActionHandler, BridgeHostConfig } from '@webview-ts/core';
 import { BridgeHost } from '@webview-ts/core';
-import type { ActionMapBase, Middleware, StrictKeyOf } from '@webview-ts/shared';
+import type {
+  ActionMapBase,
+  ConnectionRegistry,
+  Middleware,
+  StrictKeyOf,
+} from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
-import { ConnectionRegistry, generateSourceId } from '@webview-ts/shared';
+import { generateSourceId } from '@webview-ts/shared';
 
 import { ReactNativeHostAdapter } from '../adapters/ReactNativeHostAdapter';
 

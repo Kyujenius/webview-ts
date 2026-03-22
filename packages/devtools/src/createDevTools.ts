@@ -2,10 +2,12 @@
  * Convenience factory for creating DevTools bundle
  */
 
-import type { LoggerConfig } from './logger/StructuredLogger';
-import { createStructuredLogger, StructuredLogger } from './logger/StructuredLogger';
-import { createDevToolsMiddleware, DevToolsMiddleware } from './middleware/DevToolsMiddleware';
-import { createTimeTracker, TimeTracker } from './middleware/TimeTracker';
+import type { LoggerConfig, StructuredLogger } from './logger/StructuredLogger';
+import { createStructuredLogger } from './logger/StructuredLogger';
+import type { DevToolsMiddleware } from './middleware/DevToolsMiddleware';
+import { createDevToolsMiddleware } from './middleware/DevToolsMiddleware';
+import type { TimeTracker } from './middleware/TimeTracker';
+import { createTimeTracker } from './middleware/TimeTracker';
 import type { DevToolsConfig } from './types/index';
 
 /**

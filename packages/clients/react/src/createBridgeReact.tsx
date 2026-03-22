@@ -1,5 +1,5 @@
 import { BridgeClient } from '@webview-ts/core';
-import type { ActionState } from '@webview-ts/shared';
+import type { ActionState, ActionStateManager } from '@webview-ts/shared';
 import type {
   ActionMapBase,
   ActionNames,
@@ -17,7 +17,7 @@ import type {
   MergePluginEvents,
   TypedEventSubscriber,
 } from '@webview-ts/shared';
-import { ActionStateManager, mergeFallbacks } from '@webview-ts/shared';
+import { mergeFallbacks } from '@webview-ts/shared';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
