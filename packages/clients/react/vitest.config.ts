@@ -3,6 +3,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    coverage: { provider: 'v8', reporter: ['text', 'json', 'html'] },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: ['**/index.ts', '**/*.test.ts', '**/*.d.ts'],
+    },
   },
 });
