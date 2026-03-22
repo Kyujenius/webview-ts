@@ -92,7 +92,8 @@ export function App() {
     const errs = all.filter((m) => m.status === 'error').length;
     const events = all.filter((m) => m.status === 'event').length;
     const successes = all.filter((m) => m.status === 'success').length;
-    const rate = total ? Math.round((successes / total) * 100) : 0;
+    const calls = total - events;
+    const rate = calls ? Math.round((successes / calls) * 100) : 0;
     const durations = all.filter((m) => m.duration != null).map((m) => m.duration!);
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
