@@ -13,10 +13,3 @@ export function generateMessageId(): string {
   counter = (counter + 1) % 1000;
   return `${timestamp}-${random}-${counter}`;
 }
-
-/**
- * Reset counter (useful for testing)
- */
-export function resetCounter(): void {
-  counter = 0;
-}

@@ -196,10 +196,3 @@ export class PermissionManager {
     return Platform.OS;
   }
 }
-
-/**
- * Create a permission manager
- */
-export function createPermissionManager(config?: PermissionManagerConfig): PermissionManager {
-  return new PermissionManager(config);
-}

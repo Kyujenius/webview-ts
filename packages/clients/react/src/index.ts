@@ -1,6 +1,6 @@
 // Recommended: type-safe factory (tRPC-style)
 export { createBridgeReact } from './createBridgeReact';
-export type { TypedBridgeProviderProps } from './createBridgeReact';
+export type { CreateBridgeReactOptions, TypedBridgeProviderProps } from './createBridgeReact';
 
 // Legacy: standalone hooks (untyped, requires manual generic)
 export { BridgeContext, useBridgeContext } from './BridgeContext';

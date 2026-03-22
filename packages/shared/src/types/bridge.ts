@@ -60,9 +60,8 @@ export interface BridgeConfig {
    * - `true`: log warnings and reject calls
    * - `false`: disable fallback
    * - `FallbackMap`: use provided handlers as mock responses
-   * - `{ mode, handlers? }`: explicit form with mode selection
    */
-  fallback?: boolean | FallbackMap | FallbackConfig;
+  fallback?: boolean | FallbackMap;
 }
 
 export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
@@ -70,11 +69,6 @@ export type FallbackHandler<TPayload = unknown, TResponse = unknown> = (
 ) => Promise<TResponse> | TResponse;
 
 export type FallbackMap = Record<string, FallbackHandler>;
-
-export interface FallbackConfig {
-  mode: 'reject' | 'mock';
-  handlers?: FallbackMap;
-}
 
 /**
  * Bridge call options
@@ -108,26 +102,6 @@ export interface UseActionOptions extends BridgeCallOptions {
    * Note: if a global cache middleware is also active, both layers will cache.
    */
   cache?: number | boolean;
-}
-
-/**
- * Type-safe action definition
- */
-export interface ActionDefinition<TPayload = unknown, TResponse = unknown> {
-  /**
-   * Action name/identifier
-   */
-  action: string;
-
-  /**
-   * Payload type (for type inference)
-   */
-  payload?: TPayload;
-
-  /**
-   * Response type (for type inference)
-   */
-  response?: TResponse;
 }
 
 /**

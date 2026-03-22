@@ -75,30 +75,7 @@ export function createBridgeReact<
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
       const b = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
-      // Register per-action options from plugin definitions
-      if (options?.plugins) {
-        for (const plugin of options.plugins) {
-          if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
-            b.registerInterceptors(plugin.interceptors);
-          }
-          if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
-            b.registerTimeouts(plugin.timeouts);
-          }
-          if (plugin.retries && Object.keys(plugin.retries).length > 0) {
-            b.registerRetries(plugin.retries);
-          }
-          if (plugin.caches && Object.keys(plugin.caches).length > 0) {
-            b.registerCaches(plugin.caches);
-          }
-        }
-      }
-
-      // Register global middleware from options
-      if (options?.middleware) {
-        for (const mw of options.middleware) {
-          b.use(mw);
-        }
-      }
+      b.applyPlugins(options?.plugins, options?.middleware);
 
       return b;
     }, []);

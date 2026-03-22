@@ -7,19 +7,45 @@ import { useBridge } from '../composables/useBridge';
 
 // Mock BridgeClient so tests don't need a real WebView environment
 vi.mock('@webview-ts/core', () => {
-  const BridgeClient = vi.fn(() => ({
-    connect: vi.fn(),
-    destroy: vi.fn(),
-    isAvailable: vi.fn(() => false),
-    connectionMode: 'fallback' as const,
-    use: vi.fn(),
-    on: vi.fn(() => vi.fn()),
-    createActionState: vi.fn(),
-    registerInterceptors: vi.fn(),
-    registerTimeouts: vi.fn(),
-    registerRetries: vi.fn(),
-    registerCaches: vi.fn(),
-  }));
+  const BridgeClient = vi.fn(() => {
+    const instance: Record<string, any> = {
+      connect: vi.fn(),
+      destroy: vi.fn(),
+      isAvailable: vi.fn(() => false),
+      connectionMode: 'fallback' as const,
+      use: vi.fn(),
+      on: vi.fn(() => vi.fn()),
+      createActionState: vi.fn(),
+      registerInterceptors: vi.fn(),
+      registerTimeouts: vi.fn(),
+      registerRetries: vi.fn(),
+      registerCaches: vi.fn(),
+    };
+    instance.applyPlugins = vi.fn((plugins?: any[], middleware?: any[]) => {
+      if (plugins) {
+        for (const plugin of plugins) {
+          if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
+            instance.registerInterceptors(plugin.interceptors);
+          }
+          if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
+            instance.registerTimeouts(plugin.timeouts);
+          }
+          if (plugin.retries && Object.keys(plugin.retries).length > 0) {
+            instance.registerRetries(plugin.retries);
+          }
+          if (plugin.caches && Object.keys(plugin.caches).length > 0) {
+            instance.registerCaches(plugin.caches);
+          }
+        }
+      }
+      if (middleware) {
+        for (const mw of middleware) {
+          instance.use(mw);
+        }
+      }
+    });
+    return instance;
+  });
   return { BridgeClient };
 });
 
@@ -198,14 +224,14 @@ describe('createBridgeVue', () => {
       expect(finalConfig.fallback['action.foo']).toBe(configFn);
     });
 
-    it('plugin fallback is overridden by config fallback ({ handlers } form)', async () => {
+    it('plugin fallback is overridden by config fallback (FallbackMap form)', async () => {
       const { BridgeClient } = await import('@webview-ts/core');
 
       const pluginFn = vi.fn();
       const configFn = vi.fn();
       const plugin = createBridgeVue({
         plugins: [{ fallback: { 'action.foo': pluginFn } }] as any,
-        config: { fallback: { mode: 'silent', handlers: { 'action.foo': configFn } } as any },
+        config: { fallback: { 'action.foo': configFn } },
       });
       mount(defineComponent({ setup: () => () => h('div') }), {
         global: { plugins: [plugin] },

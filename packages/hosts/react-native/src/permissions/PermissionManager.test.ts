@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PermissionStatus } from '@webview-ts/shared';
-import { PermissionManager, createPermissionManager } from './PermissionManager';
+import { PermissionManager } from './PermissionManager';
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 
@@ -13,13 +13,7 @@ describe('PermissionManager', () => {
     manager = new PermissionManager({ onError });
   });
 
-  // 1. createPermissionManager returns instance
-  it('createPermissionManager returns a PermissionManager instance', () => {
-    const m = createPermissionManager();
-    expect(m).toBeInstanceOf(PermissionManager);
-  });
-
-  // 2. registerPermission + hasPermissionHandler
+  // 1. registerPermission + hasPermissionHandler
   it('registerPermission registers a handler and hasPermissionHandler returns true', () => {
     expect(manager.hasPermissionHandler('camera')).toBe(false);
     manager.registerPermission('camera', vi.fn());

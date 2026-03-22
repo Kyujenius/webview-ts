@@ -8,7 +8,7 @@ import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline
 import { createClientAdapter } from '../adapters/index';
 import type { ClientAdapter } from '@webview-ts/shared';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
-import { MiddlewarePipeline } from '../middleware/MiddlewarePipeline';
+import { MiddlewarePipeline } from '@webview-ts/shared';
 import { generateMessageId } from '../utils/id-generator';
 import { BridgeCallError, METADATA_KEYS, MetadataMap, tryAutoDevTools } from '@webview-ts/shared';
 import type {
@@ -29,7 +29,7 @@ import type {
   InferResponse,
   ConnectionMode,
   FallbackMap,
-  FallbackConfig,
+  AnyPlugin,
 } from '@webview-ts/shared';
 /**
  * Event handler type
@@ -375,7 +375,7 @@ export class BridgeClient<
   /**
    * Register per-action interceptors (from plugin definitions)
    */
-  registerInterceptors(interceptorMap: Record<string, Middleware[]>): void {
+  private registerInterceptors(interceptorMap: Record<string, Middleware[]>): void {
     for (const [action, interceptors] of Object.entries(interceptorMap)) {
       const existing = this.actionInterceptors.get(action) ?? [];
       this.actionInterceptors.set(action, [...existing, ...interceptors]);
@@ -385,7 +385,7 @@ export class BridgeClient<
   /**
    * Register per-action timeouts (from plugin definitions)
    */
-  registerTimeouts(timeoutMap: Record<string, number>): void {
+  private registerTimeouts(timeoutMap: Record<string, number>): void {
     for (const [action, timeout] of Object.entries(timeoutMap)) {
       this.actionTimeouts.set(action, timeout);
     }
@@ -394,7 +394,7 @@ export class BridgeClient<
   /**
    * Register per-action retries (from plugin definitions)
    */
-  registerRetries(retryMap: Record<string, RetryConfig>): void {
+  private registerRetries(retryMap: Record<string, RetryConfig>): void {
     for (const [action, retry] of Object.entries(retryMap)) {
       this.actionRetries.set(action, retry);
     }
@@ -403,9 +403,37 @@ export class BridgeClient<
   /**
    * Register per-action caches (from plugin definitions)
    */
-  registerCaches(cacheMap: Record<string, number | boolean>): void {
+  private registerCaches(cacheMap: Record<string, number | boolean>): void {
     for (const [action, cache] of Object.entries(cacheMap)) {
       this.actionCaches.set(action, cache);
+    }
+  }
+
+  /**
+   * Apply plugins and global middleware in one call.
+   * Replaces the duplicated registration loops in framework adapters (React, Vue, etc.).
+   */
+  applyPlugins(plugins?: AnyPlugin[], middleware?: Middleware[]): void {
+    if (plugins) {
+      for (const plugin of plugins) {
+        if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
+          this.registerInterceptors(plugin.interceptors);
+        }
+        if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
+          this.registerTimeouts(plugin.timeouts);
+        }
+        if (plugin.retries && Object.keys(plugin.retries).length > 0) {
+          this.registerRetries(plugin.retries);
+        }
+        if (plugin.caches && Object.keys(plugin.caches).length > 0) {
+          this.registerCaches(plugin.caches);
+        }
+      }
+    }
+    if (middleware) {
+      for (const mw of middleware) {
+        this.use(mw);
+      }
     }
   }
 
@@ -454,9 +482,6 @@ export class BridgeClient<
   } {
     if (raw === true) return { enabled: true };
     if (raw === false || raw === undefined) return { enabled: false };
-    if (typeof raw === 'object' && 'mode' in raw) {
-      return { enabled: true, handlers: (raw as FallbackConfig).handlers };
-    }
     return { enabled: true, handlers: raw as FallbackMap };
   }
 

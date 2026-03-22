@@ -31,7 +31,7 @@ describe('BridgeClient - Cleanup', () => {
 
     it('should preserve action interceptors after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.registerInterceptors({
+      bridge['registerInterceptors']({
         'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
       });
       bridge.destroy();
@@ -41,7 +41,7 @@ describe('BridgeClient - Cleanup', () => {
 
     it('should preserve action timeouts after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.registerTimeouts({ 'camera.getInfo': 5000 });
+      bridge['registerTimeouts']({ 'camera.getInfo': 5000 });
       bridge.destroy();
 
       expect(bridge['actionTimeouts'].size).toBe(1);
@@ -81,7 +81,7 @@ describe('BridgeClient - Cleanup', () => {
 
     it('should clear action interceptors after dispose', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.registerInterceptors({
+      bridge['registerInterceptors']({
         'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
       });
       bridge.dispose();
@@ -91,7 +91,7 @@ describe('BridgeClient - Cleanup', () => {
 
     it('should clear action timeouts after dispose', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.registerTimeouts({ 'camera.getInfo': 5000 });
+      bridge['registerTimeouts']({ 'camera.getInfo': 5000 });
       bridge.dispose();
 
       expect(bridge['actionTimeouts'].size).toBe(0);

@@ -79,8 +79,8 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     bridge = new BridgeClient({ fallback: true });
     const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
     bridge.use(mw);
-    bridge.registerInterceptors({ 'test.action': [mw] });
-    bridge.registerTimeouts({ 'test.action': 5000 });
+    bridge['registerInterceptors']({ 'test.action': [mw] });
+    bridge['registerTimeouts']({ 'test.action': 5000 });
     bridge.on('testEvent', vi.fn());
 
     // Full Strict Mode cycle

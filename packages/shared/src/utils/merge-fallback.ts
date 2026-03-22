@@ -1,4 +1,4 @@
-import type { BridgeConfig, FallbackMap, FallbackConfig } from '../types/bridge';
+import type { BridgeConfig, FallbackMap } from '../types/bridge';
 import type { AnyPlugin } from '../plugins/types';
 
 /**
@@ -23,11 +23,7 @@ export function mergeFallbacks(
   }
 
   const configHandlers =
-    configFallback && typeof configFallback === 'object' && !('mode' in configFallback)
-      ? (configFallback as FallbackMap)
-      : configFallback && typeof configFallback === 'object' && 'handlers' in configFallback
-        ? ((configFallback as FallbackConfig).handlers ?? {})
-        : {};
+    configFallback && typeof configFallback === 'object' ? (configFallback as FallbackMap) : {};
 
   return { ...pluginFallback, ...configHandlers };
 }

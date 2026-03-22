@@ -3,20 +3,12 @@
  * React Native host implementation for webview-ts
  */
 
-// Re-export BridgeHost from core for convenience
-export {
-  BridgeHost,
-  type BridgeHostConfig,
-  type ActionHandler,
-  type RequestContext,
-} from '@webview-ts/core';
-
 // Adapter
 export { ReactNativeHostAdapter } from './adapters/ReactNativeHostAdapter';
 export type { WebViewMessageEvent } from './adapters/ReactNativeHostAdapter';
 
 // Permissions
-export { createPermissionManager } from './permissions/PermissionManager';
+export { PermissionManager } from './permissions/PermissionManager';
 export type {
   PermissionManagerConfig,
   PermissionResult,

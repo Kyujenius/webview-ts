@@ -101,14 +101,9 @@ describe('BridgeClient', () => {
       expect(b.connectionMode).toBe('fallback');
     });
 
-    it('should accept explicit mode object with reject', () => {
-      const b = new BridgeClient({ fallback: { mode: 'reject' } });
-      expect(b.connectionMode).toBe('fallback');
-    });
-
-    it('should accept explicit mode object with mock and handlers', () => {
+    it('should accept FallbackMap directly', () => {
       const b = new BridgeClient({
-        fallback: { mode: 'mock', handlers: { 'test.action': async () => 42 } },
+        fallback: { 'test.action': async () => 42 },
       });
       expect(b.connectionMode).toBe('fallback');
     });
