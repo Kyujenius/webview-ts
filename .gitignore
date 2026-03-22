@@ -49,3 +49,4 @@ lerna-debug.log*
 .claude
 *.md
 .omc/
+.understand-anything/
