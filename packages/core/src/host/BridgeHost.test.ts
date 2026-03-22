@@ -174,4 +174,83 @@ describe('BridgeHost', () => {
       }).not.toThrow();
     });
   });
+
+  describe('middleware', () => {
+    it('use() registers middleware that runs before handler', async () => {
+      const order: string[] = [];
+      const mw = {
+        name: 'test',
+        fn: async (_ctx: any, next: any) => {
+          order.push('mw');
+          await next();
+        },
+      };
+
+      bridgeHost.use(mw);
+      bridgeHost.registerHandler('mw.action', async () => {
+        order.push('handler');
+        return 'ok';
+      });
+
+      await bridgeHost.handleMessage({
+        id: 'msg-1',
+        action: 'mw.action',
+        payload: undefined,
+        timestamp: Date.now(),
+        sourceId: 'client',
+        targetId: 'host',
+      });
+
+      expect(order).toEqual(['mw', 'handler']);
+    });
+
+    it('prepend() adds middleware as outermost layer', async () => {
+      const order: string[] = [];
+
+      bridgeHost.use({
+        name: 'inner',
+        fn: async (_ctx: any, next: any) => {
+          order.push('inner');
+          await next();
+        },
+      });
+      bridgeHost.prepend({
+        name: 'outer',
+        fn: async (_ctx: any, next: any) => {
+          order.push('outer');
+          await next();
+        },
+      });
+      bridgeHost.registerHandler('order.test', async () => 'ok');
+
+      await bridgeHost.handleMessage({
+        id: 'msg-1',
+        action: 'order.test',
+        payload: undefined,
+        timestamp: Date.now(),
+        sourceId: 'client',
+        targetId: 'host',
+      });
+
+      expect(order).toEqual(['outer', 'inner']);
+    });
+
+    it('removeMiddleware() removes by name', () => {
+      bridgeHost.use({ name: 'removable', fn: async (_ctx: any, next: any) => next() });
+      expect(bridgeHost.removeMiddleware('removable')).toBe(true);
+      expect(bridgeHost.removeMiddleware('removable')).toBe(false);
+    });
+  });
+
+  describe('event sending', () => {
+    it('sendEvent sends event JSON via adapter', () => {
+      bridgeHost.sendEvent('test.event', { data: 1 });
+
+      expect(mockAdapter.sent.length).toBeGreaterThan(0);
+      const parsed = JSON.parse(mockAdapter.sent[mockAdapter.sent.length - 1]);
+      expect(parsed.event).toBe('test.event');
+      expect(parsed.payload).toEqual({ data: 1 });
+      expect(parsed.sourceId).toBe('host');
+    });
+  });
 });
