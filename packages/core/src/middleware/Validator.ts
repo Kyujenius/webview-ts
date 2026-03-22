@@ -69,21 +69,3 @@ export function createValidator(options: ValidatorMiddlewareOptions = {}): Middl
 
   return { name: 'validator', fn };
 }
-
-/**
- * @deprecated Use createValidator() instead
- */
-export class ValidatorMiddleware {
-  private middleware: Middleware;
-
-  constructor(options: ValidatorMiddlewareOptions = {}) {
-    this.middleware = createValidator(options);
-  }
-
-  get name() {
-    return this.middleware.name;
-  }
-  get fn() {
-    return this.middleware.fn;
-  }
-}

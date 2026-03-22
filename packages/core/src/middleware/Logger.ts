@@ -83,21 +83,3 @@ export function createLogger(options: LoggerMiddlewareOptions = {}): Middleware 
 
   return { name: 'logger', fn };
 }
-
-/**
- * @deprecated Use createLogger() instead
- */
-export class LoggerMiddleware {
-  private middleware: Middleware;
-
-  constructor(options: LoggerMiddlewareOptions = {}) {
-    this.middleware = createLogger(options);
-  }
-
-  get name() {
-    return this.middleware.name;
-  }
-  get fn() {
-    return this.middleware.fn;
-  }
-}

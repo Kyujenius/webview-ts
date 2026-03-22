@@ -17,3 +17,4 @@ export { MetadataMap, createMetadataKey, type MetadataKey } from './metadata/ind
 export { tryAutoDevTools } from './devtools/auto-devtools';
 export type { AutoDevToolsTarget } from './devtools/auto-devtools';
 export { generateSourceId } from './utils/source-id';
+export { mergeFallbacks } from './utils/merge-fallback';

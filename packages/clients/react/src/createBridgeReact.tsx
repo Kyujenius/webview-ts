@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
 import { BridgeClient } from '@webview-ts/core';
-import { ActionStateManager } from '@webview-ts/shared';
+import { ActionStateManager, mergeFallbacks } from '@webview-ts/shared';
 import type { ActionState } from '@webview-ts/shared';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
@@ -10,7 +10,6 @@ import type {
   ActionMapBase,
   EventMapBase,
   ActionNames,
-  FallbackMap,
   EventNames,
   Middleware,
 } from '@webview-ts/shared';
@@ -72,31 +71,7 @@ export function createBridgeReact<
 
     // useMemo: create instance without side effects (safe for Strict Mode double-invoke)
     const bridge = useMemo(() => {
-      // Auto-collect fallbacks from plugins
-      let pluginFallback: FallbackMap = {};
-      if (options?.plugins) {
-        for (const plugin of options.plugins) {
-          if (plugin.fallback) {
-            pluginFallback = { ...pluginFallback, ...plugin.fallback };
-          }
-        }
-      }
-
-      // Merge: plugin fallback (base) + config fallback (override)
-      const configFallback = mergedConfig?.fallback;
-      let finalFallback: BridgeConfig['fallback'];
-      if (Object.keys(pluginFallback).length > 0) {
-        const configHandlers =
-          configFallback && typeof configFallback === 'object' && !('mode' in configFallback)
-            ? (configFallback as FallbackMap)
-            : configFallback && typeof configFallback === 'object' && 'handlers' in configFallback
-              ? ((configFallback as { handlers?: FallbackMap }).handlers ?? {})
-              : {};
-        finalFallback = { ...pluginFallback, ...configHandlers };
-      } else {
-        finalFallback = configFallback;
-      }
-
+      const finalFallback = mergeFallbacks(options?.plugins, mergedConfig?.fallback);
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
       const b = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 

@@ -1,9 +1,9 @@
 import type { App, Plugin } from 'vue';
 import { inject, onScopeDispose } from 'vue';
 import { BridgeClient } from '@webview-ts/core';
+import { mergeFallbacks } from '@webview-ts/shared';
 import type {
   BridgeConfig,
-  FallbackMap,
   ActionMapBase,
   EventMapBase,
   EventNames,
@@ -51,31 +51,7 @@ export function createBridgeVue<
   type TAllEvents = MergePluginEvents<TPlugins> & TCustomEvents;
 
   function install(app: App) {
-    // Collect fallbacks from plugins
-    let pluginFallback: FallbackMap = {};
-    if (options?.plugins) {
-      for (const plugin of options.plugins) {
-        if (plugin.fallback) {
-          pluginFallback = { ...pluginFallback, ...plugin.fallback };
-        }
-      }
-    }
-
-    // Merge: plugin fallback (base) + config fallback (override)
-    const configFallback = options?.config?.fallback;
-    let finalFallback: BridgeConfig['fallback'];
-    if (Object.keys(pluginFallback).length > 0) {
-      const configHandlers =
-        configFallback && typeof configFallback === 'object' && !('mode' in configFallback)
-          ? (configFallback as FallbackMap)
-          : configFallback && typeof configFallback === 'object' && 'handlers' in configFallback
-            ? ((configFallback as { handlers?: FallbackMap }).handlers ?? {})
-            : {};
-      finalFallback = { ...pluginFallback, ...configHandlers };
-    } else {
-      finalFallback = configFallback;
-    }
-
+    const finalFallback = mergeFallbacks(options?.plugins, options?.config?.fallback);
     const finalConfig: BridgeConfig = { ...options?.config, fallback: finalFallback };
     const bridge = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 

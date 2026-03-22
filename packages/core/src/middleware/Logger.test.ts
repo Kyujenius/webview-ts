@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MetadataMap } from '@webview-ts/shared';
 import type { MiddlewareContext } from '@webview-ts/shared';
-import { createLogger, LoggerMiddleware } from './Logger';
+import { createLogger } from './Logger';
 
 function makeCtx(overrides?: Partial<MiddlewareContext>): MiddlewareContext {
   return {
@@ -171,13 +171,5 @@ describe('createLogger', () => {
 
     expect(logger.mock.calls[0][0]).toBe('debug');
     expect(logger.mock.calls[1][0]).toBe('debug');
-  });
-});
-
-describe('LoggerMiddleware (deprecated)', () => {
-  it('wraps createLogger and exposes name and fn', () => {
-    const mw = new LoggerMiddleware();
-    expect(mw.name).toBe('logger');
-    expect(typeof mw.fn).toBe('function');
   });
 });
