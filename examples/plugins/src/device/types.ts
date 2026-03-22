@@ -5,3 +5,5 @@ export interface DeviceInfoResponse {
   osName: string;
   osVersion: string;
 }
+
+export type AppStateStatus = 'active' | 'background' | 'inactive';

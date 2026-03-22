@@ -1,9 +1,17 @@
-import { definePlugin, action } from '@webview-ts/shared';
-import type { DeviceInfoResponse } from './types';
+import { definePlugin, action, event } from '@webview-ts/shared';
+import type { DeviceInfoResponse, AppStateStatus } from './types';
 
-export const device = definePlugin('device', {
-  getInfo: action<void, DeviceInfoResponse>(),
-}).withFallback({
+export const device = definePlugin(
+  'device',
+  {
+    getInfo: action<void, DeviceInfoResponse>(),
+  },
+  {
+    events: {
+      appStateChanged: event<AppStateStatus>(),
+    },
+  }
+).withFallback({
   getInfo: async () => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 

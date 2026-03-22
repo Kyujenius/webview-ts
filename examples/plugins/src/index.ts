@@ -39,6 +39,6 @@ export type {
   CalendarEvent,
 } from './calendar/types';
 
-export type { DeviceInfoResponse } from './device/types';
+export type { DeviceInfoResponse, AppStateStatus } from './device/types';
 
 export type { SharePayload, ShareResponse } from './share/types';
