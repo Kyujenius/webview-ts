@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { action, event } from './types';
 import { definePlugin } from './define';
+import type { Middleware } from '../types/middleware';
+
+const mockMiddleware = (label: string): Middleware => ({
+  name: label,
+  fn: vi.fn(),
+});
 
 // ─── action() ───
 
@@ -35,8 +41,8 @@ describe('action()', () => {
   });
 
   it('use() chains interceptors and returns same marker', () => {
-    const mw1 = vi.fn();
-    const mw2 = vi.fn();
+    const mw1 = mockMiddleware('mw1');
+    const mw2 = mockMiddleware('mw2');
     const m = action();
     const returned = m.use(mw1).use(mw2);
     expect(returned).toBe(m);
@@ -69,7 +75,7 @@ describe('definePlugin()', () => {
     getCached: action<void, string>({ cache: 8000 }),
   };
 
-  const mw = vi.fn();
+  const mw = mockMiddleware('test-interceptor');
   markers.takePhoto.use(mw);
 
   const plugin = definePlugin('camera', markers);
