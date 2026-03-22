@@ -15,21 +15,21 @@
     "@example/plugins": "workspace:*",
     "@webview-ts/react-native": "workspace:*",
     "@webview-ts/shared": "workspace:*",
-    "expo": "~52.0.49",
-    "expo-asset": "^55.0.8",
-    "expo-calendar": "~14.0.5",
-    "expo-device": "~7.0.3",
-    "expo-haptics": "~14.0.1",
-    "expo-image-picker": "~16.0.6",
-    "expo-local-authentication": "~15.0.2",
-    "expo-location": "~18.0.10",
-    "expo-status-bar": "~2.0.1",
-    "react": "18.3.1",
-    "react-native": "0.76.9",
-    "react-native-webview": "^13.12.5"
+    "expo": "~55.0.8",
+    "expo-asset": "^55.0.10",
+    "expo-calendar": "~55.0.10",
+    "expo-device": "~55.0.10",
+    "expo-haptics": "~55.0.9",
+    "expo-image-picker": "~55.0.13",
+    "expo-local-authentication": "~55.0.9",
+    "expo-location": "~55.1.4",
+    "expo-status-bar": "~55.0.4",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-webview": "^13.16.0"
   },
   "devDependencies": {
-    "@types/react": "~18.3.27",
+    "@types/react": "~19.2.14",
     "typescript": "~5.9.2"
   }
 }
