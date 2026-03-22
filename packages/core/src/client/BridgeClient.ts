@@ -45,7 +45,6 @@ export class BridgeClient<
 > {
   private config: {
     timeout: number;
-    debug: boolean;
     maxConcurrentRequests: number;
     enableDeduplication: boolean;
     onError?: BridgeConfig['onError'];
@@ -79,7 +78,6 @@ export class BridgeClient<
     this.sourceId = generateSourceId(config.name);
     this.config = {
       timeout: config.timeout ?? 0,
-      debug: config.debug ?? false,
       maxConcurrentRequests: config.maxConcurrentRequests ?? 100,
       enableDeduplication: config.enableDeduplication ?? true,
       onError: config.onError,

@@ -26,8 +26,6 @@ export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = Action
   middleware?: Middleware[];
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
-  /** Optional debug mode */
-  debug?: boolean;
 }
 
 export interface SimpleBridgeHostResult {
@@ -64,9 +62,9 @@ export interface SimpleBridgeHostResult {
 export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
   options: SimpleBridgeHostOptions<TActions>
 ): SimpleBridgeHostResult {
-  const { handlers, plugins, middleware, config, debug } = options;
+  const { handlers, plugins, middleware, config } = options;
 
-  const bridgeHost = new BridgeHost({ ...config, debug });
+  const bridgeHost = new BridgeHost({ ...config });
 
   // Register middleware
   if (middleware) {

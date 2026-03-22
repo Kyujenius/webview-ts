@@ -16,8 +16,6 @@ export interface BridgeWebViewProps<TActions extends ActionMapBase = ActionMapBa
   middleware?: Middleware[];
   /** BridgeHost configuration */
   config?: BridgeHostConfig;
-  /** Debug mode */
-  debug?: boolean;
   /** Shared ConnectionRegistry for multi-webview routing */
   registry?: ConnectionRegistry;
   /** Name for this WebView instance (used in sourceId and DevTools) */
@@ -27,12 +25,12 @@ export interface BridgeWebViewProps<TActions extends ActionMapBase = ActionMapBa
 export function useBridgeWebView<TActions extends ActionMapBase = ActionMapBase>(
   props: BridgeWebViewProps<TActions>
 ) {
-  const { handlers, plugins, middleware, config, debug, registry, name } = props;
+  const { handlers, plugins, middleware, config, registry, name } = props;
 
   const sourceId = useMemo(() => generateSourceId(name), [name]);
 
   const host = useMemo(
-    () => createSimpleBridgeHost({ handlers, plugins, middleware, config, debug }),
+    () => createSimpleBridgeHost({ handlers, plugins, middleware, config }),
     [] // intentionally empty — host is created once on mount, matching useBridgeHost behavior
   );
 

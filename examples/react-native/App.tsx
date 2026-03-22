@@ -11,7 +11,7 @@ import {
   deviceHost,
   shareHost,
 } from './hosts';
-import { permissionGuard, rateLimiter } from './middleware';
+import { hostLogger, permissionGuard, rateLimiter } from './middleware';
 
 const WEB_APP_URL = 'http://localhost:3000';
 
@@ -27,8 +27,7 @@ export default function App() {
       deviceHost,
       shareHost,
     ],
-    middleware: [permissionGuard, rateLimiter],
-    debug: false,
+    middleware: [hostLogger, permissionGuard, rateLimiter],
   });
 
   return (

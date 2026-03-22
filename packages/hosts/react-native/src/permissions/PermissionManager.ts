@@ -1,16 +1,10 @@
 import { PermissionStatus } from '@webview-ts/shared';
 import { Platform } from 'react-native';
-import { createDebugLogger } from '@webview-ts/shared';
 
 /**
  * Configuration for PermissionManager
  */
 export interface PermissionManagerConfig {
-  /**
-   * Enable debug logging
-   */
-  debug?: boolean;
-
   /**
    * Custom error handler
    */
@@ -50,16 +44,13 @@ export class PermissionManager {
   private config: Required<PermissionManagerConfig>;
   private handlers: Map<string, PermissionHandler>;
   private cache: Map<string, PermissionResult>;
-  private log: (message: string, data?: unknown) => void;
 
   constructor(config: PermissionManagerConfig = {}) {
     this.config = {
-      debug: config.debug ?? false,
       onError: config.onError ?? ((error) => console.error('[PermissionManager]', error)),
     };
     this.handlers = new Map();
     this.cache = new Map();
-    this.log = createDebugLogger('PermissionManager', this.config.debug);
   }
 
   /**
@@ -71,7 +62,6 @@ export class PermissionManager {
     }
 
     this.handlers.set(permission, handler);
-    this.log(`Registered permission handler: ${permission}`);
   }
 
   /**
@@ -80,7 +70,6 @@ export class PermissionManager {
   unregisterPermission(permission: string): void {
     this.handlers.delete(permission);
     this.cache.delete(permission);
-    this.log(`Unregistered permission handler: ${permission}`);
   }
 
   /**
@@ -90,14 +79,12 @@ export class PermissionManager {
     // Check cache first
     const cached = this.cache.get(permission);
     if (cached) {
-      this.log(`Permission '${permission}' status from cache: ${cached.status}`);
       return cached.status;
     }
 
     // Get handler
     const handler = this.handlers.get(permission);
     if (!handler) {
-      this.log(`No handler for permission '${permission}', assuming denied`);
       return PermissionStatus.DENIED;
     }
 
@@ -108,7 +95,6 @@ export class PermissionManager {
       // Cache result
       this.cache.set(permission, result);
 
-      this.log(`Permission '${permission}' status: ${result.status}`);
       return result.status;
     } catch (error) {
       this.config.onError(error instanceof Error ? error : new Error(String(error)));
@@ -127,15 +113,12 @@ export class PermissionManager {
     }
 
     try {
-      this.log(`Requesting permission: ${permission}`);
-
       // Execute handler
       const result = await handler();
 
       // Update cache
       this.cache.set(permission, result);
 
-      this.log(`Permission '${permission}' request result: ${result.status}`);
       return result.status;
     } catch (error) {
       this.config.onError(error instanceof Error ? error : new Error(String(error)));
@@ -187,10 +170,8 @@ export class PermissionManager {
   clearCache(permission?: string): void {
     if (permission) {
       this.cache.delete(permission);
-      this.log(`Cleared cache for permission: ${permission}`);
     } else {
       this.cache.clear();
-      this.log('Cleared all permission cache');
     }
   }
 

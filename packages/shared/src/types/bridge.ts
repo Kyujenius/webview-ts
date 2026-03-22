@@ -34,12 +34,6 @@ export interface BridgeConfig {
   timeout?: number;
 
   /**
-   * Enable debug logging
-   * @default false
-   */
-  debug?: boolean;
-
-  /**
    * Maximum number of concurrent requests
    * @default 100
    */

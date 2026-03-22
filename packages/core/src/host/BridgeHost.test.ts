@@ -32,9 +32,7 @@ describe('BridgeHost', () => {
   let mockAdapter: ReturnType<typeof createMockAdapter>;
 
   beforeEach(() => {
-    bridgeHost = new BridgeHost({
-      debug: false,
-    });
+    bridgeHost = new BridgeHost();
 
     mockAdapter = createMockAdapter();
     bridgeHost.attach(mockAdapter.adapter);
@@ -45,19 +43,16 @@ describe('BridgeHost', () => {
       const defaultHost = new BridgeHost();
       const config = defaultHost.getConfig();
 
-      expect(config.debug).toBe(false);
       expect(config.timeout).toBe(0);
       expect(typeof config.onError).toBe('function');
     });
 
     it('should create bridge host with custom config', () => {
       const customHost = new BridgeHost({
-        debug: true,
         timeout: 10000,
       });
 
       const config = customHost.getConfig();
-      expect(config.debug).toBe(true);
       expect(config.timeout).toBe(10000);
     });
   });

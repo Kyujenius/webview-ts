@@ -7,7 +7,6 @@ describe('BridgeClient', () => {
   beforeEach(() => {
     bridge = new BridgeClient({
       timeout: 5000,
-      debug: false,
     });
   });
 
@@ -17,7 +16,6 @@ describe('BridgeClient', () => {
       const config = defaultBridge.getConfig();
 
       expect(config.timeout).toBe(0);
-      expect(config.debug).toBe(false);
       expect(config.maxConcurrentRequests).toBe(100);
       expect(config.enableDeduplication).toBe(true);
     });
@@ -25,13 +23,11 @@ describe('BridgeClient', () => {
     it('should create bridge with custom config', () => {
       const customBridge = new BridgeClient({
         timeout: 10000,
-        debug: true,
         maxConcurrentRequests: 50,
       });
 
       const config = customBridge.getConfig();
       expect(config.timeout).toBe(10000);
-      expect(config.debug).toBe(true);
       expect(config.maxConcurrentRequests).toBe(50);
     });
   });
@@ -42,7 +38,6 @@ describe('BridgeClient', () => {
 
       expect(config).toEqual({
         timeout: 5000,
-        debug: false,
         maxConcurrentRequests: 100,
         enableDeduplication: true,
       });

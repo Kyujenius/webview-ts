@@ -11,7 +11,6 @@ import {
   MiddlewarePipeline,
   MetadataMap,
   toBridgeErrorCode,
-  createDebugLogger,
   BridgeCallError,
 } from '@webview-ts/shared';
 
@@ -19,8 +18,6 @@ import {
  * Configuration for the BridgeHost
  */
 export interface BridgeHostConfig {
-  /** Enable debug logging */
-  debug?: boolean;
   /** Maximum time to process a request (ms). 0 = disabled (default) */
   timeout?: number;
   /** Custom error handler */
@@ -53,17 +50,14 @@ export class BridgeHost {
   private handlers: Map<string, ActionHandler>;
   private pipeline: MiddlewarePipeline;
   private adapter?: HostAdapter;
-  private log: (message: string, data?: unknown) => void;
 
   constructor(config: BridgeHostConfig = {}) {
     this.config = {
-      debug: config.debug ?? false,
       timeout: config.timeout ?? 0,
       onError: config.onError ?? ((error) => console.error('[BridgeHost]', error)),
     };
     this.handlers = new Map();
     this.pipeline = new MiddlewarePipeline();
-    this.log = createDebugLogger('BridgeHost', this.config.debug);
   }
 
   getConfig(): Required<BridgeHostConfig> {
@@ -93,12 +87,10 @@ export class BridgeHost {
       throw new Error(`Action '${action}' is already registered`);
     }
     this.handlers.set(action, handler as ActionHandler);
-    this.log(`Registered action: ${action}`);
   }
 
   unregisterHandler(action: string): void {
     this.handlers.delete(action);
-    this.log(`Unregistered action: ${action}`);
   }
 
   registerAction<TPayload = unknown, TResponse = unknown>(
@@ -130,8 +122,6 @@ export class BridgeHost {
    * Runs through the onion middleware pipeline, then executes the handler.
    */
   async handleMessage(message: BridgeMessage): Promise<BridgeResponse> {
-    this.log(`Received message: ${message.action}`, message);
-
     const ctx: MiddlewareContext = {
       request: message,
       startTime: Date.now(),
@@ -228,7 +218,6 @@ export class BridgeHost {
       sourceId: 'host',
     };
     this.sendToWebView(eventMessage);
-    this.log(`Sent event: ${event}`, eventMessage);
   }
 
   emit<TPayload = unknown>(event: string, payload?: TPayload): void {
@@ -241,7 +230,6 @@ export class BridgeHost {
 
   private sendResponse(response: BridgeResponse): void {
     this.sendToWebView(response);
-    this.log(`Sent response for message: ${response.id}`, response);
   }
 
   private sendToWebView(message: BridgeResponse | BridgeEvent): void {
@@ -256,6 +244,5 @@ export class BridgeHost {
     this.handlers.clear();
     this.pipeline.clear();
     this.adapter = undefined;
-    this.log('BridgeHost destroyed');
   }
 }
