@@ -124,3 +124,86 @@ describe('ActionStateManager', () => {
     expect(after).not.toBe(before);
   });
 });
+
+describe('ActionStateManager cache', () => {
+  it('returns cached result on second execute with same payload (cache: true)', async () => {
+    const callFn = vi.fn().mockResolvedValue({ value: 1 });
+    const manager = new ActionStateManager(callFn, true);
+
+    await manager.execute({ id: 1 });
+    await manager.execute({ id: 1 });
+
+    expect(callFn).toHaveBeenCalledTimes(1);
+    expect(manager.getSnapshot().data).toEqual({ value: 1 });
+  });
+
+  it('does not cache when cache is disabled (no cache arg)', async () => {
+    const callFn = vi.fn().mockResolvedValue({ value: 1 });
+    const manager = new ActionStateManager(callFn);
+
+    await manager.execute({ id: 1 });
+    await manager.execute({ id: 1 });
+
+    expect(callFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches different payloads separately', async () => {
+    const callFn = vi
+      .fn()
+      .mockImplementation((payload: { id: number }) => Promise.resolve({ value: payload.id }));
+    const manager = new ActionStateManager(callFn, true);
+
+    await manager.execute({ id: 1 });
+    await manager.execute({ id: 2 });
+    await manager.execute({ id: 1 });
+    await manager.execute({ id: 2 });
+
+    expect(callFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('expires cache after TTL', async () => {
+    const callFn = vi.fn().mockResolvedValue({ value: 1 });
+    const manager = new ActionStateManager(callFn, 50);
+
+    await manager.execute({ id: 1 });
+    expect(callFn).toHaveBeenCalledTimes(1);
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    await manager.execute({ id: 1 });
+    expect(callFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('invalidateCache clears cache but keeps state', async () => {
+    const callFn = vi.fn().mockResolvedValue({ value: 1 });
+    const manager = new ActionStateManager(callFn, true);
+
+    await manager.execute({ id: 1 });
+    expect(manager.getSnapshot().status).toBe('success');
+    expect(manager.getSnapshot().data).toEqual({ value: 1 });
+
+    manager.invalidateCache();
+
+    expect(manager.getSnapshot().status).toBe('success');
+    expect(manager.getSnapshot().data).toEqual({ value: 1 });
+
+    await manager.execute({ id: 1 });
+    expect(callFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('reset clears both cache and state', async () => {
+    const callFn = vi.fn().mockResolvedValue({ value: 1 });
+    const manager = new ActionStateManager(callFn, true);
+
+    await manager.execute({ id: 1 });
+    expect(manager.getSnapshot().status).toBe('success');
+
+    manager.reset();
+
+    expect(manager.getSnapshot().status).toBe('idle');
+    expect(manager.getSnapshot().data).toBeNull();
+
+    await manager.execute({ id: 1 });
+    expect(callFn).toHaveBeenCalledTimes(2);
+  });
+});
