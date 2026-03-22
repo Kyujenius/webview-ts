@@ -142,6 +142,198 @@ describe('createBridgeVue', () => {
     });
   });
 
+  describe('plugin fallback merging', () => {
+    it('collects fallback from a single plugin', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const fallbackFn = vi.fn(() => ({ ok: true }));
+      const plugin = createBridgeVue({
+        plugins: [{ fallback: { 'action.foo': fallbackFn } }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
+      const finalConfig = calls[calls.length - 1][0];
+      expect(finalConfig.fallback).toMatchObject({ 'action.foo': fallbackFn });
+    });
+
+    it('merges fallbacks from multiple plugins (later plugin overrides)', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const fn1 = vi.fn();
+      const fn2 = vi.fn();
+      const plugin = createBridgeVue({
+        plugins: [
+          { fallback: { 'action.foo': fn1, 'action.bar': fn1 } },
+          { fallback: { 'action.foo': fn2 } },
+        ] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
+      const finalConfig = calls[calls.length - 1][0];
+      expect(finalConfig.fallback['action.foo']).toBe(fn2);
+      expect(finalConfig.fallback['action.bar']).toBe(fn1);
+    });
+
+    it('plugin fallback is overridden by config fallback (FallbackMap form)', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const pluginFn = vi.fn();
+      const configFn = vi.fn();
+      const plugin = createBridgeVue({
+        plugins: [{ fallback: { 'action.foo': pluginFn } }] as any,
+        config: { fallback: { 'action.foo': configFn } as any },
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
+      const finalConfig = calls[calls.length - 1][0];
+      expect(finalConfig.fallback['action.foo']).toBe(configFn);
+    });
+
+    it('plugin fallback is overridden by config fallback ({ handlers } form)', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const pluginFn = vi.fn();
+      const configFn = vi.fn();
+      const plugin = createBridgeVue({
+        plugins: [{ fallback: { 'action.foo': pluginFn } }] as any,
+        config: { fallback: { mode: 'silent', handlers: { 'action.foo': configFn } } as any },
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
+      const finalConfig = calls[calls.length - 1][0];
+      expect(finalConfig.fallback['action.foo']).toBe(configFn);
+    });
+
+    it('uses config fallback directly when no plugin provides fallback', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const configFn = vi.fn();
+      const plugin = createBridgeVue({
+        plugins: [{}] as any,
+        config: { fallback: { 'action.foo': configFn } as any },
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
+      const finalConfig = calls[calls.length - 1][0];
+      expect(finalConfig.fallback['action.foo']).toBe(configFn);
+    });
+  });
+
+  describe('plugin registration (interceptors, timeouts, retries, caches)', () => {
+    it('calls registerInterceptors for a plugin with interceptors', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const interceptors = { 'action.foo': [vi.fn()] };
+      const plugin = createBridgeVue({
+        plugins: [{ interceptors }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerInterceptors).toHaveBeenCalledWith(interceptors);
+    });
+
+    it('does not call registerInterceptors when plugin.interceptors is empty', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const plugin = createBridgeVue({
+        plugins: [{ interceptors: {} }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerInterceptors).not.toHaveBeenCalled();
+    });
+
+    it('calls registerTimeouts for a plugin with timeouts', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const timeouts = { 'action.foo': 5000 };
+      const plugin = createBridgeVue({
+        plugins: [{ timeouts }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerTimeouts).toHaveBeenCalledWith(timeouts);
+    });
+
+    it('calls registerRetries for a plugin with retries', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const retries = { 'action.foo': 3 };
+      const plugin = createBridgeVue({
+        plugins: [{ retries }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerRetries).toHaveBeenCalledWith(retries);
+    });
+
+    it('calls registerCaches for a plugin with caches', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const caches = { 'action.foo': { ttl: 1000 } };
+      const plugin = createBridgeVue({
+        plugins: [{ caches }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerCaches).toHaveBeenCalledWith(caches);
+    });
+
+    it('registers multiple plugin configs from multiple plugins', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const timeouts1 = { 'action.foo': 3000 };
+      const timeouts2 = { 'action.bar': 7000 };
+      const plugin = createBridgeVue({
+        plugins: [{ timeouts: timeouts1 }, { timeouts: timeouts2 }] as any,
+      });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const results = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = results[results.length - 1].value;
+      expect(instance.registerTimeouts).toHaveBeenCalledTimes(2);
+      expect(instance.registerTimeouts).toHaveBeenCalledWith(timeouts1);
+      expect(instance.registerTimeouts).toHaveBeenCalledWith(timeouts2);
+    });
+  });
+
   describe('useEvent (typed)', () => {
     it('throws without a provider', () => {
       const plugin = createBridgeVue();
