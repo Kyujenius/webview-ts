@@ -1,5 +1,6 @@
 import type { ActionMapBase, StrictKeyOf, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
+import { ConnectionRegistry, generateSourceId } from '@webview-ts/shared';
 import type { BridgeHostConfig, ActionHandler } from '@webview-ts/core';
 import { BridgeHost } from '@webview-ts/core';
 import { ReactNativeHostAdapter } from '../adapters/ReactNativeHostAdapter';
@@ -25,6 +26,10 @@ export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = Action
   middleware?: Middleware[];
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
+  /** Shared ConnectionRegistry for multi-webview routing */
+  registry?: ConnectionRegistry;
+  /** Name for this WebView instance (used in sourceId and DevTools) */
+  name?: string;
 }
 
 export interface SimpleBridgeHostResult {
@@ -135,6 +140,8 @@ export interface UseBridgeHostReturn {
   sendEvent: <T>(event: string, payload: T) => void;
   /** Direct access to BridgeHost (advanced usage) */
   bridgeHost: BridgeHost;
+  /** Unique source ID for this WebView instance */
+  sourceId: string;
 }
 
 /**
@@ -163,7 +170,19 @@ export interface UseBridgeHostReturn {
 export function useBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
   options: SimpleBridgeHostOptions<TActions>
 ): UseBridgeHostReturn {
+  const { registry, name } = options;
+  const sourceId = useMemo(() => generateSourceId(name), [name]);
   const result = useMemo(() => createSimpleBridgeHost(options), []);
+
+  // Register with ConnectionRegistry if provided (multi-webview routing)
+  useEffect(() => {
+    if (!registry) return;
+    const sender = (message: string) => {
+      result.adapter.send(message);
+    };
+    registry.register(sourceId, sender);
+    return () => registry.unregister(sourceId);
+  }, [registry, sourceId, result]);
 
   useEffect(() => {
     return () => {
@@ -180,5 +199,6 @@ export function useBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
     webViewProps: result.webViewProps,
     sendEvent,
     bridgeHost: result.bridgeHost,
+    sourceId,
   };
 }
