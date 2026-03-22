@@ -9,6 +9,7 @@ const navLinks = [
   { to: '/device', label: 'Device' },
   { to: '/share', label: 'Share' },
   { to: '/actions', label: 'useAction' },
+  { to: '/middleware', label: 'Middleware' },
 ] as const;
 </script>
 

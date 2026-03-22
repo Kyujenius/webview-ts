@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/device', component: () => import('./pages/DevicePage.vue') },
     { path: '/share', component: () => import('./pages/SharePage.vue') },
     { path: '/actions', component: () => import('./pages/ActionsPage.vue') },
+    { path: '/middleware', component: () => import('./pages/MiddlewarePage.vue') },
   ],
 });
 

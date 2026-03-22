@@ -222,6 +222,43 @@ bridge.use({
 });`}
         </pre>
       </div>
+      <div className="card">
+        <h2>Global vs Plugin Interceptor</h2>
+        <pre style={{ fontSize: 11 }}>
+          {`// ─── Global Middleware ───
+// Runs on EVERY action. Use for cross-cutting concerns.
+// Registered via bridge.use() or createBridgeReact({ middleware: [...] })
+
+bridge.use(logger());      // Log all calls
+bridge.use(auth());        // Inject token on all requests
+bridge.use(timing());      // Measure all roundtrips
+
+// ─── Plugin Interceptor ───
+// Runs on ONE specific action only. Use for per-action behavior.
+// Registered via action.use() in plugin definition.
+
+const camera = definePlugin('camera', {
+  takePhoto: action<Payload, Response>({ timeout: 30000 })
+    .use(compressionInterceptor)   // Only for takePhoto
+    .use(watermarkInterceptor),    // Only for takePhoto
+  getInfo: action<void, Info>(),   // No interceptors
+});
+
+// ─── Execution Order ───
+//
+//  Global MW[0] (request)     ← outermost
+//    Global MW[1] (request)
+//      Plugin Interceptor[0] (request)  ← action-specific
+//        [CORE: send to native]
+//      Plugin Interceptor[0] (response)
+//    Global MW[1] (response)
+//  Global MW[0] (response)    ← outermost
+//
+// Rule of thumb:
+//   Affects ALL actions → global
+//   Affects ONE action  → interceptor`}
+        </pre>
+      </div>
     </div>
   );
 }
