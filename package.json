@@ -14,6 +14,7 @@
     "test:coverage": "bash scripts/coverage.sh",
     "test:watch": "turbo run test:watch",
     "lint": "turbo run lint",
+    "lint:fix": "eslint --fix 'packages/**/src/**/*.{ts,tsx}' 'examples/**/src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
