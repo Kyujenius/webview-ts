@@ -4,7 +4,7 @@ import { exec } from 'node:child_process';
 import { platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, type WebSocket } from 'ws';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '4000', 10);
@@ -19,7 +19,7 @@ const http = createServer((_req, res) => {
 type Role = 'host' | 'client' | 'dashboard';
 
 const wss = new WebSocketServer({ server: http });
-const connections = new Map<import('ws').WebSocket, Role>();
+const connections = new Map<WebSocket, Role>();
 
 function parseRole(url: string | undefined): Role {
   const params = new URL(url ?? '/', 'http://localhost').searchParams;
