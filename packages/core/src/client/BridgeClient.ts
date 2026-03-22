@@ -182,7 +182,7 @@ export class BridgeClient<
     options?: BridgeCallOptions
   ): Promise<InferResponse<TActions, TAction>> {
     if (!this.isAvailable()) {
-      throw new Error('Native bridge not available');
+      throw new BridgeCallError('Native bridge not available', 'NATIVE_UNAVAILABLE');
     }
 
     const message: BridgeMessage = {
