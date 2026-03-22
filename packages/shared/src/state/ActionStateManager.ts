@@ -1,10 +1,11 @@
 import type { ActionStatus } from '../plugins/types';
 import type { BridgeCallOptions } from '../types/bridge';
+import { BridgeCallError } from '../types/errors';
 
 export interface ActionState<TData> {
   status: ActionStatus;
   data: TData | null;
-  error: Error | null;
+  error: BridgeCallError | null;
   isLoading: boolean;
 }
 
@@ -54,7 +55,10 @@ export class ActionStateManager<TData, TPayload = unknown> {
       this.setState({ status: 'success', data: result, error: null, isLoading: false });
       return result;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      const error =
+        err instanceof BridgeCallError
+          ? err
+          : new BridgeCallError(err instanceof Error ? err.message : String(err), 'UNKNOWN_ERROR');
       // preserve previous data on error (matches current useActionCore behavior)
       this.setState({ status: 'error', data: this.state.data, error, isLoading: false });
       throw error;
