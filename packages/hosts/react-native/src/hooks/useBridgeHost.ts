@@ -1,6 +1,5 @@
 import type { ActionMapBase, StrictKeyOf, Middleware } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
-import { tryAutoDevTools } from '@webview-ts/shared';
 import type { BridgeHostConfig, ActionHandler } from '@webview-ts/core';
 import { BridgeHost } from '@webview-ts/core';
 import { ReactNativeHostAdapter } from '../adapters/ReactNativeHostAdapter';
@@ -167,9 +166,7 @@ export function useBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
   const result = useMemo(() => createSimpleBridgeHost(options), []);
 
   useEffect(() => {
-    const devtoolsCleanup = tryAutoDevTools(result.bridgeHost, 'host');
     return () => {
-      devtoolsCleanup?.();
       result.bridgeHost.destroy();
     };
   }, [result]);
