@@ -74,7 +74,7 @@ export function App() {
     if (filter !== 'all') arr = arr.filter((m) => m.status === filter);
     if (search) arr = arr.filter((m) => m.action.toLowerCase().includes(search.toLowerCase()));
     if (sourceFilter) arr = arr.filter((m) => m.sourceId === sourceFilter || m.status === 'event');
-    return arr.reverse();
+    return [...arr].sort((a, b) => b.timestamp - a.timestamp);
   }, [all, filter, search, sourceFilter]);
 
   const selected = selectedId ? (records.get(selectedId) ?? null) : null;
