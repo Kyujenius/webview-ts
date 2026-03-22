@@ -9,6 +9,7 @@ import CalendarPage from './pages/CalendarPage';
 import DevicePage from './pages/DevicePage';
 import SharePage from './pages/SharePage';
 import ActionsPage from './pages/ActionsPage';
+import MiddlewarePage from './pages/MiddlewarePage';
 
 const routes: { path: string; label: string; component: ComponentType }[] = [
   { path: '/', label: 'Home', component: HomePage },
@@ -20,6 +21,7 @@ const routes: { path: string; label: string; component: ComponentType }[] = [
   { path: '/device', label: 'Device', component: DevicePage },
   { path: '/share', label: 'Share', component: SharePage },
   { path: '/actions', label: 'useAction', component: ActionsPage },
+  { path: '/middleware', label: 'Middleware', component: MiddlewarePage },
 ];
 
 function App() {
