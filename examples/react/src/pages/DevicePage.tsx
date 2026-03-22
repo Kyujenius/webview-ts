@@ -10,7 +10,7 @@ function DevicePage() {
   const { getInfo, on } = usePlugin(device);
   const [appState, setAppState] = useState<AppStateStatus | null>(null);
 
-  on('appStateChanged', (state) => {
+  on('appStateChanged', (state: AppStateStatus) => {
     setAppState(state);
   });
 
