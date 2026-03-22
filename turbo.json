@@ -9,6 +9,10 @@
     "test": {
       "dependsOn": ["build"]
     },
+    "test:coverage": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test:watch": {
       "cache": false,
       "persistent": true

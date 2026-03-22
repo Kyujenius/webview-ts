@@ -44,6 +44,7 @@
     "build": "vite build --config vite.config.dashboard.ts && tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint src",
