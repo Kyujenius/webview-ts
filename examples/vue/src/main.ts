@@ -1,8 +1,10 @@
+import './styles.css';
+
 import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
+
 import App from './App.vue';
 import { bridge } from './bridge';
-import './styles.css';
 
 const router = createRouter({
   history: createWebHistory(),

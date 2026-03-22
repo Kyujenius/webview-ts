@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { usePlugin, useBridge } from '../bridge';
 import { location } from '@example/plugins';
-import ModeBadge from '../components/ModeBadge';
+import { useEffect, useState } from 'react';
+
+import { useBridge, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
+import ModeBadge from '../components/ModeBadge';
 
 function LocationPage() {
   const { getCurrentPosition, watchPosition, clearWatch, on } = usePlugin(location);

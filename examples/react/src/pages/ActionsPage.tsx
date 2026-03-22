@@ -1,5 +1,6 @@
-import { useAction, usePlugin } from '../bridge';
 import { device } from '@example/plugins';
+
+import { useAction, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
 
 function ActionsPage() {

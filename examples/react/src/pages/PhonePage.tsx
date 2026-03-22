@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { usePlugin, useBridge } from '../bridge';
 import { phone } from '@example/plugins';
-import ModeBadge from '../components/ModeBadge';
+import { useState } from 'react';
+
+import { useBridge, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
+import ModeBadge from '../components/ModeBadge';
 
 function PhonePage() {
   const { connectionMode } = useBridge();

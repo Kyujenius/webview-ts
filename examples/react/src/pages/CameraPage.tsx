@@ -1,7 +1,8 @@
-import { usePlugin, useBridge } from '../bridge';
 import { camera } from '@example/plugins';
-import ModeBadge from '../components/ModeBadge';
+
+import { useBridge, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
+import ModeBadge from '../components/ModeBadge';
 
 function CameraPage() {
   const { takePhoto, pickImage } = usePlugin(camera);

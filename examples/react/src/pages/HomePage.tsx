@@ -1,5 +1,5 @@
 import { useBridge } from '../bridge';
-import { getModeLabel, getModeClassName } from '../components/ModeBadge';
+import { getModeClassName, getModeLabel } from '../components/ModeBadge';
 
 function HomePage() {
   const { connectionMode } = useBridge();

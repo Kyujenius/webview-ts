@@ -1,15 +1,16 @@
-import { ComponentType } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import CameraPage from './pages/CameraPage';
-import LocationPage from './pages/LocationPage';
-import BiometricPage from './pages/BiometricPage';
-import PhonePage from './pages/PhonePage';
-import CalendarPage from './pages/CalendarPage';
-import DevicePage from './pages/DevicePage';
-import SharePage from './pages/SharePage';
+import type { ComponentType } from 'react';
+import { Link, Route, Routes, useLocation } from 'react-router-dom';
+
 import ActionsPage from './pages/ActionsPage';
+import BiometricPage from './pages/BiometricPage';
+import CalendarPage from './pages/CalendarPage';
+import CameraPage from './pages/CameraPage';
+import DevicePage from './pages/DevicePage';
+import HomePage from './pages/HomePage';
+import LocationPage from './pages/LocationPage';
 import MiddlewarePage from './pages/MiddlewarePage';
+import PhonePage from './pages/PhonePage';
+import SharePage from './pages/SharePage';
 
 const routes: { path: string; label: string; component: ComponentType }[] = [
   { path: '/', label: 'Home', component: HomePage },

@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { usePlugin, useBridge } from '../bridge';
+import type { AppStateStatus, DeviceInfoResponse } from '@example/plugins';
 import { device } from '@example/plugins';
-import type { DeviceInfoResponse, AppStateStatus } from '@example/plugins';
-import ModeBadge from '../components/ModeBadge';
+import { useState } from 'react';
+
+import { useBridge, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
+import ModeBadge from '../components/ModeBadge';
 
 function DevicePage() {
   const { connectionMode } = useBridge();

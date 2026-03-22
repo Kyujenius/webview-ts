@@ -1,9 +1,11 @@
+import './styles.css';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { BridgeProvider } from './bridge';
+
 import App from './App';
-import './styles.css';
+import { BridgeProvider } from './bridge';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
