@@ -56,7 +56,12 @@ describe('createLogger', () => {
     expect(resLevel).toBe('info');
     expect(resMsg).toContain('[Bridge Response]');
     expect(resMsg).toContain('testAction');
-    expect(resData).toMatchObject({ id: 'req-1', action: 'testAction', success: true, data: { result: 42 } });
+    expect(resData).toMatchObject({
+      id: 'req-1',
+      action: 'testAction',
+      success: true,
+      data: { result: 42 },
+    });
   });
 
   it('logs error response with "error" level', async () => {
