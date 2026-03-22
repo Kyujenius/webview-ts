@@ -10,8 +10,10 @@ import type {
 import {
   MiddlewarePipeline,
   MetadataMap,
+  ConnectionRegistry,
   toBridgeErrorCode,
   BridgeCallError,
+  TARGET,
 } from '@webview-ts/shared';
 
 /**
@@ -22,6 +24,16 @@ export interface BridgeHostConfig {
   timeout?: number;
   /** Custom error handler */
   onError?: (error: Error, context?: unknown) => void;
+  /** ConnectionRegistry for multi-webview event routing */
+  registry?: ConnectionRegistry;
+}
+
+/**
+ * Options for sendEvent targeting
+ */
+export interface SendEventOptions {
+  /** Target WebView sourceId, or '__broadcast__' for all. Defaults to attached adapter. */
+  target?: string;
 }
 
 /**
@@ -46,7 +58,8 @@ export interface RequestContext {
  * Uses the same Koa-style onion middleware as the web-side BridgeClient.
  */
 export class BridgeHost {
-  private config: Required<BridgeHostConfig>;
+  private config: Required<Omit<BridgeHostConfig, 'registry'>>;
+  private registry?: ConnectionRegistry;
   private handlers: Map<string, ActionHandler>;
   private pipeline: MiddlewarePipeline;
   private adapter?: HostAdapter;
@@ -56,11 +69,12 @@ export class BridgeHost {
       timeout: config.timeout ?? 0,
       onError: config.onError ?? ((error) => console.error('[BridgeHost]', error)),
     };
+    this.registry = config.registry;
     this.handlers = new Map();
     this.pipeline = new MiddlewarePipeline();
   }
 
-  getConfig(): Required<BridgeHostConfig> {
+  getConfig(): Required<Omit<BridgeHostConfig, 'registry'>> {
     return { ...this.config };
   }
 
@@ -210,33 +224,67 @@ export class BridgeHost {
     }
   }
 
-  sendEvent<TPayload = unknown>(event: string, payload: TPayload): void {
+  sendEvent<TPayload = unknown>(
+    event: string,
+    payload: TPayload,
+    options?: SendEventOptions
+  ): void {
     const eventMessage: BridgeEvent<TPayload> = {
       event,
       payload,
       timestamp: Date.now(),
       sourceId: 'host',
     };
-    this.sendToWebView(eventMessage);
+    const messageJson = JSON.stringify(eventMessage);
+
+    if (options?.target && this.registry) {
+      if (options.target === TARGET.BROADCAST) {
+        this.registry.broadcast(messageJson);
+      } else {
+        this.registry.sendTo(options.target, messageJson);
+      }
+      return;
+    }
+
+    this.sendViaAdapter(messageJson);
   }
 
-  emit<TPayload = unknown>(event: string, payload?: TPayload): void {
+  emit<TPayload = unknown>(event: string, payload?: TPayload, options?: SendEventOptions): void {
     if (payload !== undefined) {
-      this.sendEvent(event, payload);
+      this.sendEvent(event, payload, options);
     } else {
-      this.sendEvent(event, undefined as unknown as TPayload);
+      this.sendEvent(event, undefined as unknown as TPayload, options);
     }
+  }
+
+  /**
+   * Broadcast an event to all connected WebViews via ConnectionRegistry.
+   * Requires registry to be configured.
+   */
+  broadcastEvent<TPayload = unknown>(event: string, payload: TPayload): void {
+    this.sendEvent(event, payload, { target: TARGET.BROADCAST });
   }
 
   private sendResponse(response: BridgeResponse): void {
-    this.sendToWebView(response);
+    const messageJson = JSON.stringify(response);
+
+    // Route response to the correct WebView via registry if available
+    if (this.registry && response.targetId) {
+      try {
+        this.registry.sendTo(response.targetId, messageJson);
+        return;
+      } catch {
+        // targetId not in registry — fall back to attached adapter
+      }
+    }
+
+    this.sendViaAdapter(messageJson);
   }
 
-  private sendToWebView(message: BridgeResponse | BridgeEvent): void {
+  private sendViaAdapter(messageJson: string): void {
     if (!this.adapter) {
       throw new Error('No adapter attached. Call attach(adapter) first.');
     }
-    const messageJson = JSON.stringify(message);
     this.adapter.send(messageJson);
   }
 

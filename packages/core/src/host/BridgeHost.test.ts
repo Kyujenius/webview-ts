@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BridgeHost } from './BridgeHost';
+import { ConnectionRegistry, TARGET } from '@webview-ts/shared';
 import type { BridgeMessage } from '@webview-ts/shared';
 import type { HostAdapter } from '@webview-ts/shared';
 
@@ -265,6 +266,97 @@ describe('BridgeHost', () => {
       expect(parsed.event).toBe('test.event');
       expect(parsed.payload).toEqual({ data: 1 });
       expect(parsed.sourceId).toBe('host');
+    });
+  });
+
+  describe('event routing with ConnectionRegistry', () => {
+    it('sendEvent with target routes to specific WebView via registry', () => {
+      const registry = new ConnectionRegistry();
+      const sentA: string[] = [];
+      const sentB: string[] = [];
+      registry.register('webview-a', (msg: string) => sentA.push(msg));
+      registry.register('webview-b', (msg: string) => sentB.push(msg));
+
+      const host = new BridgeHost({ registry });
+      host.attach(mockAdapter.adapter);
+      host.sendEvent('chat.message', { text: 'hi' }, { target: 'webview-a' });
+
+      expect(sentA).toHaveLength(1);
+      expect(sentB).toHaveLength(0);
+      const parsed = JSON.parse(sentA[0]);
+      expect(parsed.event).toBe('chat.message');
+      expect(parsed.payload).toEqual({ text: 'hi' });
+    });
+
+    it('sendEvent with broadcast routes to all WebViews via registry', () => {
+      const registry = new ConnectionRegistry();
+      const sentA: string[] = [];
+      const sentB: string[] = [];
+      registry.register('webview-a', (msg: string) => sentA.push(msg));
+      registry.register('webview-b', (msg: string) => sentB.push(msg));
+
+      const host = new BridgeHost({ registry });
+      host.attach(mockAdapter.adapter);
+      host.sendEvent('auth.expired', { reason: 'timeout' }, { target: TARGET.BROADCAST });
+
+      expect(sentA).toHaveLength(1);
+      expect(sentB).toHaveLength(1);
+      expect(JSON.parse(sentA[0]).event).toBe('auth.expired');
+      expect(JSON.parse(sentB[0]).event).toBe('auth.expired');
+    });
+
+    it('broadcastEvent is a shortcut for sendEvent with broadcast target', () => {
+      const registry = new ConnectionRegistry();
+      const sentA: string[] = [];
+      const sentB: string[] = [];
+      registry.register('webview-a', (msg: string) => sentA.push(msg));
+      registry.register('webview-b', (msg: string) => sentB.push(msg));
+
+      const host = new BridgeHost({ registry });
+      host.attach(mockAdapter.adapter);
+      host.broadcastEvent('sync.update', { version: 2 });
+
+      expect(sentA).toHaveLength(1);
+      expect(sentB).toHaveLength(1);
+    });
+
+    it('sendEvent without target falls back to attached adapter', () => {
+      const registry = new ConnectionRegistry();
+      const host = new BridgeHost({ registry });
+      host.attach(mockAdapter.adapter);
+
+      host.sendEvent('local.event', { x: 1 });
+
+      expect(mockAdapter.sent).toHaveLength(1);
+      expect(JSON.parse(mockAdapter.sent[0]).event).toBe('local.event');
+    });
+
+    it('response routes to correct WebView via registry', async () => {
+      const registry = new ConnectionRegistry();
+      const sentToA: string[] = [];
+      registry.register('webview-a', (msg: string) => sentToA.push(msg));
+
+      const host = new BridgeHost({ registry });
+      host.attach(mockAdapter.adapter);
+      host.registerHandler('test.action', async () => 'ok');
+
+      const message = {
+        id: 'msg-1',
+        action: 'test.action',
+        payload: undefined,
+        timestamp: Date.now(),
+        sourceId: 'webview-a',
+        targetId: 'host',
+      };
+      await host.handleMessageString(JSON.stringify(message));
+
+      // Response should be routed to webview-a via registry, not via adapter
+      expect(sentToA).toHaveLength(1);
+      expect(mockAdapter.sent).toHaveLength(0);
+      const parsed = JSON.parse(sentToA[0]);
+      expect(parsed.id).toBe('msg-1');
+      expect(parsed.success).toBe(true);
+      expect(parsed.targetId).toBe('webview-a');
     });
   });
 });
