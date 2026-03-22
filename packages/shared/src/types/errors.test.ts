@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { BridgeCallError, getErrorCategory, isRetryable, isAuthError } from './errors';
+import {
+  BridgeCallError,
+  getErrorCategory,
+  isRetryable,
+  isAuthError,
+  toBridgeErrorCode,
+} from './errors';
 
 describe('BridgeCallError', () => {
   it('should carry code and details', () => {
@@ -57,5 +63,31 @@ describe('isAuthError', () => {
 
   it('returns false for non-auth errors', () => {
     expect(isAuthError(new BridgeCallError('t', 'TIMEOUT'))).toBe(false);
+  });
+});
+
+describe('toBridgeErrorCode', () => {
+  it('returns the code for all 10 valid BridgeErrorCode values', () => {
+    expect(toBridgeErrorCode('TIMEOUT')).toBe('TIMEOUT');
+    expect(toBridgeErrorCode('HANDLER_NOT_FOUND')).toBe('HANDLER_NOT_FOUND');
+    expect(toBridgeErrorCode('PERMISSION_DENIED')).toBe('PERMISSION_DENIED');
+    expect(toBridgeErrorCode('NATIVE_UNAVAILABLE')).toBe('NATIVE_UNAVAILABLE');
+    expect(toBridgeErrorCode('HANDLER_ERROR')).toBe('HANDLER_ERROR');
+    expect(toBridgeErrorCode('NETWORK_ERROR')).toBe('NETWORK_ERROR');
+    expect(toBridgeErrorCode('MIDDLEWARE_ERROR')).toBe('MIDDLEWARE_ERROR');
+    expect(toBridgeErrorCode('FALLBACK_ERROR')).toBe('FALLBACK_ERROR');
+    expect(toBridgeErrorCode('NO_FALLBACK')).toBe('NO_FALLBACK');
+    expect(toBridgeErrorCode('UNKNOWN_ERROR')).toBe('UNKNOWN_ERROR');
+  });
+
+  it('returns UNKNOWN_ERROR for invalid string', () => {
+    expect(toBridgeErrorCode('NOT_A_CODE')).toBe('UNKNOWN_ERROR');
+  });
+
+  it('returns UNKNOWN_ERROR for non-string values', () => {
+    expect(toBridgeErrorCode(42)).toBe('UNKNOWN_ERROR');
+    expect(toBridgeErrorCode(null)).toBe('UNKNOWN_ERROR');
+    expect(toBridgeErrorCode(undefined)).toBe('UNKNOWN_ERROR');
+    expect(toBridgeErrorCode({})).toBe('UNKNOWN_ERROR');
   });
 });
