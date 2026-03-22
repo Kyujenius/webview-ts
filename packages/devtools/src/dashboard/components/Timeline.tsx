@@ -1,5 +1,5 @@
 import type { RecordedMessage } from '../../types';
-import { statusColor, statusIcon } from './StatusUtils';
+import { statusColor, statusIcon, errorCodeColor } from './StatusUtils';
 
 interface TimelineProps {
   records: RecordedMessage[];
@@ -22,7 +22,10 @@ export function Timeline({ records, selectedId, hasAnyRecords, onSelect }: Timel
   return (
     <div id="timeline">
       {records.map((m) => {
-        const color = statusColor(m.status);
+        const color =
+          m.status === 'error' && m.error?.code
+            ? errorCodeColor(m.error.code)
+            : statusColor(m.status);
         return (
           <div
             key={m.recordId}
@@ -50,7 +53,35 @@ export function Timeline({ records, selectedId, hasAnyRecords, onSelect }: Timel
                 {m.source}
               </span>
             )}
+            {m.sourceId && (
+              <span
+                style={{
+                  fontSize: 9,
+                  padding: '1px 3px',
+                  borderRadius: 3,
+                  background: '#115e59',
+                  color: '#5eead4',
+                  fontFamily: 'monospace',
+                }}
+              >
+                {m.sourceId.length > 8 ? '…' + m.sourceId.slice(-4) : m.sourceId}
+              </span>
+            )}
             <span className="msg-action">{m.action}</span>
+            {m.error?.code && (
+              <span
+                style={{
+                  fontSize: 9,
+                  padding: '1px 3px',
+                  borderRadius: 3,
+                  background: '#1e1e1e',
+                  color: errorCodeColor(m.error.code),
+                  fontFamily: 'monospace',
+                }}
+              >
+                {m.error.code}
+              </span>
+            )}
             {m.duration != null && <span className="msg-dur">{m.duration.toFixed(0)}ms</span>}
             <span className="msg-time">
               {new Date(m.timestamp).toLocaleTimeString('en-US', { hour12: false })}

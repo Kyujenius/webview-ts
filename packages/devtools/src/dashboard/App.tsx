@@ -15,6 +15,7 @@ export function App() {
   const [connected, setConnected] = useState(false);
   const [tab, setTab] = useState<InspectorTab>('response');
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+  const [sourceFilter, setSourceFilter] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
 
   // ---- WebSocket connection ----
@@ -72,10 +73,19 @@ export function App() {
     let arr = all;
     if (filter !== 'all') arr = arr.filter((m) => m.status === filter);
     if (search) arr = arr.filter((m) => m.action.toLowerCase().includes(search.toLowerCase()));
+    if (sourceFilter) arr = arr.filter((m) => m.sourceId === sourceFilter);
     return arr.reverse();
-  }, [all, filter, search]);
+  }, [all, filter, search, sourceFilter]);
 
   const selected = selectedId ? (records.get(selectedId) ?? null) : null;
+
+  const sourceIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const m of all) {
+      if (m.sourceId) ids.add(m.sourceId);
+    }
+    return Array.from(ids).sort();
+  }, [all]);
 
   const stats = useMemo(() => {
     const total = all.length;
@@ -87,8 +97,15 @@ export function App() {
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
       : '-';
-    return { total, errs, events, rate, avg };
-  }, [all]);
+    const clients = sourceIds.length;
+    const errorBreakdown: Record<string, number> = {};
+    for (const m of all) {
+      if (m.error?.code) {
+        errorBreakdown[m.error.code] = (errorBreakdown[m.error.code] ?? 0) + 1;
+      }
+    }
+    return { total, errs, events, rate, avg, clients, errorBreakdown };
+  }, [all, sourceIds]);
 
   const eventStream = useMemo(() => {
     if (!selected || selected.status !== 'event') return [];
@@ -129,6 +146,9 @@ export function App() {
         search={search}
         onSearchChange={setSearch}
         totalCount={records.size}
+        sourceIds={sourceIds}
+        sourceFilter={sourceFilter}
+        onSourceFilterChange={setSourceFilter}
       />
       <div id="body">
         <Timeline

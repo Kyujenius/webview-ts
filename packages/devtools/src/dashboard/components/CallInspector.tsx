@@ -1,7 +1,7 @@
 import type { RecordedMessage } from '../../types';
-import { statusColor } from './StatusUtils';
+import { statusColor, errorCodeColor } from './StatusUtils';
 
-export type InspectorTab = 'payload' | 'response' | 'raw';
+export type InspectorTab = 'payload' | 'response' | 'routing' | 'raw';
 
 interface CallInspectorProps {
   selected: RecordedMessage;
@@ -9,7 +9,7 @@ interface CallInspectorProps {
   onTabChange: (tab: InspectorTab) => void;
 }
 
-const TABS: InspectorTab[] = ['response', 'payload', 'raw'];
+const TABS: InspectorTab[] = ['response', 'payload', 'routing', 'raw'];
 
 function getTabContent(selected: RecordedMessage, tab: InspectorTab): string {
   if (tab === 'payload') return JSON.stringify(selected.payload ?? null, null, 2);
@@ -19,6 +19,14 @@ function getTabContent(selected: RecordedMessage, tab: InspectorTab): string {
       null,
       2
     );
+  if (tab === 'routing') {
+    const routing: Record<string, string | undefined> = {
+      messageId: selected.messageId,
+      sourceId: selected.sourceId,
+      targetId: selected.targetId,
+    };
+    return JSON.stringify(routing, null, 2);
+  }
   return JSON.stringify(selected, null, 2);
 }
 
@@ -30,6 +38,18 @@ export function CallInspector({ selected, tab, onTabChange }: CallInspectorProps
           {selected.status}
         </span>
         <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{selected.action}</span>
+        {selected.error?.code && (
+          <span
+            style={{
+              fontFamily: 'monospace',
+              fontSize: 11,
+              color: errorCodeColor(selected.error.code),
+              fontWeight: 700,
+            }}
+          >
+            {selected.error.code}
+          </span>
+        )}
         {selected.duration != null && (
           <span
             style={{

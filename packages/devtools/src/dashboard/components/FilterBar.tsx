@@ -6,6 +6,9 @@ interface FilterBarProps {
   search: string;
   onSearchChange: (s: string) => void;
   totalCount: number;
+  sourceIds: string[];
+  sourceFilter: string;
+  onSourceFilterChange: (s: string) => void;
 }
 
 const FILTERS: Filter[] = ['all', 'success', 'error', 'pending', 'event'];
@@ -16,6 +19,9 @@ export function FilterBar({
   search,
   onSearchChange,
   totalCount,
+  sourceIds,
+  sourceFilter,
+  onSourceFilterChange,
 }: FilterBarProps) {
   return (
     <div id="filter-bar">
@@ -35,6 +41,27 @@ export function FilterBar({
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
       />
+      {sourceIds.length > 0 && (
+        <select
+          value={sourceFilter}
+          onChange={(e) => onSourceFilterChange(e.target.value)}
+          style={{
+            background: '#1e293b',
+            color: '#e2e8f0',
+            border: '1px solid #334155',
+            borderRadius: 4,
+            padding: '4px 8px',
+            fontSize: 12,
+          }}
+        >
+          <option value="">All sources</option>
+          {sourceIds.map((id) => (
+            <option key={id} value={id}>
+              {id}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

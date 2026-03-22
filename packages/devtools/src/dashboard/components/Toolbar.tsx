@@ -1,9 +1,13 @@
+import { errorCodeColor } from './StatusUtils';
+
 interface Stats {
   total: number;
   rate: number;
   errs: number;
   events: number;
   avg: string;
+  clients: number;
+  errorBreakdown: Record<string, number>;
 }
 
 interface ToolbarProps {
@@ -41,7 +45,26 @@ export function Toolbar({ stats, connected, onClear }: ToolbarProps) {
         <span>
           Avg: <span className="stat-val">{stats.avg}ms</span>
         </span>
+        {stats.clients > 0 && (
+          <span>
+            Clients:{' '}
+            <span className="stat-val" style={{ color: '#5eead4' }}>
+              {stats.clients}
+            </span>
+          </span>
+        )}
       </div>
+      {Object.keys(stats.errorBreakdown).length > 0 && (
+        <div style={{ display: 'flex', gap: 6, fontSize: 10, marginLeft: 12 }}>
+          {Object.entries(stats.errorBreakdown)
+            .slice(0, 3)
+            .map(([code, count]) => (
+              <span key={code} style={{ color: errorCodeColor(code), fontFamily: 'monospace' }}>
+                {code}:{count}
+              </span>
+            ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <span id="conn" className={connected ? 'on' : 'off'}>
           {connected ? 'connected' : 'disconnected'}

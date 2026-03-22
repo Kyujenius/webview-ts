@@ -78,6 +78,15 @@ export interface RecordedMessage {
 
   /** Which side recorded this: 'host' (RN) or 'client' (web) */
   source?: 'host' | 'client';
+
+  /** Bridge message ID — correlates request↔response */
+  messageId?: string;
+
+  /** Source bridge instance ID (which WebView sent this) */
+  sourceId?: string;
+
+  /** Target bridge instance ID (where the message is going) */
+  targetId?: string;
 }
 
 /**
