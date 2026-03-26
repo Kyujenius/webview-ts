@@ -4,7 +4,8 @@ import type {
   BridgeConfig,
   EventMapBase,
   EventNames,
-  Middleware,
+  RequestInterceptor,
+  ResponseInterceptor,
 } from '@webview-ts/shared';
 import type {
   AnyPluginList,
@@ -27,8 +28,11 @@ export interface CreateBridgeVueOptions<
 > {
   config?: BridgeConfig;
   plugins?: TPlugins;
-  /** Global middleware — registered in order (outermost first). */
-  middleware?: Middleware[];
+  /** Global interceptors applied to all requests/responses. */
+  interceptors?: {
+    request?: RequestInterceptor[];
+    response?: ResponseInterceptor[];
+  };
   /** Zero-cost event type marker for custom events. Use `{} as MyEvents`. */
   events?: TCustomEvents;
 }
@@ -56,7 +60,7 @@ export function createBridgeVue<
     const finalConfig: BridgeConfig = { ...options?.config, fallback: finalFallback };
     const bridge = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
-    bridge.applyPlugins(options?.plugins, options?.middleware);
+    bridge.applyPlugins(options?.plugins, options?.interceptors);
 
     bridge.connect();
 

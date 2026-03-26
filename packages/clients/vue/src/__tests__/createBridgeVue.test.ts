@@ -14,15 +14,18 @@ vi.mock('@webview-ts/core', () => {
       destroy: vi.fn(),
       isAvailable: vi.fn(() => false),
       connectionMode: 'fallback' as const,
-      use: vi.fn(),
       on: vi.fn(() => vi.fn()),
       createActionState: vi.fn(),
       registerInterceptors: vi.fn(),
       registerTimeouts: vi.fn(),
       registerRetries: vi.fn(),
       registerCaches: vi.fn(),
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() },
+      },
     };
-    instance.applyPlugins = vi.fn((plugins?: any[], middleware?: any[]) => {
+    instance.applyPlugins = vi.fn((plugins?: any[], interceptors?: any) => {
       if (plugins) {
         for (const plugin of plugins) {
           if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
@@ -39,9 +42,14 @@ vi.mock('@webview-ts/core', () => {
           }
         }
       }
-      if (middleware) {
-        for (const mw of middleware) {
-          instance.use(mw);
+      if (interceptors?.request) {
+        for (const interceptor of interceptors.request) {
+          instance.interceptors.request.use(interceptor);
+        }
+      }
+      if (interceptors?.response) {
+        for (const interceptor of interceptors.response) {
+          instance.interceptors.response.use(interceptor);
         }
       }
     });
@@ -133,28 +141,44 @@ describe('createBridgeVue', () => {
     });
   });
 
-  describe('global middleware registration', () => {
-    it('calls bridge.use() for each middleware passed in options', async () => {
+  describe('global interceptor registration', () => {
+    it('calls interceptors.request.use() for each request interceptor passed in options', async () => {
       const { BridgeClient } = await import('@webview-ts/core');
 
-      const mw1 = { name: 'mw1', fn: vi.fn((_ctx: unknown, next: () => Promise<void>) => next()) };
-      const mw2 = { name: 'mw2', fn: vi.fn((_ctx: unknown, next: () => Promise<void>) => next()) };
+      const ri1 = vi.fn();
+      const ri2 = vi.fn();
 
-      const plugin = createBridgeVue({ middleware: [mw1, mw2] });
+      const plugin = createBridgeVue({ interceptors: { request: [ri1, ri2] } });
       mount(defineComponent({ setup: () => () => h('div') }), {
         global: { plugins: [plugin] },
       });
 
-      // Get the latest mock instance created during mount
       const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
       const instance = calls[calls.length - 1].value;
 
-      expect(instance.use).toHaveBeenCalledTimes(2);
-      expect(instance.use).toHaveBeenCalledWith(mw1);
-      expect(instance.use).toHaveBeenCalledWith(mw2);
+      expect(instance.interceptors.request.use).toHaveBeenCalledTimes(2);
+      expect(instance.interceptors.request.use).toHaveBeenCalledWith(ri1);
+      expect(instance.interceptors.request.use).toHaveBeenCalledWith(ri2);
     });
 
-    it('does not call bridge.use() when no middleware provided', async () => {
+    it('calls interceptors.response.use() for each response interceptor passed in options', async () => {
+      const { BridgeClient } = await import('@webview-ts/core');
+
+      const rsp1 = vi.fn();
+
+      const plugin = createBridgeVue({ interceptors: { response: [rsp1] } });
+      mount(defineComponent({ setup: () => () => h('div') }), {
+        global: { plugins: [plugin] },
+      });
+
+      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
+      const instance = calls[calls.length - 1].value;
+
+      expect(instance.interceptors.response.use).toHaveBeenCalledTimes(1);
+      expect(instance.interceptors.response.use).toHaveBeenCalledWith(rsp1);
+    });
+
+    it('does not call interceptors.request.use() when no interceptors provided', async () => {
       const { BridgeClient } = await import('@webview-ts/core');
 
       const plugin = createBridgeVue();
@@ -165,7 +189,8 @@ describe('createBridgeVue', () => {
       const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.results;
       const instance = calls[calls.length - 1].value;
 
-      expect(instance.use).not.toHaveBeenCalled();
+      expect(instance.interceptors.request.use).not.toHaveBeenCalled();
+      expect(instance.interceptors.response.use).not.toHaveBeenCalled();
     });
   });
 

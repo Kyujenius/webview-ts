@@ -1,11 +1,6 @@
 import type { ActionHandler, BridgeHostConfig } from '@webview-ts/core';
 import { BridgeHost } from '@webview-ts/core';
-import type {
-  ActionMapBase,
-  ConnectionRegistry,
-  Middleware,
-  StrictKeyOf,
-} from '@webview-ts/shared';
+import type { ActionMapBase, ConnectionRegistry, StrictKeyOf } from '@webview-ts/shared';
 import type { HostPluginResult } from '@webview-ts/shared';
 import { generateSourceId } from '@webview-ts/shared';
 
@@ -28,8 +23,6 @@ export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = Action
   handlers?: TypedHandlers<TActions>;
   /** Plugins that provide additional handlers */
   plugins?: HostPluginResult[];
-  /** Middleware — same MiddlewareFn type as web side */
-  middleware?: Middleware[];
   /** Optional BridgeHost configuration */
   config?: BridgeHostConfig;
   /** Shared ConnectionRegistry for multi-webview routing */
@@ -72,16 +65,9 @@ export interface SimpleBridgeHostResult {
 export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
   options: SimpleBridgeHostOptions<TActions>
 ): SimpleBridgeHostResult {
-  const { handlers, plugins, middleware, config } = options;
+  const { handlers, plugins, config } = options;
 
   const bridgeHost = new BridgeHost({ ...config });
-
-  // Register middleware
-  if (middleware) {
-    for (const mw of middleware) {
-      bridgeHost.use(mw);
-    }
-  }
 
   const adapter = new ReactNativeHostAdapter();
   bridgeHost.attach(adapter);

@@ -7,7 +7,8 @@ import type {
   ConnectionMode,
   EventMapBase,
   EventNames,
-  Middleware,
+  RequestInterceptor,
+  ResponseInterceptor,
   UseActionOptions,
 } from '@webview-ts/shared';
 import type {
@@ -42,8 +43,11 @@ export interface CreateBridgeReactOptions<
 > {
   plugins?: TPlugins;
   config?: BridgeConfig;
-  /** Global middleware — registered in order (outermost first). */
-  middleware?: Middleware[];
+  /** Global interceptors applied to all requests/responses. */
+  interceptors?: {
+    request?: RequestInterceptor[];
+    response?: ResponseInterceptor[];
+  };
   /** Zero-cost event type marker for custom events. Use `{} as MyEvents`. */
   events?: TCustomEvents;
 }
@@ -76,7 +80,7 @@ export function createBridgeReact<
       const finalConfig: BridgeConfig = { ...mergedConfig, fallback: finalFallback };
       const b = new BridgeClient<TAllActions, TAllEvents>(finalConfig);
 
-      b.applyPlugins(options?.plugins, options?.middleware);
+      b.applyPlugins(options?.plugins, options?.interceptors);
 
       return b;
     }, []);
