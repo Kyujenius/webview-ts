@@ -10,15 +10,13 @@ describe('BridgeClient - Cleanup', () => {
   });
 
   describe('destroy()', () => {
-    it('should preserve middleware after destroy', () => {
+    it('should preserve request interceptors after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
-      bridge.use(mw);
+      bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
       bridge.destroy();
 
-      // Middleware survives destroy — accessible via the private pipeline
-      expect(bridge['middleware'].getAll()).toHaveLength(1);
-      expect(bridge['middleware'].getAll()[0].name).toBe('test');
+      expect(bridge.interceptors.request.getAll()).toHaveLength(1);
+      expect(bridge.interceptors.request.getAll()[0].name).toBe('test');
     });
 
     it('should preserve event handlers after destroy', () => {
@@ -30,14 +28,14 @@ describe('BridgeClient - Cleanup', () => {
       expect(bridge['eventHandlers'].size).toBe(1);
     });
 
-    it('should preserve action interceptors after destroy', () => {
+    it('should preserve action request interceptors after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge['registerInterceptors']({
-        'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
-      });
+      bridge['actionRequestInterceptors'].set('camera.takePhoto', [
+        { name: 'auth', fn: async (req) => req },
+      ]);
       bridge.destroy();
 
-      expect(bridge['actionInterceptors'].size).toBe(1);
+      expect(bridge['actionRequestInterceptors'].size).toBe(1);
     });
 
     it('should preserve action timeouts after destroy', () => {
@@ -48,12 +46,12 @@ describe('BridgeClient - Cleanup', () => {
       expect(bridge['actionTimeouts'].size).toBe(1);
     });
 
-    it('should clear pending contexts after destroy', () => {
+    it('should clear pending callbacks after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge['pendingContexts'].set('test-id', {} as any);
+      bridge['callbacks']['callbacks'].set('test-id', {} as any);
       bridge.destroy();
 
-      expect(bridge['pendingContexts'].size).toBe(0);
+      expect(bridge['callbacks']['callbacks'].size).toBe(0);
     });
 
     it('should be idempotent', () => {
@@ -64,12 +62,12 @@ describe('BridgeClient - Cleanup', () => {
   });
 
   describe('dispose()', () => {
-    it('should clear middleware after dispose', () => {
+    it('should clear request interceptors after dispose', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.use({ name: 'test', fn: async (_ctx: any, next: any) => next() });
+      bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
       bridge.dispose();
 
-      expect(bridge['middleware'].getAll()).toHaveLength(0);
+      expect(bridge.interceptors.request.getAll()).toHaveLength(0);
     });
 
     it('should clear event handlers after dispose', () => {
@@ -80,14 +78,14 @@ describe('BridgeClient - Cleanup', () => {
       expect(bridge['eventHandlers'].size).toBe(0);
     });
 
-    it('should clear action interceptors after dispose', () => {
+    it('should clear action request interceptors after dispose', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge['registerInterceptors']({
-        'camera.takePhoto': [{ name: 'auth', fn: async (_ctx: any, next: any) => next() }],
-      });
+      bridge['actionRequestInterceptors'].set('camera.takePhoto', [
+        { name: 'auth', fn: async (req) => req },
+      ]);
       bridge.dispose();
 
-      expect(bridge['actionInterceptors'].size).toBe(0);
+      expect(bridge['actionRequestInterceptors'].size).toBe(0);
     });
 
     it('should clear action timeouts after dispose', () => {

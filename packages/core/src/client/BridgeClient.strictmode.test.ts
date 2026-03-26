@@ -78,9 +78,10 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
 
   it('configuration survives connect/disconnect cycles', () => {
     bridge = new BridgeClient({ fallback: true });
-    const mw = { name: 'test', fn: async (_ctx: any, next: any) => next() };
-    bridge.use(mw);
-    bridge['registerInterceptors']({ 'test.action': [mw] });
+    bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
+    bridge['actionRequestInterceptors'].set('test.action', [
+      { name: 'test', fn: async (req) => req },
+    ]);
     bridge['registerTimeouts']({ 'test.action': 5000 });
     bridge.on('testEvent', vi.fn());
 
@@ -89,8 +90,8 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     bridge.destroy();
     bridge.connect();
 
-    expect(bridge['middleware'].getAll()).toHaveLength(1);
-    expect(bridge['actionInterceptors'].size).toBe(1);
+    expect(bridge.interceptors.request.getAll()).toHaveLength(1);
+    expect(bridge['actionRequestInterceptors'].size).toBe(1);
     expect(bridge['actionTimeouts'].size).toBe(1);
     expect(bridge['eventHandlers'].size).toBe(1);
   });

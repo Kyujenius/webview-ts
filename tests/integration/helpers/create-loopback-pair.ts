@@ -1,9 +1,16 @@
 import { BridgeClient, BridgeHost } from '@webview-ts/core';
-import type { BridgeMessage, HostAdapter, Middleware } from '@webview-ts/shared';
+import type {
+  BridgeMessage,
+  HostAdapter,
+  RequestInterceptor,
+  ResponseInterceptor,
+} from '@webview-ts/shared';
 
 export interface LoopbackPairOptions {
-  clientMiddleware?: Middleware[];
-  hostMiddleware?: Middleware[];
+  clientInterceptors?: {
+    request?: RequestInterceptor[];
+    response?: ResponseInterceptor[];
+  };
   hostConfig?: { timeout?: number; debug?: boolean };
   clientConfig?: { timeout?: number; debug?: boolean };
 }
@@ -39,7 +46,7 @@ class LoopbackAdapter implements HostAdapter {
  *   BridgeClient.call()
  *     -> FallbackAdapter invokes handler
  *       -> handler calls host.handleMessage(message) -- object-level
- *         -> host middleware pipeline -> handler executes -> BridgeResponse
+ *         -> handler executes -> BridgeResponse
  *           -> FallbackAdapter resolves promise -> BridgeClient receives data
  *
  * Message flow (events):
@@ -82,9 +89,10 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
     fallback: fallbackHandlers,
   });
 
-  // Apply middleware
-  for (const mw of options.clientMiddleware ?? []) bridge.use(mw);
-  for (const mw of options.hostMiddleware ?? []) host.use(mw);
+  // Register interceptors
+  for (const int of options.clientInterceptors?.request ?? []) bridge.interceptors.request.use(int);
+  for (const int of options.clientInterceptors?.response ?? [])
+    bridge.interceptors.response.use(int);
 
   bridge.connect();
 
