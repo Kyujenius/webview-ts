@@ -5,7 +5,7 @@ export interface LoopbackPairOptions {
   clientMiddleware?: Middleware[];
   hostMiddleware?: Middleware[];
   hostConfig?: { timeout?: number; debug?: boolean };
-  clientConfig?: { timeout?: number; debug?: boolean; maxConcurrentRequests?: number };
+  clientConfig?: { timeout?: number; debug?: boolean };
 }
 
 /**

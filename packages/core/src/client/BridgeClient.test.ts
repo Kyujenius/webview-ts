@@ -17,19 +17,12 @@ describe('BridgeClient', () => {
       const config = defaultBridge.getConfig();
 
       expect(config.timeout).toBe(0);
-      expect(config.maxConcurrentRequests).toBe(100);
-      expect(config.enableDeduplication).toBe(true);
     });
 
     it('should create bridge with custom config', () => {
-      const customBridge = new BridgeClient({
-        timeout: 10000,
-        maxConcurrentRequests: 50,
-      });
-
+      const customBridge = new BridgeClient({ timeout: 10000 });
       const config = customBridge.getConfig();
       expect(config.timeout).toBe(10000);
-      expect(config.maxConcurrentRequests).toBe(50);
     });
   });
 
@@ -39,8 +32,6 @@ describe('BridgeClient', () => {
 
       expect(config).toEqual({
         timeout: 5000,
-        maxConcurrentRequests: 100,
-        enableDeduplication: true,
       });
     });
   });

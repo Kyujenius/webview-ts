@@ -34,18 +34,6 @@ export interface BridgeConfig {
   timeout?: number;
 
   /**
-   * Maximum number of concurrent requests
-   * @default 100
-   */
-  maxConcurrentRequests?: number;
-
-  /**
-   * Enable request deduplication
-   * @default true
-   */
-  enableDeduplication?: boolean;
-
-  /**
    * Global error handler
    */
   onError?: (error: BridgeError, context: ErrorContext) => void;

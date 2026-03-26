@@ -108,11 +108,11 @@ export class CallbackRegistry {
    * Clear all callbacks
    */
   clear(): void {
-    // Clear all timeouts
     for (const entry of this.callbacks.values()) {
       if (entry.timeoutId) {
         clearTimeout(entry.timeoutId);
       }
+      entry.reject(new BridgeCallError('Bridge destroyed', 'NATIVE_UNAVAILABLE'));
     }
 
     this.callbacks.clear();

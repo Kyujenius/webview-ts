@@ -82,10 +82,10 @@ graph TB
 
 ```bash
 # Web (React)
-pnpm add @webview-ts/core @webview-ts/react @webview-ts/shared
+pnpm add @webview-ts/react
 
 # Native (React Native)
-pnpm add @webview-ts/core @webview-ts/react-native @webview-ts/shared
+pnpm add @webview-ts/react-native
 ```
 
 ### 2. Define a Plugin
