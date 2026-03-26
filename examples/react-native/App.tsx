@@ -1,18 +1,17 @@
-import { StyleSheet, SafeAreaView, View, Text } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useBridgeHost } from '@webview-ts/react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { WebView } from 'react-native-webview';
+
 import {
-  cameraHost,
-  locationHost,
   biometricHost,
-  hapticsHost,
-  phoneHost,
   calendarHost,
+  cameraHost,
   deviceHost,
+  hapticsHost,
+  locationHost,
+  phoneHost,
   shareHost,
 } from './hosts';
-import { hostLogger, permissionGuard, rateLimiter } from './middleware';
-
 const WEB_APP_URL = 'http://localhost:3000';
 
 export default function App() {
@@ -27,7 +26,6 @@ export default function App() {
       deviceHost,
       shareHost,
     ],
-    middleware: [hostLogger, permissionGuard, rateLimiter],
   });
 
   return (
