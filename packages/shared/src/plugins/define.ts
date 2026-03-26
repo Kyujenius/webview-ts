@@ -1,5 +1,5 @@
 import type { FallbackMap, RetryConfig } from '../types/bridge';
-import type { Middleware } from '../types/middleware';
+import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import type {
   ActionMarkerMap,
   ActionNameMap,
@@ -10,8 +10,9 @@ import type {
   EventNameMap,
   ExpandActions,
   HostPluginResult,
-  InterceptorMap,
   PluginInstance,
+  RequestInterceptorMap,
+  ResponseInterceptorMap,
   RetryMap,
   ShortFallbackHandlers,
   ShortHostHandlers,
@@ -47,11 +48,18 @@ export function definePlugin<
   }
 
   // Extract per-action interceptors from markers
-  const interceptors: InterceptorMap = {};
+  const requestInterceptors: RequestInterceptorMap = {};
+  const responseInterceptors: ResponseInterceptorMap = {};
   for (const short of shortNames) {
-    const marker = markers[short] as { __interceptors?: Middleware[] };
-    if (marker.__interceptors?.length) {
-      interceptors[`${name}.${short}`] = marker.__interceptors;
+    const marker = markers[short] as {
+      __requestInterceptors?: RequestInterceptor[];
+      __responseInterceptors?: ResponseInterceptor[];
+    };
+    if (marker.__requestInterceptors?.length) {
+      requestInterceptors[`${name}.${short}`] = marker.__requestInterceptors;
+    }
+    if (marker.__responseInterceptors?.length) {
+      responseInterceptors[`${name}.${short}`] = marker.__responseInterceptors;
     }
   }
 
@@ -88,7 +96,8 @@ export function definePlugin<
     _eventTypes: {} as TEvents,
     actions: actions as ActionNameMap<TName, TMarkers>,
     events: eventNames as EventNameMap<TName, TEvents>,
-    interceptors,
+    requestInterceptors,
+    responseInterceptors,
     timeouts,
     retries,
     caches,

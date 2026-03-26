@@ -1,5 +1,5 @@
 import type { BridgeCallOptions, FallbackMap, RetryConfig } from '../types/bridge';
-import type { Middleware } from '../types/middleware';
+import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import type { RoutingStrategy } from '../types/routing';
 import type { StrictKeyOf } from '../types/utils';
 
@@ -27,8 +27,8 @@ export interface ActionOptions {
 export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __payload: TPayload;
   readonly __response: TResponse;
-  /** Per-action interceptors (runtime) */
-  readonly __interceptors?: Middleware[];
+  readonly __requestInterceptors?: RequestInterceptor[];
+  readonly __responseInterceptors?: ResponseInterceptor[];
   /** Per-action timeout in ms (runtime) */
   readonly __timeout?: number;
   /** Per-action retry config (runtime) */
@@ -37,24 +37,42 @@ export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __cache?: number | boolean;
   /** Per-action routing strategy (runtime) */
   readonly __routing?: RoutingStrategy;
-  /** Chain an interceptor to this action */
-  use(interceptor: Middleware): ActionMarker<TPayload, TResponse>;
+  readonly interceptors: {
+    readonly request: {
+      use(interceptor: RequestInterceptor): ActionMarker<TPayload, TResponse>;
+    };
+    readonly response: {
+      use(interceptor: ResponseInterceptor): ActionMarker<TPayload, TResponse>;
+    };
+  };
 }
 
 /** Zero-runtime type marker for defining plugin actions */
 export function action<TPayload = void, TResponse = void>(
   options?: ActionOptions
 ): ActionMarker<TPayload, TResponse> {
-  const interceptors: Middleware[] = [];
+  const requestInterceptors: RequestInterceptor[] = [];
+  const responseInterceptors: ResponseInterceptor[] = [];
   const marker: any = {
-    __interceptors: interceptors,
+    __requestInterceptors: requestInterceptors,
+    __responseInterceptors: responseInterceptors,
     __timeout: options?.timeout,
     __retry: options?.retry,
     __cache: options?.cache,
     __routing: options?.routing,
-    use(interceptor: Middleware) {
-      interceptors.push(interceptor);
-      return marker;
+    interceptors: {
+      request: {
+        use(interceptor: RequestInterceptor) {
+          requestInterceptors.push(interceptor);
+          return marker;
+        },
+      },
+      response: {
+        use(interceptor: ResponseInterceptor) {
+          responseInterceptors.push(interceptor);
+          return marker;
+        },
+      },
     },
   };
   return marker as ActionMarker<TPayload, TResponse>;
@@ -163,8 +181,8 @@ export type EmptyEventMap = Record<string, never>;
 
 // ─── Plugin instance ───
 
-/** Per-action interceptor map: { 'camera.takePhoto': Middleware[] } */
-export type InterceptorMap = Record<string, Middleware[]>;
+export type RequestInterceptorMap = Record<string, RequestInterceptor[]>;
+export type ResponseInterceptorMap = Record<string, ResponseInterceptor[]>;
 
 /** Per-action timeout map: { 'camera.takePhoto': 5000 } */
 export type TimeoutMap = Record<string, number>;
@@ -193,7 +211,8 @@ export interface PluginInstance<
   readonly _eventTypes: TEvents;
   readonly actions: ActionNameMap<TName, TMarkers>;
   readonly events: EventNameMap<TName, TEvents>;
-  readonly interceptors: InterceptorMap;
+  readonly requestInterceptors: RequestInterceptorMap;
+  readonly responseInterceptors: ResponseInterceptorMap;
   readonly timeouts: TimeoutMap;
   readonly retries: RetryMap;
   readonly caches: CacheMap;

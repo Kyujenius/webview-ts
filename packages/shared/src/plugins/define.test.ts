@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Middleware } from '../types/middleware';
+import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import { definePlugin } from './define';
 import { action, event } from './types';
 
-const mockMiddleware = (label: string): Middleware => ({
+const mockRequestInterceptor = (label: string): RequestInterceptor => ({
+  name: label,
+  fn: vi.fn(),
+});
+
+const mockResponseInterceptor = (label: string): ResponseInterceptor => ({
   name: label,
   fn: vi.fn(),
 });
@@ -14,7 +19,8 @@ const mockMiddleware = (label: string): Middleware => ({
 describe('action()', () => {
   it('creates a marker with no options', () => {
     const m = action();
-    expect(m.__interceptors).toEqual([]);
+    expect(m.__requestInterceptors).toEqual([]);
+    expect(m.__responseInterceptors).toEqual([]);
     expect(m.__timeout).toBeUndefined();
     expect(m.__retry).toBeUndefined();
     expect(m.__cache).toBeUndefined();
@@ -41,15 +47,26 @@ describe('action()', () => {
     expect(m.__cache).toBe(true);
   });
 
-  it('use() chains interceptors and returns same marker', () => {
-    const mw1 = mockMiddleware('mw1');
-    const mw2 = mockMiddleware('mw2');
+  it('interceptors.request.use() chains interceptors and returns same marker', () => {
+    const ri1 = mockRequestInterceptor('ri1');
+    const ri2 = mockRequestInterceptor('ri2');
     const m = action();
-    const returned = m.use(mw1).use(mw2);
+    const returned = m.interceptors.request.use(ri1).interceptors.request.use(ri2);
     expect(returned).toBe(m);
-    expect(m.__interceptors).toHaveLength(2);
-    expect(m.__interceptors![0]).toBe(mw1);
-    expect(m.__interceptors![1]).toBe(mw2);
+    expect(m.__requestInterceptors).toHaveLength(2);
+    expect(m.__requestInterceptors![0]).toBe(ri1);
+    expect(m.__requestInterceptors![1]).toBe(ri2);
+  });
+
+  it('interceptors.response.use() chains interceptors and returns same marker', () => {
+    const ri1 = mockResponseInterceptor('ri1');
+    const ri2 = mockResponseInterceptor('ri2');
+    const m = action();
+    const returned = m.interceptors.response.use(ri1).interceptors.response.use(ri2);
+    expect(returned).toBe(m);
+    expect(m.__responseInterceptors).toHaveLength(2);
+    expect(m.__responseInterceptors![0]).toBe(ri1);
+    expect(m.__responseInterceptors![1]).toBe(ri2);
   });
 });
 
@@ -70,14 +87,17 @@ describe('event()', () => {
 // ─── definePlugin() ───
 
 describe('definePlugin()', () => {
+  const reqInterceptor = mockRequestInterceptor('test-request-interceptor');
+  const resInterceptor = mockResponseInterceptor('test-response-interceptor');
+
   const markers = {
     takePhoto: action<{ quality: number }, string>({ timeout: 5000 }),
     getStatus: action<void, boolean>({ retry: { maxAttempts: 2, delay: 200 } }),
     getCached: action<void, string>({ cache: 8000 }),
   };
 
-  const mw = mockMiddleware('test-interceptor');
-  markers.takePhoto.use(mw);
+  markers.takePhoto.interceptors.request.use(reqInterceptor);
+  markers.takePhoto.interceptors.response.use(resInterceptor);
 
   const plugin = definePlugin('camera', markers);
 
@@ -95,9 +115,14 @@ describe('definePlugin()', () => {
     expect(plugin.events).toEqual({});
   });
 
-  it('extracts interceptors for actions that have them', () => {
-    expect(plugin.interceptors['camera.takePhoto']).toContain(mw);
-    expect(plugin.interceptors['camera.getStatus']).toBeUndefined();
+  it('extracts request interceptors for actions that have them', () => {
+    expect(plugin.requestInterceptors['camera.takePhoto']).toContain(reqInterceptor);
+    expect(plugin.requestInterceptors['camera.getStatus']).toBeUndefined();
+  });
+
+  it('extracts response interceptors for actions that have them', () => {
+    expect(plugin.responseInterceptors['camera.takePhoto']).toContain(resInterceptor);
+    expect(plugin.responseInterceptors['camera.getStatus']).toBeUndefined();
   });
 
   it('extracts timeouts', () => {
