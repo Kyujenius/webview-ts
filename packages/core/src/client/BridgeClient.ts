@@ -359,7 +359,11 @@ export class BridgeClient<
 
     const wrapper = this.handlerWrappers.get(handler);
     if (wrapper) {
-      this.eventHandlers.get(event)?.delete(wrapper);
+      const handlers = this.eventHandlers.get(event);
+      handlers?.delete(wrapper);
+      if (handlers?.size === 0) {
+        this.eventHandlers.delete(event);
+      }
       this.handlerWrappers.delete(handler);
     }
   }

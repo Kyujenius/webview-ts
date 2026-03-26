@@ -48,7 +48,11 @@ describe('BridgeClient - Cleanup', () => {
 
     it('should clear pending callbacks after destroy', () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge['callbacks']['callbacks'].set('test-id', {} as any);
+      bridge['callbacks']['callbacks'].set('test-id', {
+        resolve: () => {},
+        reject: () => {},
+        timestamp: Date.now(),
+      });
       bridge.destroy();
 
       expect(bridge['callbacks']['callbacks'].size).toBe(0);
