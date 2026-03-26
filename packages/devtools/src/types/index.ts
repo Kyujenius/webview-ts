@@ -10,32 +10,6 @@ import type { DevToolsTransport } from '../transport/DevToolsTransport';
 export type MessageStatus = 'pending' | 'success' | 'error' | 'timeout' | 'event';
 
 /**
- * Trace entry for a single middleware or interceptor execution
- */
-export interface MiddlewareTrace {
-  /** Middleware name */
-  name: string;
-  /** Layer: global middleware or plugin interceptor */
-  layer: 'global' | 'plugin';
-  /** Plugin name (only when layer='plugin') */
-  plugin?: string;
-  /** Time spent before next() (request phase) in ms */
-  enterMs: number;
-  /** Time spent after next() (response phase) in ms */
-  exitMs: number;
-  /** Whether this middleware short-circuited (did not call next()) */
-  shortCircuit: boolean;
-  /** Reason for short-circuit (e.g. "cache-hit", "auth-rejected") */
-  shortCircuitReason?: string;
-  /** Error thrown by this specific middleware */
-  error?: { message: string; stack?: string };
-  /** Logs left by middleware via ctx.metadata.set('__mwLog:<name>', [...]) */
-  logs?: string[];
-  /** Metadata keys added/changed during this middleware's execution */
-  metadataChanges?: Record<string, unknown>;
-}
-
-/**
  * Recorded call — one entry per bridge.call() lifecycle.
  * Starts as PENDING, then updates to SUCCESS/ERROR/TIMEOUT.
  */
@@ -66,15 +40,6 @@ export interface RecordedMessage {
 
   /** Stack trace (for errors) */
   stackTrace?: string;
-
-  /** Middleware/interceptor execution trace (for waterfall) */
-  middlewareTrace?: MiddlewareTrace[];
-
-  /** Handler execution time in ms */
-  handlerMs?: number;
-
-  /** Whether handler was skipped (short-circuited) */
-  handlerSkipped?: boolean;
 
   /** Bridge message ID — correlates request↔response */
   messageId?: string;

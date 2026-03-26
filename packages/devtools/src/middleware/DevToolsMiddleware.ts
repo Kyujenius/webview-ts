@@ -1,19 +1,11 @@
 /**
  * DevToolsMiddleware — Records all bridge calls for debugging/visualization.
- * One record per call: PENDING → SUCCESS/ERROR.
+ * Subscribes to lifecycle events: call:start, call:end, call:error.
  */
-
-import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
-import { METADATA_KEYS } from '@webview-ts/shared';
 
 import { DevToolsStoreImpl } from '../logger/DevToolsStore';
 import type { DevToolsTransport } from '../transport/DevToolsTransport';
-import type {
-  DevToolsConfig,
-  DevToolsStore,
-  MiddlewareTrace,
-  RecordedMessage,
-} from '../types/index';
+import type { DevToolsConfig, DevToolsStore, RecordedMessage } from '../types/index';
 
 type ResolvedConfig = Omit<Required<DevToolsConfig>, 'transport'> & {
   transport?: DevToolsTransport;
@@ -38,20 +30,90 @@ export class DevToolsMiddleware {
     this.store = store ?? new DevToolsStoreImpl(this.config.maxRecords);
   }
 
-  toMiddleware(): Middleware {
-    return { name: 'devtools', fn: this.createFn(), __skipTrace: true } satisfies Middleware;
-  }
+  connect(target: { onCall(event: string, handler: (data: any) => void): () => void }): () => void {
+    const unsubs: (() => void)[] = [];
 
-  get name(): string {
-    return 'devtools';
-  }
+    unsubs.push(
+      target.onCall(
+        'call:start',
+        (data: { id: string; action: string; payload: unknown; timestamp: number }) => {
+          if (!this.config.enabled) return;
+          if (!this.config.filter({ action: data.action, payload: data.payload })) return;
 
-  get fn(): MiddlewareFn {
-    return this.createFn();
-  }
+          const record: RecordedMessage = {
+            recordId: this.generateRecordId(),
+            status: 'pending',
+            action: data.action,
+            payload: data.payload,
+            timestamp: data.timestamp,
+            messageId: data.id,
+          };
 
-  get __skipTrace(): boolean {
-    return true;
+          this.store.addMessage(record);
+          this.config.onMessage(record);
+          this.config.transport?.send({ type: 'record', record: { ...record } });
+          if (this.config.debug) console.log(`[devtools] → ${record.action} (pending)`);
+        }
+      )
+    );
+
+    unsubs.push(
+      target.onCall(
+        'call:end',
+        (data: { id: string; action: string; response: any; duration: number }) => {
+          if (!this.config.enabled) return;
+
+          const duration = this.config.trackPerformance ? data.duration : undefined;
+          const status = data.response?.success ? 'success' : 'error';
+
+          const record: RecordedMessage = {
+            recordId: this.generateRecordId(),
+            status,
+            action: data.action,
+            timestamp: Date.now(),
+            duration,
+            messageId: data.id,
+            responseData: data.response?.success ? data.response.data : undefined,
+            error: data.response && !data.response.success ? data.response.error : undefined,
+          };
+
+          this.store.addMessage(record);
+          this.config.onMessage(record);
+          this.config.transport?.send({ type: 'record', record: { ...record } });
+          if (this.config.debug)
+            console.log(`[devtools] ← ${data.action} (${status} ${duration?.toFixed(0)}ms)`);
+        }
+      )
+    );
+
+    unsubs.push(
+      target.onCall(
+        'call:error',
+        (data: { id: string; action: string; error: Error; duration: number }) => {
+          if (!this.config.enabled) return;
+
+          const duration = this.config.trackPerformance ? data.duration : undefined;
+          const record: RecordedMessage = {
+            recordId: this.generateRecordId(),
+            status: 'error',
+            action: data.action,
+            timestamp: Date.now(),
+            duration,
+            messageId: data.id,
+            error: { code: 'CALL_ERROR', message: data.error.message },
+            stackTrace: this.config.captureStackTraces ? data.error.stack : undefined,
+          };
+
+          this.store.addMessage(record);
+          this.config.onMessage(record);
+          this.config.transport?.send({ type: 'record', record: { ...record } });
+          if (this.config.debug)
+            console.log(`[devtools] ✗ ${data.action} (error: ${data.error.message})`);
+        }
+      )
+    );
+
+    return () => unsubs.forEach((fn) => fn());
   }
 
   getStore(): DevToolsStore {
@@ -68,102 +130,6 @@ export class DevToolsMiddleware {
 
   isEnabled(): boolean {
     return this.config.enabled;
-  }
-
-  private createFn(): MiddlewareFn {
-    return async (ctx, next) => {
-      if (!this.config.enabled) {
-        return next();
-      }
-
-      const { request } = ctx;
-
-      if (!this.config.filter(request)) {
-        return next();
-      }
-
-      // Create a single record for this call lifecycle
-      const record: RecordedMessage = {
-        recordId: this.generateRecordId(),
-        status: 'pending',
-        action: request.action,
-        payload: request.payload,
-        timestamp: Date.now(),
-        messageId: request.id,
-        sourceId: request.sourceId,
-        targetId: request.targetId,
-      };
-
-      this.store.addMessage(record);
-      this.config.onMessage(record);
-      this.config.transport?.send({ type: 'record', record: { ...record } });
-      if (this.config.debug) console.log(`[devtools] → ${record.action} (pending)`);
-
-      const startTime = Date.now();
-
-      try {
-        await next();
-
-        const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
-        const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as
-          | MiddlewareTrace[]
-          | undefined;
-        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
-        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
-
-        const updates: Partial<RecordedMessage> = {
-          status: ctx.response?.success ? 'success' : 'error',
-          duration,
-          middlewareTrace,
-          handlerMs,
-          handlerSkipped,
-        };
-
-        if (ctx.response?.success) {
-          updates.responseData = ctx.response.data;
-        } else if (ctx.response && !ctx.response.success) {
-          updates.error = ctx.response.error;
-        }
-
-        this.store.updateMessage(record.recordId, updates);
-        Object.assign(record, updates);
-        this.config.onMessage(record);
-        this.config.transport?.send({ type: 'record', record: { ...record } });
-        if (this.config.debug)
-          console.log(
-            `[devtools] ← ${record.action} (${updates.status} ${duration?.toFixed(0)}ms)`
-          );
-      } catch (error) {
-        const duration = this.config.trackPerformance ? Date.now() - startTime : undefined;
-        const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES) as
-          | MiddlewareTrace[]
-          | undefined;
-        const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
-        const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
-
-        const err = error instanceof Error ? error : new Error(String(error));
-        const updates: Partial<RecordedMessage> = {
-          status: 'error',
-          duration,
-          error: {
-            code: 'MIDDLEWARE_ERROR',
-            message: err.message,
-          },
-          stackTrace: this.config.captureStackTraces ? err.stack : undefined,
-          middlewareTrace,
-          handlerMs,
-          handlerSkipped,
-        };
-
-        this.store.updateMessage(record.recordId, updates);
-        Object.assign(record, updates);
-        this.config.onMessage(record);
-        this.config.transport?.send({ type: 'record', record: { ...record } });
-        if (this.config.debug) console.log(`[devtools] ✗ ${record.action} (error: ${err.message})`);
-
-        throw error;
-      }
-    };
   }
 
   private generateRecordId(): string {

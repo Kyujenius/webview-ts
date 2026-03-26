@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MetadataMap } from '../metadata/MetadataMap';
-import type { Middleware } from '../types/middleware';
 import { _resetAutoDevTools, type AutoDevToolsTarget, tryAutoDevTools } from './auto-devtools';
 
 // --- Mock WebSocket ---
@@ -39,29 +37,43 @@ class MockWebSocket {
   }
 }
 
+type EventHandler = (data: any) => void;
+
 function createTarget(): AutoDevToolsTarget & {
-  prepended: Middleware[];
-  removed: string[];
-  eventHandlers: Array<(event: string, payload: unknown) => void>;
+  handlers: Map<string, EventHandler[]>;
+  anyEventHandlers: Array<(event: string, payload: unknown) => void>;
+  emit(event: string, data: any): void;
+  getHandlerCount(event: string): number;
 } {
-  const eventHandlers: Array<(event: string, payload: unknown) => void> = [];
+  const handlers = new Map<string, EventHandler[]>();
+  const anyEventHandlers: Array<(event: string, payload: unknown) => void> = [];
   return {
-    prepended: [],
-    removed: [],
-    eventHandlers,
-    prepend(mw: Middleware) {
-      this.prepended.push(mw);
-    },
-    removeMiddleware(name: string) {
-      this.removed.push(name);
-      return true;
+    handlers,
+    anyEventHandlers,
+    onCall(event: string, handler: EventHandler): () => void {
+      if (!handlers.has(event)) handlers.set(event, []);
+      handlers.get(event)!.push(handler);
+      return () => {
+        const list = handlers.get(event);
+        if (list) {
+          const idx = list.indexOf(handler);
+          if (idx >= 0) list.splice(idx, 1);
+        }
+      };
     },
     onAnyEvent(handler: (event: string, payload: unknown) => void) {
-      eventHandlers.push(handler);
+      anyEventHandlers.push(handler);
       return () => {
-        const idx = eventHandlers.indexOf(handler);
-        if (idx >= 0) eventHandlers.splice(idx, 1);
+        const idx = anyEventHandlers.indexOf(handler);
+        if (idx >= 0) anyEventHandlers.splice(idx, 1);
       };
+    },
+    emit(event: string, data: any) {
+      const list = handlers.get(event);
+      if (list) list.forEach((h) => h(data));
+    },
+    getHandlerCount(event: string): number {
+      return handlers.get(event)?.length ?? 0;
     },
   };
 }
@@ -91,7 +103,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       // Mount
       const cleanup1 = tryAutoDevTools(target)!;
       await new Promise<void>((r) => queueMicrotask(r));
-      expect(target.prepended).toHaveLength(1);
+      expect(target.getHandlerCount('call:start')).toBe(1);
 
       // Strict Mode cleanup — removes target, closes WS
       cleanup1();
@@ -102,8 +114,8 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       expect(MockWebSocket.instances).toHaveLength(2);
 
       await new Promise<void>((r) => queueMicrotask(r));
-      // Should get middleware again from the new WS onopen
-      expect(target.prepended).toHaveLength(2);
+      // Should get subscriptions again from the new WS onopen
+      expect(target.getHandlerCount('call:start')).toBe(1);
       expect(cleanup2).toBeTypeOf('function');
 
       cleanup2();
@@ -114,7 +126,6 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       // Mount — WS1 created
       const cleanup1 = tryAutoDevTools(target)!;
-      const ws1 = MockWebSocket.instances[0];
       await new Promise<void>((r) => queueMicrotask(r));
 
       // Strict Mode cleanup — closes WS1
@@ -124,16 +135,14 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       // Re-mount — WS2 created (before WS1.onclose fires)
       const cleanup2 = tryAutoDevTools(target)!;
       const ws2 = MockWebSocket.instances[1];
-      expect(ws2).not.toBe(ws1);
+      expect(ws2).not.toBe(MockWebSocket.instances[0]);
 
       // Now WS1.onclose fires (stale)
       await new Promise<void>((r) => queueMicrotask(r));
 
-      // WS2.onopen should still fire and middleware should be added
+      // WS2.onopen should still fire and subscriptions should be added
       await new Promise<void>((r) => queueMicrotask(r));
-      // The last prepend should be from WS2
-      const lastPrepended = target.prepended[target.prepended.length - 1];
-      expect(lastPrepended.name).toBe('__auto_devtools');
+      expect(target.getHandlerCount('call:start')).toBeGreaterThanOrEqual(1);
 
       cleanup2();
     });
@@ -147,9 +156,9 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       globalThis.queueMicrotask = (cb: () => void) => pendingCallbacks.push(cb);
 
       tryAutoDevTools(target);
-      const ws1 = MockWebSocket.instances[0];
 
       // Before WS1.onopen fires, close it and create WS2
+      const ws1 = MockWebSocket.instances[0];
       ws1.readyState = MockWebSocket.CLOSED;
       globalThis.queueMicrotask = originalQueueMicrotask;
 
@@ -158,10 +167,10 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       await new Promise<void>((r) => queueMicrotask(r));
 
       // Now flush WS1's pending onopen — it should be a no-op
-      const prependedBefore = target.prepended.length;
+      const handlerCountBefore = target.getHandlerCount('call:start');
       for (const cb of pendingCallbacks) cb();
-      // WS1's onopen should NOT prepend middleware (stale guard)
-      expect(target.prepended.length).toBe(prependedBefore);
+      // WS1's onopen should NOT add subscriptions (stale guard)
+      expect(target.getHandlerCount('call:start')).toBe(handlerCountBefore);
 
       cleanup2();
     });
@@ -173,17 +182,17 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
 
       const cleanup1 = tryAutoDevTools(target)!;
       await new Promise<void>((r) => queueMicrotask(r));
-      expect(target.eventHandlers).toHaveLength(1);
+      expect(target.anyEventHandlers).toHaveLength(1);
 
       // Strict Mode cleanup
       cleanup1();
-      expect(target.eventHandlers).toHaveLength(0);
+      expect(target.anyEventHandlers).toHaveLength(0);
 
       // Re-mount
       const cleanup2 = tryAutoDevTools(target)!;
       await new Promise<void>((r) => queueMicrotask(r));
       // Should have exactly 1 handler, not 2
-      expect(target.eventHandlers).toHaveLength(1);
+      expect(target.anyEventHandlers).toHaveLength(1);
 
       cleanup2();
     });
@@ -203,7 +212,7 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       ws.sent = []; // clear any setup messages
 
       // Fire an event
-      target.eventHandlers[0]('test.event', { value: 42 });
+      target.anyEventHandlers[0]('test.event', { value: 42 });
 
       expect(ws.sent).toHaveLength(1);
       const record = JSON.parse(ws.sent[0]);
@@ -223,19 +232,19 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       const cleanup2 = tryAutoDevTools(target2)!;
       await new Promise<void>((r) => queueMicrotask(r));
 
-      expect(target1.prepended).toHaveLength(1);
-      expect(target2.prepended).toHaveLength(1);
+      expect(target1.getHandlerCount('call:start')).toBe(1);
+      expect(target2.getHandlerCount('call:start')).toBe(1);
 
       // Cleanup target1 only
       cleanup1();
-      expect(target1.removed).toContain('__auto_devtools');
+      expect(target1.getHandlerCount('call:start')).toBe(0);
       // WS should still be open (target2 still active)
       expect(MockWebSocket.instances[0].closed).toBe(false);
 
       // target2's event handler should still work
       const ws = MockWebSocket.instances[0];
       ws.sent = [];
-      target2.eventHandlers[0]('test.event', {});
+      target2.anyEventHandlers[0]('test.event', {});
       expect(ws.sent).toHaveLength(1);
 
       cleanup2();
@@ -256,46 +265,10 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       const cleanup1b = tryAutoDevTools(target1)!;
       // No new WebSocket should be created
       expect(MockWebSocket.instances).toHaveLength(1);
-      // target1 should get middleware immediately (wsReady is true)
-      expect(target1.prepended).toHaveLength(2);
+      // target1 should get subscriptions immediately (wsReady is true)
+      expect(target1.getHandlerCount('call:start')).toBe(1);
 
       cleanup1b();
-    });
-  });
-
-  describe('sendRecord null safety', () => {
-    it('sendRecord does not throw when ws is null', async () => {
-      const target = createTarget();
-      const cleanup = tryAutoDevTools(target)!;
-      await new Promise<void>((r) => queueMicrotask(r));
-
-      const mw = target.prepended[0];
-
-      // Close WS so it becomes null
-      cleanup();
-      await new Promise<void>((r) => queueMicrotask(r));
-
-      // The middleware closure still references the old ws,
-      // but sendRecord should handle null safely
-      const ctx = {
-        request: {
-          id: 'msg-1',
-          sourceId: 'client-1',
-          targetId: 'host',
-          action: 'test',
-          timestamp: Date.now(),
-        },
-        startTime: Date.now(),
-        metadata: new MetadataMap(),
-        response: undefined as any,
-      };
-
-      // Should not throw
-      await expect(
-        mw.fn(ctx, async () => {
-          ctx.response = { id: 'msg-1', success: true, data: {}, timestamp: Date.now() };
-        })
-      ).resolves.not.toThrow();
     });
   });
 });

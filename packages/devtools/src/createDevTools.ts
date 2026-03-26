@@ -15,7 +15,7 @@ import type { DevToolsConfig } from './types/index';
  */
 export interface CreateDevToolsOptions {
   /**
-   * DevTools middleware config
+   * DevTools recorder config
    */
   devtools?: DevToolsConfig;
 
@@ -35,9 +35,9 @@ export interface CreateDevToolsOptions {
  */
 export interface DevToolsBundle {
   /**
-   * DevTools middleware for recording messages
+   * DevTools recorder for recording messages
    */
-  middleware: DevToolsMiddleware;
+  recorder: DevToolsMiddleware;
 
   /**
    * Time tracker for performance metrics
@@ -48,19 +48,33 @@ export interface DevToolsBundle {
    * Structured logger
    */
   logger: StructuredLogger;
+
+  /**
+   * Connect both recorder and timeTracker to a bridge target's lifecycle events.
+   * Returns a cleanup function that unsubscribes all.
+   */
+  connect(target: { onCall(event: string, handler: (data: any) => void): () => void }): () => void;
 }
 
 /**
  * Create a complete DevTools bundle
  */
 export function createDevTools(options: CreateDevToolsOptions = {}): DevToolsBundle {
-  const middleware = createDevToolsMiddleware(options.devtools);
+  const recorder = createDevToolsMiddleware(options.devtools);
   const timeTracker = createTimeTracker(options.timeTrackerMaxEntries);
   const logger = createStructuredLogger(options.logger);
 
   return {
-    middleware,
+    recorder,
     timeTracker,
     logger,
+    connect(target) {
+      const unsub1 = recorder.connect(target);
+      const unsub2 = timeTracker.connect(target);
+      return () => {
+        unsub1();
+        unsub2();
+      };
+    },
   };
 }

@@ -2,8 +2,8 @@
  * Zero-config DevTools auto-connect.
  *
  * In development mode, automatically tries to connect to the DevTools
- * dashboard server (ws://localhost:4000) and register a lightweight
- * recording middleware. If the server is not running, silently ignores.
+ * dashboard server (ws://localhost:4000) and subscribe to bridge lifecycle
+ * events. If the server is not running, silently ignores.
  *
  * Uses a module-level singleton WebSocket so that multiple bridge instances
  * (e.g. from React Strict Mode double-invoking useMemo) share one connection.
@@ -12,18 +12,24 @@
  * by bundlers via the `process.env.NODE_ENV` guard.
  */
 
-import { METADATA_KEYS } from '../constants/metadata-keys';
-import type { Middleware, MiddlewareContext } from '../types/middleware';
-
 const DEVTOOLS_PORT = 4000;
-const DEVTOOLS_MW_NAME = '__auto_devtools';
 
 /**
  * Minimal interface that both BridgeClient (core) and BridgeHost (RN) satisfy.
  */
 export interface AutoDevToolsTarget {
-  prepend(middleware: Middleware): void;
-  removeMiddleware(name: string): boolean;
+  onCall(
+    event: 'call:start',
+    handler: (data: { id: string; action: string; payload: unknown; timestamp: number }) => void
+  ): () => void;
+  onCall(
+    event: 'call:end',
+    handler: (data: { id: string; action: string; response: any; duration: number }) => void
+  ): () => void;
+  onCall(
+    event: 'call:error',
+    handler: (data: { id: string; action: string; error: Error; duration: number }) => void
+  ): () => void;
   /** Subscribe to all events (optional — only BridgeClient has this) */
   onAnyEvent?(handler: (event: string, payload: unknown) => void): () => void;
 }
@@ -37,9 +43,6 @@ interface RecordPayload {
   error?: { code: string; message: string; details?: unknown };
   timestamp: number;
   duration?: number;
-  middlewareTrace?: unknown[];
-  handlerMs?: number;
-  handlerSkipped?: boolean;
   messageId?: string;
   sourceId?: string;
   targetId?: string;
@@ -55,70 +58,59 @@ function sendRecord(ws: WebSocket | null, record: RecordPayload): void {
   }
 }
 
-function createRecordingMiddleware(ws: WebSocket): Middleware {
-  const fn = async (ctx: MiddlewareContext, next: () => Promise<void>) => {
-    const record: RecordPayload = {
-      recordId: generateRecordId(),
-      status: 'pending',
-      action: ctx.request.action,
-      payload: ctx.request.payload,
-      timestamp: Date.now(),
-      messageId: ctx.request.id,
-      sourceId: ctx.request.sourceId,
-      targetId: ctx.request.targetId,
-    };
+function createRecordingSubscription(target: AutoDevToolsTarget, ws: WebSocket): () => void {
+  const unsubs: (() => void)[] = [];
 
-    sendRecord(ws, record);
-    const startTime = Date.now();
-
-    try {
-      await next();
-
-      const duration = Date.now() - startTime;
-      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES);
-      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
-      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
-
-      const updated: RecordPayload = {
-        ...record,
-        status: ctx.response?.success ? 'success' : 'error',
-        duration,
-        middlewareTrace,
-        handlerMs,
-        handlerSkipped,
+  unsubs.push(
+    target.onCall('call:start', (data) => {
+      const record: RecordPayload = {
+        recordId: generateRecordId(),
+        status: 'pending',
+        action: data.action,
+        payload: data.payload,
+        timestamp: data.timestamp,
+        messageId: data.id,
       };
+      sendRecord(ws, record);
+    })
+  );
 
-      if (ctx.response?.success) {
-        updated.responseData = ctx.response.data;
-      } else if (ctx.response && !ctx.response.success) {
-        updated.error = ctx.response.error;
-      }
+  unsubs.push(
+    target.onCall('call:end', (data) => {
+      const status = data.response?.success ? 'success' : 'error';
+      const record: RecordPayload = {
+        recordId: generateRecordId(),
+        status,
+        action: data.action,
+        timestamp: Date.now(),
+        duration: data.duration,
+        messageId: data.id,
+        responseData: data.response?.success ? data.response.data : undefined,
+        error: data.response && !data.response.success ? data.response.error : undefined,
+      };
+      sendRecord(ws, record);
+    })
+  );
 
-      sendRecord(ws, updated);
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const middlewareTrace = ctx.metadata.get(METADATA_KEYS.MW_TRACES);
-      const handlerMs = ctx.metadata.get(METADATA_KEYS.HANDLER_MS);
-      const handlerSkipped = ctx.metadata.get(METADATA_KEYS.HANDLER_SKIPPED);
-
-      sendRecord(ws, {
-        ...record,
+  unsubs.push(
+    target.onCall('call:error', (data) => {
+      const record: RecordPayload = {
+        recordId: generateRecordId(),
         status: 'error',
-        duration,
+        action: data.action,
+        timestamp: Date.now(),
+        duration: data.duration,
+        messageId: data.id,
         error: {
-          code: 'MIDDLEWARE_ERROR',
-          message: error instanceof Error ? error.message : String(error),
+          code: 'CALL_ERROR',
+          message: data.error.message,
         },
-        middlewareTrace,
-        handlerMs,
-        handlerSkipped,
-      });
+      };
+      sendRecord(ws, record);
+    })
+  );
 
-      throw error;
-    }
-  };
-
-  return { name: DEVTOOLS_MW_NAME, fn, __skipTrace: true };
+  return () => unsubs.forEach((fn) => fn());
 }
 
 // ---- Singleton WebSocket shared across all bridge instances ----
@@ -135,6 +127,9 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** Per-target event unsubscribe functions */
 const eventUnsubs = new Map<AutoDevToolsTarget, () => void>();
+
+/** Per-target recording subscription cleanup functions */
+const recordingUnsubs = new Map<AutoDevToolsTarget, () => void>();
 
 function subscribeEvents(target: AutoDevToolsTarget, ws: WebSocket): void {
   if (!target.onAnyEvent) return;
@@ -161,6 +156,20 @@ function unsubscribeEvents(target: AutoDevToolsTarget): void {
   }
 }
 
+function subscribeRecording(target: AutoDevToolsTarget, ws: WebSocket): void {
+  if (recordingUnsubs.has(target)) return; // prevent duplicate subscription
+  const unsub = createRecordingSubscription(target, ws);
+  recordingUnsubs.set(target, unsub);
+}
+
+function unsubscribeRecording(target: AutoDevToolsTarget): void {
+  const unsub = recordingUnsubs.get(target);
+  if (unsub) {
+    unsub();
+    recordingUnsubs.delete(target);
+  }
+}
+
 function getOrCreateWs(role: DevToolsRole): WebSocket | null {
   if (sharedWs && sharedWs.readyState !== WebSocket.CLOSED) {
     return sharedWs;
@@ -181,7 +190,7 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
     if (sharedWs !== thisWs) return;
     wsReady = true;
     for (const t of targets) {
-      t.prepend(createRecordingMiddleware(sharedWs!));
+      subscribeRecording(t, sharedWs!);
       subscribeEvents(t, sharedWs!);
     }
   };
@@ -195,7 +204,7 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
     if (sharedWs !== thisWs) return;
     wsReady = false;
     for (const t of targets) {
-      t.removeMiddleware(DEVTOOLS_MW_NAME);
+      unsubscribeRecording(t);
       unsubscribeEvents(t);
     }
     sharedWs = null;
@@ -216,7 +225,7 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
  * Try to auto-connect to the DevTools server.
  * Returns a cleanup function if connected, or undefined if skipped.
  *
- * @param target - Bridge instance to attach devtools middleware to
+ * @param target - Bridge instance to subscribe devtools events on
  * @param role   - 'host' (BridgeHost / RN) or 'client' (BridgeClient / web)
  *
  * Uses a singleton WebSocket — multiple calls share one connection.
@@ -236,7 +245,7 @@ export function tryAutoDevTools(
 
   // If WS is already open, register immediately
   if (ws && wsReady) {
-    target.prepend(createRecordingMiddleware(ws));
+    subscribeRecording(target, ws);
     subscribeEvents(target, ws);
   } else if (!ws && !retryTimer) {
     // First connection failed — schedule retry
@@ -248,7 +257,7 @@ export function tryAutoDevTools(
 
   return () => {
     targets.delete(target);
-    target.removeMiddleware(DEVTOOLS_MW_NAME);
+    unsubscribeRecording(target);
     unsubscribeEvents(target);
 
     // Close WS and stop retrying when no more targets
@@ -280,5 +289,6 @@ export function _resetAutoDevTools(): void {
   sharedWs = null;
   targets = new Set();
   eventUnsubs.clear();
+  recordingUnsubs.clear();
   wsReady = false;
 }

@@ -7,7 +7,6 @@
 export type {
   DevToolsConfig,
   DevToolsStore,
-  MiddlewareTrace,
   PerformanceMetrics,
   RecordedMessage,
 } from './types/index';

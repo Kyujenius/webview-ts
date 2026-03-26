@@ -1,9 +1,7 @@
 /**
- * TimeTracker — Performance tracking middleware using the onion model.
- * Timing is natural: start before next(), end after next().
+ * TimeTracker — Performance tracking via lifecycle event subscription.
+ * Subscribes to call:start, call:end, call:error events.
  */
-
-import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
 
 export interface PerformanceEntry {
   messageId: string;
@@ -24,49 +22,47 @@ export class TimeTracker {
     this.maxEntries = maxEntries;
   }
 
-  get name(): string {
-    return 'time-tracker';
-  }
+  connect(target: { onCall(event: string, handler: (data: any) => void): () => void }): () => void {
+    const unsubs: (() => void)[] = [];
 
-  get fn(): MiddlewareFn {
-    return this.createFn();
-  }
+    unsubs.push(
+      target.onCall('call:start', (data: { id: string; action: string }) => {
+        const entry: PerformanceEntry = {
+          messageId: data.id,
+          action: data.action,
+          startTime: performance.now(),
+        };
+        this.entries.set(data.id, entry);
+      })
+    );
 
-  toMiddleware(): Middleware {
-    return { name: this.name, fn: this.createFn() };
-  }
-
-  private createFn(): MiddlewareFn {
-    return async (ctx, next) => {
-      const entry: PerformanceEntry = {
-        messageId: ctx.request.id,
-        action: ctx.request.action,
-        startTime: performance.now(),
-      };
-
-      this.entries.set(ctx.request.id, entry);
-
-      try {
-        await next();
-
+    unsubs.push(
+      target.onCall('call:end', (data: { id: string; response: any }) => {
+        const entry = this.entries.get(data.id);
+        if (!entry) return;
         entry.endTime = performance.now();
         entry.duration = entry.endTime - entry.startTime;
-        entry.success = ctx.response?.success ?? true;
-
-        if (ctx.response && !ctx.response.success && ctx.response.error) {
-          entry.error = ctx.response.error.message;
+        entry.success = data.response?.success ?? true;
+        if (data.response && !data.response.success && data.response.error) {
+          entry.error = data.response.error.message;
         }
-      } catch (error) {
+        this.completeEntry(entry);
+      })
+    );
+
+    unsubs.push(
+      target.onCall('call:error', (data: { id: string; error: Error }) => {
+        const entry = this.entries.get(data.id);
+        if (!entry) return;
         entry.endTime = performance.now();
         entry.duration = entry.endTime - entry.startTime;
         entry.success = false;
-        const err = error instanceof Error ? error : new Error(String(error));
-        entry.error = err.message;
-        throw error;
-      } finally {
+        entry.error = data.error.message;
         this.completeEntry(entry);
-      }
-    };
+      })
+    );
+
+    return () => unsubs.forEach((fn) => fn());
   }
 
   private completeEntry(entry: PerformanceEntry): void {

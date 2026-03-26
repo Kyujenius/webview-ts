@@ -1,21 +1,28 @@
-import { MetadataMap } from '@webview-ts/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createTimeTracker, TimeTracker } from './TimeTracker';
 
-function makeCtx(action = 'test.action', id = 'msg-1') {
+type EventHandler = (data: any) => void;
+
+function createMockTarget() {
+  const handlers: Map<string, EventHandler[]> = new Map();
+
   return {
-    request: {
-      id,
-      action,
-      payload: {},
-      timestamp: Date.now(),
-      sourceId: 'src',
-      targetId: 'host',
+    onCall(event: string, handler: EventHandler): () => void {
+      if (!handlers.has(event)) handlers.set(event, []);
+      handlers.get(event)!.push(handler);
+      return () => {
+        const list = handlers.get(event);
+        if (list) {
+          const idx = list.indexOf(handler);
+          if (idx >= 0) list.splice(idx, 1);
+        }
+      };
     },
-    startTime: Date.now(),
-    metadata: new MetadataMap(),
-    response: undefined as any,
+    emit(event: string, data: any) {
+      const list = handlers.get(event);
+      if (list) list.forEach((h) => h(data));
+    },
   };
 }
 
@@ -30,17 +37,12 @@ describe('TimeTracker', () => {
     expect(tracker).toBeInstanceOf(TimeTracker);
   });
 
-  it('toMiddleware() returns middleware named "time-tracker"', () => {
-    const mw = tracker.toMiddleware();
-    expect(mw.name).toBe('time-tracker');
-    expect(typeof mw.fn).toBe('function');
-  });
+  it('records a successful entry with duration via connect()', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
 
-  it('records a successful entry with duration', async () => {
-    const ctx = makeCtx();
-    await tracker.fn(ctx, async () => {
-      ctx.response = { success: true } as any;
-    });
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
 
     const entries = tracker.getEntries();
     expect(entries).toHaveLength(1);
@@ -49,13 +51,12 @@ describe('TimeTracker', () => {
     expect(entries[0].duration).toBeGreaterThanOrEqual(0);
   });
 
-  it('records an error entry and rethrows', async () => {
-    const ctx = makeCtx();
-    await expect(
-      tracker.fn(ctx, async () => {
-        throw new Error('boom');
-      })
-    ).rejects.toThrow('boom');
+  it('records an error entry via call:error', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:error', { id: 'msg-1', error: new Error('boom') });
 
     const entries = tracker.getEntries();
     expect(entries).toHaveLength(1);
@@ -64,13 +65,14 @@ describe('TimeTracker', () => {
     expect(entries[0].duration).toBeGreaterThanOrEqual(0);
   });
 
-  it('records response error when ctx.response.success === false', async () => {
-    const ctx = makeCtx();
-    await tracker.fn(ctx, async () => {
-      ctx.response = {
-        success: false,
-        error: { message: 'response error' },
-      } as any;
+  it('records response error when response.success === false', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', {
+      id: 'msg-1',
+      response: { success: false, error: { message: 'response error' } },
     });
 
     const entries = tracker.getEntries();
@@ -79,38 +81,56 @@ describe('TimeTracker', () => {
     expect(entries[0].error).toBe('response error');
   });
 
-  it('getEntries() returns completed entries', async () => {
-    const ctx = makeCtx();
-    await tracker.fn(ctx, async () => {});
+  it('getEntries() returns completed entries', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
 
     expect(tracker.getEntries()).toHaveLength(1);
   });
 
-  it('getEntriesByAction() filters by action name', async () => {
-    await tracker.fn(makeCtx('action.a', 'id-1'), async () => {});
-    await tracker.fn(makeCtx('action.b', 'id-2'), async () => {});
-    await tracker.fn(makeCtx('action.a', 'id-3'), async () => {});
+  it('getEntriesByAction() filters by action name', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'id-1', action: 'action.a' });
+    target.emit('call:end', { id: 'id-1', response: { success: true } });
+    target.emit('call:start', { id: 'id-2', action: 'action.b' });
+    target.emit('call:end', { id: 'id-2', response: { success: true } });
+    target.emit('call:start', { id: 'id-3', action: 'action.a' });
+    target.emit('call:end', { id: 'id-3', response: { success: true } });
 
     expect(tracker.getEntriesByAction('action.a')).toHaveLength(2);
     expect(tracker.getEntriesByAction('action.b')).toHaveLength(1);
     expect(tracker.getEntriesByAction('action.c')).toHaveLength(0);
   });
 
-  it('getAverageDuration() computes average across all entries', async () => {
-    await tracker.fn(makeCtx('a', 'id-1'), async () => {});
-    await tracker.fn(makeCtx('b', 'id-2'), async () => {});
+  it('getAverageDuration() computes average across all entries', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'id-1', action: 'a' });
+    target.emit('call:end', { id: 'id-1', response: { success: true } });
+    target.emit('call:start', { id: 'id-2', action: 'b' });
+    target.emit('call:end', { id: 'id-2', response: { success: true } });
 
     const avg = tracker.getAverageDuration();
     expect(avg).toBeGreaterThanOrEqual(0);
   });
 
-  it('getAverageDuration(action) filters by action', async () => {
-    await tracker.fn(makeCtx('action.x', 'id-1'), async () => {});
-    await tracker.fn(makeCtx('action.y', 'id-2'), async () => {});
+  it('getAverageDuration(action) filters by action', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'id-1', action: 'action.x' });
+    target.emit('call:end', { id: 'id-1', response: { success: true } });
+    target.emit('call:start', { id: 'id-2', action: 'action.y' });
+    target.emit('call:end', { id: 'id-2', response: { success: true } });
 
     const avg = tracker.getAverageDuration('action.x');
     expect(avg).toBeGreaterThanOrEqual(0);
-    // Only 1 entry for action.x, so avg equals that entry's duration
     const [entry] = tracker.getEntriesByAction('action.x');
     expect(avg).toBe(entry.duration);
   });
@@ -119,15 +139,14 @@ describe('TimeTracker', () => {
     expect(tracker.getAverageDuration()).toBe(0);
   });
 
-  it('getSuccessRate() computes ratio of successful entries', async () => {
-    await tracker.fn(makeCtx('a', 'id-1'), async () => {
-      // no response — success defaults to true
-    });
-    await expect(
-      tracker.fn(makeCtx('a', 'id-2'), async () => {
-        throw new Error('fail');
-      })
-    ).rejects.toThrow();
+  it('getSuccessRate() computes ratio of successful entries', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'id-1', action: 'a' });
+    target.emit('call:end', { id: 'id-1', response: { success: true } });
+    target.emit('call:start', { id: 'id-2', action: 'a' });
+    target.emit('call:error', { id: 'id-2', error: new Error('fail') });
 
     expect(tracker.getSuccessRate()).toBe(0.5);
   });
@@ -136,19 +155,34 @@ describe('TimeTracker', () => {
     expect(tracker.getSuccessRate()).toBe(0);
   });
 
-  it('getPendingEntries() is empty after completion', async () => {
-    await tracker.fn(makeCtx(), async () => {});
+  it('getPendingEntries() is empty after completion', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
+
     expect(tracker.getPendingEntries()).toHaveLength(0);
   });
 
-  it('clear() removes all entries', async () => {
-    await tracker.fn(makeCtx(), async () => {});
+  it('clear() removes all entries', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
+
     tracker.clear();
     expect(tracker.getEntries()).toHaveLength(0);
   });
 
-  it('export() returns a valid JSON string with entries', async () => {
-    await tracker.fn(makeCtx(), async () => {});
+  it('export() returns a valid JSON string with entries', () => {
+    const target = createMockTarget();
+    tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
+
     const json = tracker.export();
     const parsed = JSON.parse(json);
     expect(parsed.version).toBe('1.0');
@@ -156,16 +190,34 @@ describe('TimeTracker', () => {
     expect(parsed.entries).toHaveLength(1);
   });
 
-  it('trims oldest entries when exceeding maxEntries', async () => {
+  it('trims oldest entries when exceeding maxEntries', () => {
     const small = createTimeTracker(3);
+    const target = createMockTarget();
+    small.connect(target);
 
     for (let i = 0; i < 5; i++) {
-      await small.fn(makeCtx('a', `id-${i}`), async () => {});
+      target.emit('call:start', { id: `id-${i}`, action: 'a' });
+      target.emit('call:end', { id: `id-${i}`, response: { success: true } });
     }
 
     const entries = small.getEntries();
     expect(entries).toHaveLength(3);
-    // oldest entries were shifted out; only the last 3 remain
     expect(entries.map((e) => e.messageId)).toEqual(['id-2', 'id-3', 'id-4']);
+  });
+
+  it('connect() returns a cleanup function that unsubscribes', () => {
+    const target = createMockTarget();
+    const cleanup = tracker.connect(target);
+
+    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-1', response: { success: true } });
+    expect(tracker.getEntries()).toHaveLength(1);
+
+    cleanup();
+
+    // After cleanup, events should not be recorded
+    target.emit('call:start', { id: 'msg-2', action: 'test.action' });
+    target.emit('call:end', { id: 'msg-2', response: { success: true } });
+    expect(tracker.getEntries()).toHaveLength(1);
   });
 });

@@ -6,35 +6,32 @@ import { DevToolsMiddleware } from './middleware/DevToolsMiddleware';
 import { TimeTracker } from './middleware/TimeTracker';
 
 describe('createDevTools', () => {
-  it('returns a bundle with middleware, timeTracker, and logger', () => {
+  it('returns a bundle with recorder, timeTracker, logger, and connect', () => {
     const bundle = createDevTools();
-    expect(bundle).toHaveProperty('middleware');
+    expect(bundle).toHaveProperty('recorder');
     expect(bundle).toHaveProperty('timeTracker');
     expect(bundle).toHaveProperty('logger');
+    expect(bundle).toHaveProperty('connect');
   });
 
   it('creates all three with default options when called with no arguments', () => {
     const bundle = createDevTools();
-    expect(bundle.middleware).toBeInstanceOf(DevToolsMiddleware);
+    expect(bundle.recorder).toBeInstanceOf(DevToolsMiddleware);
     expect(bundle.timeTracker).toBeInstanceOf(TimeTracker);
     expect(bundle.logger).toBeInstanceOf(StructuredLogger);
   });
 
-  it('passes devtools config to middleware', () => {
+  it('passes devtools config to recorder', () => {
     const onMessage = vi.fn();
     const bundle = createDevTools({
       devtools: { enabled: false, maxRecords: 50, onMessage },
     });
-    expect(bundle.middleware.isEnabled()).toBe(false);
+    expect(bundle.recorder.isEnabled()).toBe(false);
   });
 
   it('passes timeTrackerMaxEntries to timeTracker', () => {
     const bundle = createDevTools({ timeTrackerMaxEntries: 42 });
-    // Verify the timeTracker respects maxEntries by filling it past the limit
-    // We can't inspect private fields directly, so we use the public API
     expect(bundle.timeTracker).toBeInstanceOf(TimeTracker);
-    // TimeTracker with maxEntries=42 keeps only the last 42 entries
-    // Confirm it was constructed (no error thrown)
     expect(bundle.timeTracker.getEntries()).toHaveLength(0);
   });
 
@@ -52,13 +49,13 @@ describe('createDevTools', () => {
     expect(onLog).toHaveBeenCalledOnce();
   });
 
-  it('middleware has expected methods', () => {
-    const { middleware } = createDevTools();
-    expect(typeof middleware.isEnabled).toBe('function');
-    expect(typeof middleware.setEnabled).toBe('function');
-    expect(typeof middleware.clear).toBe('function');
-    expect(typeof middleware.getStore).toBe('function');
-    expect(typeof middleware.toMiddleware).toBe('function');
+  it('recorder has expected methods', () => {
+    const { recorder } = createDevTools();
+    expect(typeof recorder.isEnabled).toBe('function');
+    expect(typeof recorder.setEnabled).toBe('function');
+    expect(typeof recorder.clear).toBe('function');
+    expect(typeof recorder.getStore).toBe('function');
+    expect(typeof recorder.connect).toBe('function');
   });
 
   it('timeTracker has expected methods', () => {
@@ -67,7 +64,7 @@ describe('createDevTools', () => {
     expect(typeof timeTracker.getAverageDuration).toBe('function');
     expect(typeof timeTracker.getSuccessRate).toBe('function');
     expect(typeof timeTracker.clear).toBe('function');
-    expect(typeof timeTracker.toMiddleware).toBe('function');
+    expect(typeof timeTracker.connect).toBe('function');
   });
 
   it('logger has expected methods', () => {
@@ -76,6 +73,38 @@ describe('createDevTools', () => {
     expect(typeof logger.getLogs).toBe('function');
     expect(typeof logger.getLogsByLevel).toBe('function');
     expect(typeof logger.clear).toBe('function');
-    expect(typeof logger.toMiddleware).toBe('function');
+  });
+
+  it('connect() subscribes both recorder and timeTracker to target events', () => {
+    const bundle = createDevTools();
+    const handlers = new Map<string, ((data: any) => void)[]>();
+
+    const target = {
+      onCall(event: string, handler: (data: any) => void): () => void {
+        if (!handlers.has(event)) handlers.set(event, []);
+        handlers.get(event)!.push(handler);
+        return () => {
+          const list = handlers.get(event);
+          if (list) {
+            const idx = list.indexOf(handler);
+            if (idx >= 0) list.splice(idx, 1);
+          }
+        };
+      },
+    };
+
+    const cleanup = bundle.connect(target);
+
+    // Both recorder and timeTracker should subscribe to all 3 events
+    expect(handlers.get('call:start')?.length).toBe(2);
+    expect(handlers.get('call:end')?.length).toBe(2);
+    expect(handlers.get('call:error')?.length).toBe(2);
+
+    cleanup();
+
+    // All handlers should be cleaned up
+    expect(handlers.get('call:start')?.length).toBe(0);
+    expect(handlers.get('call:end')?.length).toBe(0);
+    expect(handlers.get('call:error')?.length).toBe(0);
   });
 });
