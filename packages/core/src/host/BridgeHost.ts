@@ -5,17 +5,8 @@ import type {
   BridgeResponse,
   ConnectionRegistry,
   HostAdapter,
-  Middleware,
-  MiddlewareContext,
 } from '@webview-ts/shared';
-import {
-  BridgeCallError,
-  isBridgeMessage,
-  MetadataMap,
-  MiddlewarePipeline,
-  TARGET,
-  toBridgeErrorCode,
-} from '@webview-ts/shared';
+import { BridgeCallError, isBridgeMessage, TARGET, toBridgeErrorCode } from '@webview-ts/shared';
 
 /**
  * Configuration for the BridgeHost
@@ -51,18 +42,15 @@ export type ActionHandler<TPayload = unknown, TResponse = unknown> = (
 export interface RequestContext {
   messageId: string;
   timestamp: number;
-  metadata: Record<string, unknown>;
 }
 
 /**
  * BridgeHost - Native side bridge implementation.
- * Uses the same Koa-style onion middleware as the web-side BridgeClient.
  */
 export class BridgeHost {
   private config: Required<Omit<BridgeHostConfig, 'registry'>>;
   private registry?: ConnectionRegistry;
   private handlers: Map<string, ActionHandler>;
-  private pipeline: MiddlewarePipeline;
   private adapter?: HostAdapter;
 
   constructor(config: BridgeHostConfig = {}) {
@@ -72,26 +60,10 @@ export class BridgeHost {
     };
     this.registry = config.registry;
     this.handlers = new Map();
-    this.pipeline = new MiddlewarePipeline();
   }
 
   getConfig(): Required<Omit<BridgeHostConfig, 'registry'>> {
     return { ...this.config };
-  }
-
-  /** Add middleware — same MiddlewareFn type as web side */
-  use(middleware: Middleware): void {
-    this.pipeline.use(middleware);
-  }
-
-  /** Prepend middleware (runs as outermost layer) */
-  prepend(middleware: Middleware): void {
-    this.pipeline.prepend(middleware);
-  }
-
-  /** Remove middleware by name */
-  removeMiddleware(name: string): boolean {
-    return this.pipeline.remove(name);
   }
 
   registerHandler<TPayload = unknown, TResponse = unknown>(
@@ -136,60 +108,46 @@ export class BridgeHost {
 
   /**
    * Handle incoming message from WebView.
-   * Runs through the onion middleware pipeline, then executes the handler.
    */
   async handleMessage(message: BridgeMessage): Promise<BridgeResponse> {
-    const ctx: MiddlewareContext = {
-      request: message,
-      startTime: Date.now(),
-      metadata: new MetadataMap(),
-    };
-
-    const executeFn = () =>
-      this.pipeline.execute(ctx, async () => {
-        // Core: find and execute the action handler
-        const handler = this.handlers.get(message.action);
-        if (!handler) {
-          throw new BridgeCallError(
-            `No handler registered for action: ${message.action}`,
-            'HANDLER_NOT_FOUND',
-            { action: message.action }
-          );
-        }
-
-        const requestContext: RequestContext = {
-          messageId: message.id,
-          timestamp: message.timestamp,
-          metadata: Object.fromEntries(ctx.metadata.entries()),
-        };
-
-        const data = await Promise.resolve(handler(message.payload, requestContext));
-
-        ctx.response = {
-          id: message.id,
-          success: true,
-          data,
-          timestamp: Date.now(),
-          sourceId: 'host',
-          targetId: message.sourceId,
-        };
-      });
-
     try {
-      if (this.config.timeout > 0) {
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(
-              new BridgeCallError(`Request timeout after ${this.config.timeout}ms`, 'TIMEOUT')
-            );
-          }, this.config.timeout);
-        });
-        await Promise.race([executeFn(), timeoutPromise]);
-      } else {
-        await executeFn();
+      const handler = this.handlers.get(message.action);
+      if (!handler) {
+        throw new BridgeCallError(
+          `No handler registered for action: ${message.action}`,
+          'HANDLER_NOT_FOUND',
+          { action: message.action }
+        );
       }
 
-      return ctx.response!;
+      const requestContext: RequestContext = {
+        messageId: message.id,
+        timestamp: message.timestamp,
+      };
+
+      const executeFn = () => Promise.resolve(handler(message.payload, requestContext));
+
+      let data: unknown;
+      if (this.config.timeout > 0) {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error(`Request timeout after ${this.config.timeout}ms`)),
+            this.config.timeout
+          );
+        });
+        data = await Promise.race([executeFn(), timeoutPromise]);
+      } else {
+        data = await executeFn();
+      }
+
+      return {
+        id: message.id,
+        success: true,
+        data,
+        timestamp: Date.now(),
+        sourceId: 'host',
+        targetId: message.sourceId,
+      };
     } catch (error) {
       const bridgeError: BridgeError = {
         code:
@@ -296,7 +254,7 @@ export class BridgeHost {
   }
 
   /**
-   * Detach adapter (runtime cleanup). Handlers and middleware are preserved
+   * Detach adapter (runtime cleanup). Handlers are preserved
    * so the instance can be reattached.
    */
   destroy(): void {
@@ -304,11 +262,10 @@ export class BridgeHost {
   }
 
   /**
-   * Full disposal — clears everything including handlers and middleware.
+   * Full disposal — clears everything including handlers.
    */
   dispose(): void {
     this.destroy();
     this.handlers.clear();
-    this.pipeline.clear();
   }
 }
