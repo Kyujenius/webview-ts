@@ -1,96 +1,53 @@
 <script setup lang="ts">
 import { device } from '@example/plugins';
-import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
+import type { RequestInterceptor } from '@webview-ts/shared';
 import { ref } from 'vue';
 
 import { useBridge, usePlugin } from '../bridge';
 
-// ─── Custom Middleware: Simple Cache ───
+// ─── Custom Interceptor: Auth Token Injection ───
 
-const cache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_TTL = 10_000;
-
-const cacheMiddleware: Middleware = {
-  name: 'simple-cache',
-  fn: async (ctx, next) => {
-    const key = ctx.request.action;
-    const cached = cache.get(key);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      ctx.response = {
-        id: ctx.request.id,
-        sourceId: 'cache',
-        targetId: ctx.request.sourceId,
-        success: true,
-        data: cached.data,
-        timestamp: Date.now(),
-      };
-      return;
-    }
-    await next();
-    if (ctx.response?.success) {
-      cache.set(key, { data: ctx.response.data, timestamp: Date.now() });
-    }
-  },
-};
-
-// ─── Custom Middleware: Auth Token Injection ───
-
-function createAuthMiddleware(getToken: () => string | null): Middleware {
-  const fn: MiddlewareFn = async (ctx, next) => {
-    const token = getToken();
-    if (token) {
-      ctx.metadata.set('authToken', token);
-      ctx.request.payload = {
-        ...(ctx.request.payload as Record<string, unknown>),
-        __authToken: token,
-      };
-    }
-    await next();
+function createAuthInterceptor(getToken: () => string | null): RequestInterceptor {
+  return {
+    name: 'auth-token',
+    fn: (request) => {
+      const token = getToken();
+      if (token) {
+        request.payload = {
+          ...(request.payload as Record<string, unknown>),
+          __authToken: token,
+        };
+      }
+      return request;
+    },
   };
-  return { name: 'auth-token', fn };
 }
-
-// ─── Custom Middleware: Timing ───
-
-const timingMiddleware: Middleware = {
-  name: 'timing',
-  fn: async (ctx, next) => {
-    const start = performance.now();
-    await next();
-    const elapsed = performance.now() - start;
-    ctx.metadata.set('totalMs', Math.round(elapsed * 100) / 100);
-  },
-};
 
 // ─── Component ───
 
 const { bridge } = useBridge();
 const { getInfo } = usePlugin(device);
 const logs = ref<string[]>([]);
-const middlewareRegistered = ref(false);
+const interceptorsRegistered = ref(false);
 
 function addLog(msg: string) {
   logs.value = [...logs.value.slice(-19), msg];
 }
 
-if (!middlewareRegistered.value) {
-  bridge.use(timingMiddleware);
-  bridge.use({
+let unsubLogger: (() => void) | undefined;
+let unsubAuth: (() => void) | undefined;
+
+if (!interceptorsRegistered.value) {
+  unsubLogger = bridge.interceptors.request.use({
     name: 'logger',
-    fn: async (ctx, next) => {
-      console.log(`[→] ${ctx.request.action}`, ctx.request.payload);
-      await next();
-      if (ctx.response?.success) {
-        console.log(`[←] ${ctx.request.action} (${Date.now() - ctx.startTime}ms)`, ctx.response.data);
-      } else if (ctx.response) {
-        console.error(`[✗] ${ctx.request.action}`, ctx.response.error);
-      }
+    fn: (request) => {
+      console.log(`[→] ${request.action}`, request.payload);
+      return request;
     },
   });
-  bridge.use(cacheMiddleware);
-  bridge.use(createAuthMiddleware(() => 'demo-token-12345'));
-  middlewareRegistered.value = true;
-  addLog('✓ Middleware registered (timing → logger → cache → auth)');
+  unsubAuth = bridge.interceptors.request.use(createAuthInterceptor(() => 'demo-token-12345'));
+  interceptorsRegistered.value = true;
+  addLog('✓ Interceptors registered (logger → auth)');
 }
 
 async function handleFetchDevice() {
@@ -103,35 +60,25 @@ async function handleFetchDevice() {
   }
 }
 
-async function handleFetchCached() {
-  addLog('→ Calling device.getInfo (should be cached)...');
-  try {
-    const result = await getInfo.execute();
-    addLog(`← Cached: ${JSON.stringify(result).slice(0, 80)}...`);
-  } catch (err) {
-    addLog(`← Error: ${(err as Error).message}`);
-  }
-}
-
-function handleClearCache() {
-  cache.clear();
-  addLog('✓ Cache cleared');
+function handleCleanup() {
+  unsubLogger?.();
+  unsubAuth?.();
+  addLog('✓ Interceptors removed');
 }
 </script>
 
 <template>
   <div>
-    <h1>Middleware Examples</h1>
+    <h1>Interceptor Examples</h1>
     <p class="description">
-      Demonstrates built-in and custom middleware. Open browser console to see Logger output.
+      Demonstrates request interceptors. Open browser console to see Logger output.
     </p>
 
     <div class="card">
-      <h2>Middleware</h2>
+      <h2>Interceptors</h2>
       <p>
-        <strong>Cache:</strong> Short-circuits on cache hit (skips native call)<br />
-        <strong>Auth:</strong> Injects token into every request payload<br />
-        <strong>Timing:</strong> Measures total roundtrip time
+        <strong>Logger:</strong> Logs every outgoing request<br />
+        <strong>Auth:</strong> Injects token into every request payload
       </p>
     </div>
 
@@ -139,8 +86,7 @@ function handleClearCache() {
       <h2>Try It</h2>
       <div style="display: flex; gap: 8px; flex-wrap: wrap">
         <button class="button" @click="handleFetchDevice">Fetch Device Info</button>
-        <button class="button" @click="handleFetchCached">Fetch (Cached)</button>
-        <button class="button secondary" @click="handleClearCache">Clear Cache</button>
+        <button class="button secondary" @click="handleCleanup">Remove Interceptors</button>
       </div>
     </div>
 
@@ -153,38 +99,21 @@ function handleClearCache() {
 
     <div class="card">
       <h2>Code</h2>
-      <pre style="font-size: 11px">// 1. Logger (inline middleware)
-bridge.use({
+      <pre style="font-size: 11px">// 1. Logger (request interceptor)
+bridge.interceptors.request.use({
   name: 'logger',
-  fn: async (ctx, next) =&gt; {
-    console.log('[→]', ctx.request.action);
-    await next();
-    console.log('[←]', ctx.request.action);
+  fn: (request) =&gt; {
+    console.log('[→]', request.action);
+    return request;
   },
 });
 
-// 2. Cache (short-circuit pattern)
-const cacheMiddleware: Middleware = {
-  name: 'simple-cache',
-  fn: async (ctx, next) =&gt; {
-    const cached = cache.get(ctx.request.action);
-    if (cached) {
-      ctx.response = { ...cached };
-      return; // Don't call next() → skip native
-    }
-    await next();
-    if (ctx.response?.success) {
-      cache.set(ctx.request.action, ctx.response);
-    }
-  },
-};
-
-// 3. Custom: Auth token injection
-bridge.use({
+// 2. Auth token injection
+bridge.interceptors.request.use({
   name: 'auth-token',
-  fn: async (ctx, next) =&gt; {
-    ctx.metadata.set('authToken', getToken());
-    await next();
+  fn: (request) =&gt; {
+    request.payload = { ...request.payload, token: getToken() };
+    return request;
   },
 });</pre>
     </div>
