@@ -10,7 +10,6 @@ export * from './event-map';
 export * from './host-adapter';
 export * from './interceptor';
 export * from './message';
-export * from './middleware';
 export * from './plugin';
 export * from './routing';
 export * from './typed-bridge';
