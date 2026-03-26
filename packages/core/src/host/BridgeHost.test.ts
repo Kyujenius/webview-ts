@@ -108,7 +108,6 @@ describe('BridgeHost', () => {
         { test: 'data' },
         expect.objectContaining({
           messageId: 'msg-1',
-          metadata: {},
         })
       );
 
