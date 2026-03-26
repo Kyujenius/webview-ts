@@ -75,17 +75,17 @@ function createBridgePair(hostPluginResults: ReturnType<typeof camera.host>[]) {
 
 describe('Camera plugin: full message flow', () => {
   const cameraHostResult = camera.host({
-    takePhoto: async (payload) => ({
+    takePhoto: async (payload: any) => ({
       uri: `native://photo-q${payload.quality ?? 'default'}`,
       width: 1920,
       height: 1080,
     }),
-    pickImage: async (payload) => ({
+    pickImage: async (payload: any) => ({
       images: payload.multiple
         ? [{ uri: 'native://img1' }, { uri: 'native://img2' }]
         : [{ uri: 'native://img1' }],
     }),
-    recordVideo: async (payload) => ({
+    recordVideo: async (payload: any) => ({
       uri: 'native://video.mp4',
       duration: payload.maxDuration ?? 30,
     }),
@@ -133,14 +133,14 @@ describe('Storage plugin: full message flow', () => {
   const store = new Map<string, string>();
 
   const storageHostResult = storage.host({
-    getItem: async (payload) => ({
+    getItem: async (payload: any) => ({
       value: store.get(payload.key) ?? null,
     }),
-    setItem: async (payload) => {
+    setItem: async (payload: any) => {
       store.set(payload.key, payload.value);
       return {};
     },
-    removeItem: async (payload) => {
+    removeItem: async (payload: any) => {
       store.delete(payload.key);
       return {};
     },
@@ -245,7 +245,7 @@ describe('Custom plugin: definePlugin + full flow', () => {
   });
 
   const paymentHost = payment.host({
-    checkout: async (payload) => ({
+    checkout: async (payload: any) => ({
       transactionId: `txn-${payload.amount}-${payload.currency}`,
       success: payload.amount > 0,
     }),
@@ -305,7 +305,7 @@ describe('Event: bridge.on / bridge.off', () => {
 
   it('on() subscribes and receives events', () => {
     const received: unknown[] = [];
-    const unsubscribe = bridge.on('location.updated', (payload) => {
+    const unsubscribe = bridge.on('location.updated', (payload: any) => {
       received.push(payload);
     });
 
@@ -333,8 +333,8 @@ describe('Event: bridge.on / bridge.off', () => {
     const received1: unknown[] = [];
     const received2: unknown[] = [];
 
-    const unsub1 = bridge.on('test.event', (p) => received1.push(p));
-    const unsub2 = bridge.on('test.event', (p) => received2.push(p));
+    const unsub1 = bridge.on('test.event', (p: any) => received1.push(p));
+    const unsub2 = bridge.on('test.event', (p: any) => received2.push(p));
 
     const handlers = (bridge as any).eventHandlers.get('test.event');
     handlers.forEach((h: (p: unknown) => void) => h('ping'));
@@ -365,8 +365,8 @@ describe('Event: bridge.on / bridge.off', () => {
     const posEvents: unknown[] = [];
     const pushEvents: unknown[] = [];
 
-    const unsub1 = bridge.on('location.updated', (p) => posEvents.push(p));
-    const unsub2 = bridge.on('push.received', (p) => pushEvents.push(p));
+    const unsub1 = bridge.on('location.updated', (p: any) => posEvents.push(p));
+    const unsub2 = bridge.on('push.received', (p: any) => pushEvents.push(p));
 
     (bridge as any).eventHandlers
       .get('location.updated')
@@ -389,7 +389,7 @@ describe('Event: bridge.on / bridge.off', () => {
     bridge.on('error.event', () => {
       throw new Error('handler crashed');
     });
-    bridge.on('error.event', (p) => received.push(p));
+    bridge.on('error.event', (p: any) => received.push(p));
 
     const handlers = (bridge as any).eventHandlers.get('error.event');
     handlers.forEach((h: (p: unknown) => void) => {

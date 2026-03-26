@@ -1,22 +1,6 @@
-import { MetadataMap } from '@webview-ts/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createStructuredLogger, LogLevel, StructuredLogger } from './StructuredLogger';
-
-function makeCtx() {
-  return {
-    request: {
-      id: 'msg-1',
-      action: 'test.action',
-      payload: { foo: 1 },
-      timestamp: Date.now(),
-      sourceId: 'src',
-      targetId: 'host',
-    },
-    startTime: Date.now(),
-    metadata: new MetadataMap(),
-  };
-}
 
 describe('StructuredLogger', () => {
   let logger: StructuredLogger;
@@ -130,91 +114,112 @@ describe('StructuredLogger', () => {
     });
   });
 
-  describe('toMiddleware()', () => {
-    it('returns middleware with the correct name', () => {
-      const mw = logger.toMiddleware();
-      expect(mw.name).toBe('structured-logger');
-      expect(typeof mw.fn).toBe('function');
-    });
-  });
-
-  describe('middleware (createFn)', () => {
-    let debugLogger: StructuredLogger;
-
-    beforeEach(() => {
-      debugLogger = new StructuredLogger({ minLevel: LogLevel.DEBUG });
+  describe('toRequestInterceptor()', () => {
+    it('returns interceptor with the correct name', () => {
+      const interceptor = logger.toRequestInterceptor();
+      expect(interceptor.name).toBe('structured-logger');
+      expect(typeof interceptor.fn).toBe('function');
     });
 
-    it('logs request at DEBUG level', async () => {
-      const ctx = makeCtx();
-      await debugLogger.fn(ctx, async () => {});
+    it('logs request at DEBUG level', () => {
+      const debugLogger = new StructuredLogger({ minLevel: LogLevel.DEBUG });
+      const interceptor = debugLogger.toRequestInterceptor();
+      const request = {
+        id: 'msg-1',
+        action: 'test.action',
+        payload: { foo: 1 },
+        timestamp: Date.now(),
+        sourceId: 'src',
+        targetId: 'host',
+      };
+
+      interceptor.fn(request);
+
       const debugLogs = debugLogger.getLogsByLevel(LogLevel.DEBUG);
       expect(debugLogs.length).toBeGreaterThanOrEqual(1);
       expect(debugLogs[0].message).toContain('Request:');
       expect(debugLogs[0].message).toContain('test.action');
     });
 
-    it('logs success response at DEBUG level', async () => {
-      const ctx = makeCtx() as any;
-      await debugLogger.fn(ctx, async () => {
-        ctx.response = {
-          id: ctx.request.id,
-          success: true,
-          data: { result: 'ok' },
-          timestamp: Date.now(),
-          sourceId: 'host',
-          targetId: 'src',
-        };
+    it('hides payloads when includePayloads: false', () => {
+      const l = new StructuredLogger({ minLevel: LogLevel.DEBUG, includePayloads: false });
+      const interceptor = l.toRequestInterceptor();
+      const request = {
+        id: 'msg-1',
+        action: 'test.action',
+        payload: { secret: 'hidden' },
+        timestamp: Date.now(),
+        sourceId: 'src',
+        targetId: 'host',
+      };
+
+      interceptor.fn(request);
+
+      const debugLogs = l.getLogsByLevel(LogLevel.DEBUG);
+      const reqLog = debugLogs.find((e) => e.message.includes('Request:'));
+      expect((reqLog?.data as any)?.payload).toBe('[hidden]');
+    });
+  });
+
+  describe('toResponseInterceptor()', () => {
+    it('returns interceptor with the correct name', () => {
+      const interceptor = logger.toResponseInterceptor();
+      expect(interceptor.name).toBe('structured-logger');
+      expect(typeof interceptor.fn).toBe('function');
+    });
+
+    it('logs success response at DEBUG level', () => {
+      const debugLogger = new StructuredLogger({ minLevel: LogLevel.DEBUG });
+      const interceptor = debugLogger.toResponseInterceptor();
+
+      interceptor.fn({
+        id: 'msg-1',
+        success: true,
+        data: { result: 'ok' },
+        timestamp: Date.now(),
+        sourceId: 'host',
+        targetId: 'src',
       });
+
       const debugLogs = debugLogger.getLogsByLevel(LogLevel.DEBUG);
       const responseLogs = debugLogs.filter((e) => e.message.includes('Response:'));
       expect(responseLogs).toHaveLength(1);
       expect(responseLogs[0].message).toContain('success');
     });
 
-    it('logs error response at ERROR level', async () => {
-      const ctx = makeCtx() as any;
-      await debugLogger.fn(ctx, async () => {
-        ctx.response = {
-          id: ctx.request.id,
-          success: false,
-          error: { code: 'HANDLER_ERROR', message: 'oops' },
-          timestamp: Date.now(),
-          sourceId: 'host',
-          targetId: 'src',
-        };
+    it('logs error response at ERROR level', () => {
+      const debugLogger = new StructuredLogger({ minLevel: LogLevel.DEBUG });
+      const interceptor = debugLogger.toResponseInterceptor();
+
+      interceptor.fn({
+        id: 'msg-1',
+        success: false,
+        error: { code: 'HANDLER_ERROR', message: 'oops' },
+        timestamp: Date.now(),
+        sourceId: 'host',
+        targetId: 'src',
       });
+
       const errorLogs = debugLogger.getLogsByLevel(LogLevel.ERROR);
       expect(errorLogs).toHaveLength(1);
       expect(errorLogs[0].message).toContain('error');
     });
 
-    it('rethrows errors thrown by next()', async () => {
-      const ctx = makeCtx();
-      await expect(
-        debugLogger.fn(ctx, async () => {
-          throw new Error('next failed');
-        })
-      ).rejects.toThrow('next failed');
-    });
-
-    it('hides payloads when includePayloads: false', async () => {
+    it('hides payloads when includePayloads: false', () => {
       const l = new StructuredLogger({ minLevel: LogLevel.DEBUG, includePayloads: false });
-      const ctx = makeCtx() as any;
-      await l.fn(ctx, async () => {
-        ctx.response = {
-          id: ctx.request.id,
-          success: true,
-          data: { secret: 'hidden' },
-          timestamp: Date.now(),
-          sourceId: 'host',
-          targetId: 'src',
-        };
+      const interceptor = l.toResponseInterceptor();
+
+      interceptor.fn({
+        id: 'msg-1',
+        success: true,
+        data: { secret: 'hidden' },
+        timestamp: Date.now(),
+        sourceId: 'host',
+        targetId: 'src',
       });
+
       const debugLogs = l.getLogsByLevel(LogLevel.DEBUG);
-      const reqLog = debugLogs.find((e) => e.message.includes('Request:'));
       const resLog = debugLogs.find((e) => e.message.includes('Response:'));
-      expect((reqLog?.data as any)?.payload).toBe('[hidden]');
       expect((resLog?.data as any)?.data).toBe('[hidden]');
     });
   });

@@ -1,8 +1,8 @@
 /**
- * StructuredLogger - Structured logging for bridge messages (onion model)
+ * StructuredLogger - Structured logging for bridge messages (interceptor model)
  */
 
-import type { Middleware, MiddlewareFn } from '@webview-ts/shared';
+import type { RequestInterceptor, ResponseInterceptor } from '@webview-ts/shared';
 
 export enum LogLevel {
   DEBUG = 'debug',
@@ -51,52 +51,43 @@ export class StructuredLogger {
     return 'structured-logger';
   }
 
-  get fn(): MiddlewareFn {
-    return this.createFn();
+  /**
+   * Create a request interceptor that logs outgoing requests.
+   */
+  toRequestInterceptor(): RequestInterceptor {
+    return {
+      name: this.name,
+      fn: (request) => {
+        this.log(LogLevel.DEBUG, `Request: ${request.action}`, {
+          id: request.id,
+          action: request.action,
+          payload: this.config.includePayloads ? request.payload : '[hidden]',
+        });
+        return request;
+      },
+    };
   }
 
-  toMiddleware(): Middleware {
-    return { name: this.name, fn: this.createFn() };
-  }
-
-  private createFn(): MiddlewareFn {
-    return async (ctx, next) => {
-      const message = ctx.request;
-
-      // Request phase
-      this.log(LogLevel.DEBUG, `Request: ${message.action}`, {
-        id: message.id,
-        action: message.action,
-        payload: this.config.includePayloads ? message.payload : '[hidden]',
-      });
-
-      try {
-        await next();
-
-        // Response phase
-        if (ctx.response) {
-          if (ctx.response.success) {
-            this.log(LogLevel.DEBUG, `Response: ${message.action} (success)`, {
-              id: ctx.response.id,
-              data: this.config.includePayloads ? ctx.response.data : '[hidden]',
-            });
-          } else {
-            this.log(LogLevel.ERROR, `Response: ${message.action} (error)`, {
-              id: ctx.response.id,
-              error: ctx.response.error,
-            });
-          }
+  /**
+   * Create a response interceptor that logs incoming responses.
+   */
+  toResponseInterceptor(): ResponseInterceptor {
+    return {
+      name: this.name,
+      fn: (response) => {
+        if (response.success) {
+          this.log(LogLevel.DEBUG, `Response: (success)`, {
+            id: response.id,
+            data: this.config.includePayloads ? response.data : '[hidden]',
+          });
+        } else {
+          this.log(LogLevel.ERROR, `Response: (error)`, {
+            id: response.id,
+            error: response.error,
+          });
         }
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        this.log(
-          LogLevel.ERROR,
-          `Request failed: ${message.action}`,
-          { id: message.id, action: message.action },
-          err
-        );
-        throw error;
-      }
+        return response;
+      },
     };
   }
 

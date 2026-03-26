@@ -148,7 +148,14 @@ describe('createBridgeVue', () => {
       const ri1 = vi.fn();
       const ri2 = vi.fn();
 
-      const plugin = createBridgeVue({ interceptors: { request: [ri1, ri2] } });
+      const plugin = createBridgeVue({
+        interceptors: {
+          request: [
+            { name: 'ri1', fn: ri1 },
+            { name: 'ri2', fn: ri2 },
+          ],
+        },
+      });
       mount(defineComponent({ setup: () => () => h('div') }), {
         global: { plugins: [plugin] },
       });
@@ -157,8 +164,8 @@ describe('createBridgeVue', () => {
       const instance = calls[calls.length - 1].value;
 
       expect(instance.interceptors.request.use).toHaveBeenCalledTimes(2);
-      expect(instance.interceptors.request.use).toHaveBeenCalledWith(ri1);
-      expect(instance.interceptors.request.use).toHaveBeenCalledWith(ri2);
+      expect(instance.interceptors.request.use).toHaveBeenCalledWith({ name: 'ri1', fn: ri1 });
+      expect(instance.interceptors.request.use).toHaveBeenCalledWith({ name: 'ri2', fn: ri2 });
     });
 
     it('calls interceptors.response.use() for each response interceptor passed in options', async () => {
@@ -166,7 +173,11 @@ describe('createBridgeVue', () => {
 
       const rsp1 = vi.fn();
 
-      const plugin = createBridgeVue({ interceptors: { response: [rsp1] } });
+      const plugin = createBridgeVue({
+        interceptors: {
+          response: [{ name: 'rsp1', fn: rsp1 }],
+        },
+      });
       mount(defineComponent({ setup: () => () => h('div') }), {
         global: { plugins: [plugin] },
       });
@@ -175,7 +186,7 @@ describe('createBridgeVue', () => {
       const instance = calls[calls.length - 1].value;
 
       expect(instance.interceptors.response.use).toHaveBeenCalledTimes(1);
-      expect(instance.interceptors.response.use).toHaveBeenCalledWith(rsp1);
+      expect(instance.interceptors.response.use).toHaveBeenCalledWith({ name: 'rsp1', fn: rsp1 });
     });
 
     it('does not call interceptors.request.use() when no interceptors provided', async () => {

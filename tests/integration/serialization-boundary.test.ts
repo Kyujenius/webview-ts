@@ -36,7 +36,7 @@ describe('Serialization boundary', () => {
 
   it('handleMessageString: valid JSON → response JSON', async () => {
     freshHost();
-    host.registerHandler('echo', async (payload) => ({ echoed: payload }));
+    host.registerHandler('echo', async (payload: any) => ({ echoed: payload }));
 
     const message = JSON.stringify({
       id: 'ser-1',
@@ -65,7 +65,7 @@ describe('Serialization boundary', () => {
 
   it('preserves unicode characters through round-trip', async () => {
     freshHost();
-    host.registerHandler('echo', async (payload) => payload);
+    host.registerHandler('echo', async (payload: any) => payload);
 
     const message = JSON.stringify({
       id: 'ser-2',
@@ -83,7 +83,7 @@ describe('Serialization boundary', () => {
 
   it('preserves null vs undefined distinction', async () => {
     freshHost();
-    host.registerHandler('echo', async (payload) => payload);
+    host.registerHandler('echo', async (payload: any) => payload);
 
     const message = JSON.stringify({
       id: 'ser-3',
@@ -103,7 +103,7 @@ describe('Serialization boundary', () => {
 
   it('deeply nested objects survive serialization', async () => {
     freshHost();
-    host.registerHandler('echo', async (payload) => payload);
+    host.registerHandler('echo', async (payload: any) => payload);
 
     const deep = {
       level: 1,

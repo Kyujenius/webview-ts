@@ -14,14 +14,14 @@ describe('Interceptor end-to-end', () => {
         request: [
           {
             name: 'first',
-            fn: (req) => {
+            fn: (req: any) => {
               order.push('first');
               return req;
             },
           },
           {
             name: 'second',
-            fn: (req) => {
+            fn: (req: any) => {
               order.push('second');
               return req;
             },
@@ -40,7 +40,7 @@ describe('Interceptor end-to-end', () => {
         request: [
           {
             name: 'auth',
-            fn: (req) => ({
+            fn: (req: any) => ({
               ...req,
               payload: { ...(req.payload as object), token: 'abc' },
             }),
@@ -63,7 +63,7 @@ describe('Interceptor end-to-end', () => {
         response: [
           {
             name: 'wrap',
-            fn: (res) => ({
+            fn: (res: any) => ({
               ...res,
               data: { wrapped: true, original: res.data },
             }),

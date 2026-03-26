@@ -11,7 +11,7 @@ describe('Event flow: Host → Client', () => {
     pair = createLoopbackPair();
     const received: unknown[] = [];
 
-    pair.bridge.on('location.updated', (payload) => {
+    pair.bridge.on('location.updated', (payload: any) => {
       received.push(payload);
     });
 
@@ -27,8 +27,8 @@ describe('Event flow: Host → Client', () => {
     const log1: unknown[] = [];
     const log2: unknown[] = [];
 
-    pair.bridge.on('push.received', (p) => log1.push(p));
-    pair.bridge.on('push.received', (p) => log2.push(p));
+    pair.bridge.on('push.received', (p: any) => log1.push(p));
+    pair.bridge.on('push.received', (p: any) => log2.push(p));
 
     pair.sendEvent('push.received', { title: 'Hello' });
 
@@ -40,7 +40,7 @@ describe('Event flow: Host → Client', () => {
     pair = createLoopbackPair();
     const received: unknown[] = [];
 
-    const unsub = pair.bridge.on('test.event', (p) => received.push(p));
+    const unsub = pair.bridge.on('test.event', (p: any) => received.push(p));
 
     pair.sendEvent('test.event', { n: 1 });
     unsub();
@@ -53,8 +53,8 @@ describe('Event flow: Host → Client', () => {
     pair = createLoopbackPair();
     const received: unknown[] = [];
 
-    pair.bridge.on('bulk', (p) => received.push(p));
-    pair.bridge.on('bulk', (p) => received.push(p));
+    pair.bridge.on('bulk', (p: any) => received.push(p));
+    pair.bridge.on('bulk', (p: any) => received.push(p));
 
     pair.sendEvent('bulk', 'first');
     pair.bridge.off('bulk');
@@ -74,7 +74,7 @@ describe('Event flow: Host → Client', () => {
       return { done: true };
     });
 
-    pair.bridge.on('progress', (p) => events.push(p));
+    pair.bridge.on('progress', (p: any) => events.push(p));
 
     const result = await pair.bridge.call('slow', {});
 
@@ -86,7 +86,7 @@ describe('Event flow: Host → Client', () => {
     pair = createLoopbackPair();
     const all: Array<{ event: string; payload: unknown }> = [];
 
-    pair.bridge.onAnyEvent((event, payload) => {
+    pair.bridge.onAnyEvent((event: any, payload: any) => {
       all.push({ event, payload });
     });
 
