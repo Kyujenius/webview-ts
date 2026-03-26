@@ -18,7 +18,6 @@ export type {
   ExtractEventPayload,
   HostHandlerContext,
   HostPluginResult,
-  InterceptorMap,
   MergePluginActions,
   MergePluginEvents,
   PluginFromArray,

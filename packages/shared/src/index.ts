@@ -10,6 +10,7 @@ export * from './connection/index';
 export { METADATA_KEYS } from './constants/metadata-keys';
 export type { AutoDevToolsTarget } from './devtools/auto-devtools';
 export { tryAutoDevTools } from './devtools/auto-devtools';
+export * from './interceptor/index';
 export { createMetadataKey, type MetadataKey, MetadataMap } from './metadata/index';
 export * from './middleware/index';
 export * from './plugins/index';

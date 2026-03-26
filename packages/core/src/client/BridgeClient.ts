@@ -12,25 +12,24 @@ import type {
   BridgeEvent,
   BridgeMessage,
   BridgeResponse,
-  BridgeSuccessResponse,
   ConnectionMode,
   EventMapBase,
   FallbackMap,
   InferPayload,
   InferResponse,
-  Middleware,
-  MiddlewareContext,
+  RequestInterceptor,
+  ResponseInterceptor,
   RetryConfig,
   UseActionOptions,
 } from '@webview-ts/shared';
-import { ActionStateManager, generateSourceId, TARGET } from '@webview-ts/shared';
-import { MiddlewarePipeline } from '@webview-ts/shared';
 import {
+  ActionStateManager,
   BridgeCallError,
+  generateSourceId,
+  InterceptorManager,
   isBridgeEvent,
   isBridgeResponse,
-  METADATA_KEYS,
-  MetadataMap,
+  TARGET,
   tryAutoDevTools,
 } from '@webview-ts/shared';
 
@@ -38,11 +37,40 @@ import { createClientAdapter } from '../adapters/createClientAdapter';
 import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { generateMessageId } from '../utils/id-generator';
 import { CallbackRegistry } from './CallbackRegistry';
-import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
+
 /**
  * Event handler type
  */
 type EventHandler<T = unknown> = (payload: T) => void;
+
+// ─── Lifecycle event types ───
+
+export interface CallStartEvent {
+  id: string;
+  action: string;
+  payload: unknown;
+  timestamp: number;
+}
+
+export interface CallEndEvent {
+  id: string;
+  action: string;
+  response: BridgeResponse;
+  duration: number;
+}
+
+export interface CallErrorEvent {
+  id: string;
+  action: string;
+  error: Error;
+  duration: number;
+}
+
+type CallEventMap = {
+  'call:start': CallStartEvent;
+  'call:end': CallEndEvent;
+  'call:error': CallErrorEvent;
+};
 
 /**
  * Bridge client implementation
@@ -59,17 +87,27 @@ export class BridgeClient<
   };
   private adapter: ClientAdapter;
   private callbacks: CallbackRegistry;
-  private middleware: MiddlewarePipeline;
   private eventHandlers = new Map<string, Set<(payload: unknown) => void>>();
   /** Maps original handler → wrapper stored in eventHandlers, for off() lookup */
   // eslint-disable-next-line @typescript-eslint/ban-types
   private handlerWrappers = new WeakMap<Function, (payload: unknown) => void>();
   /** Global event interceptors (for devtools, logging, etc.) */
   private eventInterceptors = new Set<(event: string, payload: unknown) => void>();
-  /** Stores context per message id so the response phase can access it */
-  private pendingContexts = new Map<string, MiddlewareContext>();
-  /** Per-action interceptors: { 'camera.takePhoto': Middleware[] } */
-  private actionInterceptors = new Map<string, Middleware[]>();
+  /** Global interceptors (Axios-style) */
+  readonly interceptors = {
+    request: new InterceptorManager<BridgeMessage>(),
+    response: new InterceptorManager<BridgeResponse>(),
+  };
+  /** Per-action request interceptors from plugins */
+  private actionRequestInterceptors = new Map<string, RequestInterceptor[]>();
+  /** Per-action response interceptors from plugins */
+  private actionResponseInterceptors = new Map<string, ResponseInterceptor[]>();
+  /** Lifecycle event listeners */
+  private callListeners = {
+    'call:start': new Set<(data: CallStartEvent) => void>(),
+    'call:end': new Set<(data: CallEndEvent) => void>(),
+    'call:error': new Set<(data: CallErrorEvent) => void>(),
+  };
   /** Per-action timeouts: { 'camera.getInfo': 5000 } */
   private actionTimeouts = new Map<string, number>();
   /** Per-action retries from plugins */
@@ -104,7 +142,6 @@ export class BridgeClient<
     }
 
     this.callbacks = new CallbackRegistry();
-    this.middleware = new MiddlewarePipeline();
   }
 
   /**
@@ -120,7 +157,7 @@ export class BridgeClient<
 
   /**
    * Stop listening and disconnect DevTools, but preserve configuration
-   * (middleware, handlers, interceptors). Safe to call connect() again after.
+   * (handlers, interceptors). Safe to call connect() again after.
    */
   private disconnect(): void {
     this._devtoolsCleanup?.();
@@ -129,6 +166,21 @@ export class BridgeClient<
       window.removeEventListener('message', this.messageListener);
       this.messageListener = undefined;
     }
+  }
+
+  /**
+   * Subscribe to lifecycle events (call:start, call:end, call:error).
+   * Returns an unsubscribe function.
+   */
+  onCall<K extends keyof CallEventMap>(
+    event: K,
+    handler: (data: CallEventMap[K]) => void
+  ): () => void {
+    const set = this.callListeners[event] as Set<(data: any) => void>;
+    set.add(handler);
+    return () => {
+      set.delete(handler);
+    };
   }
 
   /**
@@ -176,13 +228,11 @@ export class BridgeClient<
   }
 
   /**
-   * Execute a single call attempt using the onion middleware pipeline.
+   * Execute a single call attempt using the linear interceptor pipeline.
    *
-   * The middleware wraps the core send/receive:
-   *   middleware[0] → middleware[1] → ... → [send + wait] → ... → middleware[1] → middleware[0]
-   *
-   * A single MiddlewareContext is shared across the entire lifecycle,
-   * so request-phase metadata is available in the response phase.
+   * Flow: global request interceptors -> per-action request interceptors
+   *       -> [send + wait] ->
+   *       per-action response interceptors -> global response interceptors
    */
   private async executeCall<TAction extends ActionNames<TActions>>(
     action: TAction,
@@ -193,7 +243,7 @@ export class BridgeClient<
       throw new BridgeCallError('Native bridge not available', 'NATIVE_UNAVAILABLE');
     }
 
-    const message: BridgeMessage = {
+    let message: BridgeMessage = {
       id: generateMessageId(),
       action,
       payload,
@@ -202,98 +252,82 @@ export class BridgeClient<
       targetId: TARGET.HOST,
     };
 
-    const ctx: MiddlewareContext = {
-      request: message,
-      startTime: Date.now(),
-      metadata: new MetadataMap(),
-    };
+    const startTime = Date.now();
 
-    // Store context so handleResponse can attach the response to it
-    this.pendingContexts.set(message.id, ctx);
+    // Emit call:start
+    for (const listener of this.callListeners['call:start']) {
+      try {
+        listener({ id: message.id, action: action as string, payload, timestamp: startTime });
+      } catch {
+        /* listeners must not break the call */
+      }
+    }
 
     try {
-      type TResponse = InferResponse<TActions, TAction>;
-      let resolvedData: TResponse | undefined;
+      // Run global request interceptors
+      message = await this.interceptors.request.execute(message);
 
-      // Core function: send message and wait for response
-      const coreFn = async () => {
-        const timeout =
-          options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
-
-        const responsePromise = new Promise<BridgeSuccessResponse<TResponse>>((resolve, reject) => {
-          this.callbacks.register(
-            ctx.request.id,
-            (raw: unknown) => {
-              // postMessage 경계 — JSON.parse 결과이므로 런타임 단언 불가피
-              const r = raw as BridgeResponse;
-              if (!r.success) {
-                reject(new BridgeCallError(r.error.message, r.error.code, r.error.details));
-                return;
-              }
-              resolve(r as BridgeSuccessResponse<TResponse>);
-            },
-            reject,
-            timeout
-          );
-        });
-
-        this.adapter.send(ctx.request);
-
-        const response = await responsePromise;
-        resolvedData = response.data;
-        ctx.response = response;
-      };
-
-      // Initialize trace collection
-      const allTraces: PipelineTrace[] = [];
-      ctx.metadata.set(METADATA_KEYS.MW_TRACES, allTraces);
-      const handlerStart = { value: 0 };
-      const handlerEnd = { value: 0 };
-
-      // Wrap core with per-action interceptors (inner layer),
-      // then wrap that with global middleware (outer layer).
-      // Result: Global MW → Plugin Interceptors → core → Plugin Interceptors → Global MW
-      const interceptors = this.actionInterceptors.get(action as string);
-      const trackedCore = async () => {
-        handlerStart.value = performance.now();
-        await coreFn();
-        handlerEnd.value = performance.now();
-      };
-
-      const pluginName = (action as string).split('.')[0];
-      const globalTraces = await executeOnionPipeline(
-        this.middleware.getAll(),
-        ctx,
-        interceptors?.length
-          ? async () => {
-              const interceptorTraces = await executeOnionPipeline(interceptors, ctx, trackedCore, {
-                tracing: true,
-                layer: 'plugin',
-                plugin: pluginName,
-              });
-              allTraces.push(...interceptorTraces);
-            }
-          : trackedCore,
-        { tracing: true }
-      );
-      allTraces.unshift(...globalTraces);
-
-      // Store handler timing
-      if (handlerStart.value > 0) {
-        ctx.metadata.set(
-          METADATA_KEYS.HANDLER_MS,
-          Math.round((handlerEnd.value - handlerStart.value) * 100) / 100
-        );
-        ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, false);
-      } else {
-        ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, true);
+      // Run per-action request interceptors
+      const actionReqInterceptors = this.actionRequestInterceptors.get(action as string);
+      if (actionReqInterceptors) {
+        for (const interceptor of actionReqInterceptors) {
+          message = await interceptor.fn(message);
+        }
       }
 
-      // resolvedData는 coreFn이 성공했을 때만 설정됨.
-      // 실패 시 pipeline이 throw하므로 여기에 도달 불가.
-      return resolvedData!;
-    } finally {
-      this.pendingContexts.delete(message.id);
+      // Core: send and wait for response
+      const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
+        const timeout =
+          options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
+        this.callbacks.register(message.id, resolve as (value: unknown) => void, reject, timeout);
+      });
+      this.adapter.send(message);
+      let response = await responsePromise;
+
+      if (!response.success) {
+        throw new BridgeCallError(
+          response.error.message,
+          response.error.code,
+          response.error.details
+        );
+      }
+
+      // Run per-action response interceptors
+      const actionResInterceptors = this.actionResponseInterceptors.get(action as string);
+      if (actionResInterceptors) {
+        for (const interceptor of actionResInterceptors) {
+          response = await interceptor.fn(response);
+        }
+      }
+
+      // Run global response interceptors
+      response = await this.interceptors.response.execute(response);
+
+      // Emit call:end
+      const duration = Date.now() - startTime;
+      for (const listener of this.callListeners['call:end']) {
+        try {
+          listener({ id: message.id, action: action as string, response, duration });
+        } catch {
+          /* listeners must not break the call */
+        }
+      }
+
+      return (response.success ? response.data : undefined) as InferResponse<TActions, TAction>;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const err = error instanceof Error ? error : new Error(String(error));
+
+      // Emit call:error
+      for (const listener of this.callListeners['call:error']) {
+        try {
+          listener({ id: message.id, action: action as string, error: err, duration });
+        } catch {
+          /* listeners must not break the call */
+        }
+      }
+
+      throw error;
     }
   }
 
@@ -352,38 +386,6 @@ export class BridgeClient<
   }
 
   /**
-   * Use global middleware (appended — runs as inner layer)
-   */
-  use(middleware: Middleware): void {
-    this.middleware.use(middleware);
-  }
-
-  /**
-   * Prepend global middleware (runs as outermost layer).
-   * Useful for DevTools that must wrap all other middleware.
-   */
-  prepend(middleware: Middleware): void {
-    this.middleware.prepend(middleware);
-  }
-
-  /**
-   * Remove middleware by name
-   */
-  removeMiddleware(name: string): boolean {
-    return this.middleware.remove(name);
-  }
-
-  /**
-   * Register per-action interceptors (from plugin definitions)
-   */
-  private registerInterceptors(interceptorMap: Record<string, Middleware[]>): void {
-    for (const [action, interceptors] of Object.entries(interceptorMap)) {
-      const existing = this.actionInterceptors.get(action) ?? [];
-      this.actionInterceptors.set(action, [...existing, ...interceptors]);
-    }
-  }
-
-  /**
    * Register per-action timeouts (from plugin definitions)
    */
   private registerTimeouts(timeoutMap: Record<string, number>): void {
@@ -411,15 +413,33 @@ export class BridgeClient<
   }
 
   /**
-   * Apply plugins and global middleware in one call.
+   * Apply plugins and global interceptors in one call.
    * Replaces the duplicated registration loops in framework adapters (React, Vue, etc.).
    */
-  applyPlugins(plugins?: AnyPlugin[], middleware?: Middleware[]): void {
+  applyPlugins(
+    plugins?: AnyPlugin[],
+    interceptors?: {
+      request?: RequestInterceptor[];
+      response?: ResponseInterceptor[];
+    }
+  ): void {
     if (plugins) {
       for (const plugin of plugins) {
-        if (plugin.interceptors && Object.keys(plugin.interceptors).length > 0) {
-          this.registerInterceptors(plugin.interceptors);
+        // Register per-action request interceptors
+        if (plugin.requestInterceptors && Object.keys(plugin.requestInterceptors).length > 0) {
+          for (const [action, ints] of Object.entries(plugin.requestInterceptors)) {
+            const existing = this.actionRequestInterceptors.get(action) ?? [];
+            this.actionRequestInterceptors.set(action, [...existing, ...ints]);
+          }
         }
+        // Register per-action response interceptors
+        if (plugin.responseInterceptors && Object.keys(plugin.responseInterceptors).length > 0) {
+          for (const [action, ints] of Object.entries(plugin.responseInterceptors)) {
+            const existing = this.actionResponseInterceptors.get(action) ?? [];
+            this.actionResponseInterceptors.set(action, [...existing, ...ints]);
+          }
+        }
+        // timeouts, retries, caches — unchanged
         if (plugin.timeouts && Object.keys(plugin.timeouts).length > 0) {
           this.registerTimeouts(plugin.timeouts);
         }
@@ -431,9 +451,14 @@ export class BridgeClient<
         }
       }
     }
-    if (middleware) {
-      for (const mw of middleware) {
-        this.use(mw);
+    if (interceptors?.request) {
+      for (const int of interceptors.request) {
+        this.interceptors.request.use(int);
+      }
+    }
+    if (interceptors?.response) {
+      for (const int of interceptors.response) {
+        this.interceptors.response.use(int);
       }
     }
   }
@@ -454,7 +479,7 @@ export class BridgeClient<
   ): ActionStateManager<InferResponse<TActions, TAction>, InferPayload<TActions, TAction>> {
     const actionKey = action as string;
 
-    // Resolve cache: per-action > plugin > (no global cache — use middleware for that)
+    // Resolve cache: per-action > plugin > (no global cache)
     const resolvedCache = defaultOptions?.cache ?? this.actionCaches.get(actionKey);
 
     // Resolve bridge call defaults: per-action > plugin > global (applied when no per-call options)
@@ -517,9 +542,8 @@ export class BridgeClient<
   /**
    * Handle response from native.
    *
-   * In the onion model, this simply resolves the pending callback.
-   * The middleware's post-next() code runs automatically because
-   * the response resolves the promise inside the core function.
+   * This simply resolves the pending callback.
+   * The response resolves the promise inside the core function of executeCall.
    */
   private async handleResponse(response: BridgeResponse): Promise<void> {
     const callback = this.callbacks.has(response.id);
@@ -567,15 +591,13 @@ export class BridgeClient<
   }
 
   /**
-   * Disconnect listeners and clear runtime state (pending callbacks,
-   * queued messages, in-flight contexts). Configuration (middleware,
-   * event handlers, interceptors, timeouts) is preserved so the instance
-   * can be reused after a React Strict Mode cleanup→remount cycle.
+   * Disconnect listeners and clear runtime state (pending callbacks).
+   * Configuration (event handlers, interceptors, timeouts) is preserved
+   * so the instance can be reused after a React Strict Mode cleanup->remount cycle.
    */
   destroy(): void {
     this.disconnect();
     this.callbacks.clear();
-    this.pendingContexts.clear();
   }
 
   /**
@@ -584,10 +606,12 @@ export class BridgeClient<
    */
   dispose(): void {
     this.destroy();
-    this.middleware.clear();
+    this.interceptors.request.clear();
+    this.interceptors.response.clear();
+    this.actionRequestInterceptors.clear();
+    this.actionResponseInterceptors.clear();
     this.eventHandlers.clear();
     this.eventInterceptors.clear();
-    this.actionInterceptors.clear();
     this.actionTimeouts.clear();
     this.actionRetries.clear();
     this.actionCaches.clear();

@@ -8,6 +8,7 @@ export * from './client-adapter';
 export * from './errors';
 export * from './event-map';
 export * from './host-adapter';
+export * from './interceptor';
 export * from './message';
 export * from './middleware';
 export * from './plugin';
