@@ -40,6 +40,8 @@ describe('Serialization boundary', () => {
 
     const message = JSON.stringify({
       id: 'ser-1',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'echo',
       payload: { text: 'hello' },
       timestamp: Date.now(),
@@ -69,6 +71,8 @@ describe('Serialization boundary', () => {
 
     const message = JSON.stringify({
       id: 'ser-2',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'echo',
       payload: { text: '한국어 테스트 🚀', emoji: '🎉✨' },
       timestamp: Date.now(),
@@ -87,6 +91,8 @@ describe('Serialization boundary', () => {
 
     const message = JSON.stringify({
       id: 'ser-3',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'echo',
       payload: { present: null, zero: 0, empty: '', falsy: false },
       timestamp: Date.now(),
@@ -111,6 +117,8 @@ describe('Serialization boundary', () => {
     };
     const message = JSON.stringify({
       id: 'ser-4',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'echo',
       payload: deep,
       timestamp: Date.now(),
@@ -130,6 +138,8 @@ describe('Serialization boundary', () => {
 
     const message = JSON.stringify({
       id: 'ser-5',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'fail',
       payload: {},
       timestamp: Date.now(),
@@ -149,6 +159,8 @@ describe('Serialization boundary', () => {
 
     const message = JSON.stringify({
       id: 'ser-6',
+      sourceId: 'client-1',
+      targetId: 'host',
       action: 'nonexistent.action',
       payload: {},
       timestamp: Date.now(),
