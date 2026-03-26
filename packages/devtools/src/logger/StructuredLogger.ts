@@ -88,11 +88,12 @@ export class StructuredLogger {
           }
         }
       } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
         this.log(
           LogLevel.ERROR,
           `Request failed: ${message.action}`,
           { id: message.id, action: message.action },
-          error as Error
+          err
         );
         throw error;
       }

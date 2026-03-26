@@ -8,12 +8,13 @@ export interface BridgeContextValue<TActions extends ActionMapBase = ActionMapBa
   connectionMode: ConnectionMode;
 }
 
-export const BridgeContext = createContext<BridgeContextValue | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const BridgeContext = createContext<BridgeContextValue<any> | null>(null);
 
 export function useBridgeContext<
   TActions extends ActionMapBase = ActionMapBase,
 >(): BridgeContextValue<TActions> {
   const context = useContext(BridgeContext);
   if (!context) throw new Error('useBridgeContext must be used within a <BridgeProvider>');
-  return context as unknown as BridgeContextValue<TActions>;
+  return context;
 }

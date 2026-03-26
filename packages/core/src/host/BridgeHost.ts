@@ -101,7 +101,9 @@ export class BridgeHost {
     if (this.handlers.has(action)) {
       throw new Error(`Action '${action}' is already registered`);
     }
-    this.handlers.set(action, handler as ActionHandler);
+    this.handlers.set(action, (payload: unknown, ctx: RequestContext) =>
+      handler(payload as TPayload, ctx)
+    );
   }
 
   unregisterHandler(action: string): void {
@@ -177,7 +179,9 @@ export class BridgeHost {
       if (this.config.timeout > 0) {
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
-            reject(new Error(`Request timeout after ${this.config.timeout}ms`));
+            reject(
+              new BridgeCallError(`Request timeout after ${this.config.timeout}ms`, 'TIMEOUT')
+            );
           }, this.config.timeout);
         });
         await Promise.race([executeFn(), timeoutPromise]);
@@ -233,12 +237,12 @@ export class BridgeHost {
 
   sendEvent<TPayload = unknown>(
     event: string,
-    payload: TPayload,
+    payload?: TPayload,
     options?: SendEventOptions
   ): void {
     const eventMessage: BridgeEvent<TPayload> = {
       event,
-      payload,
+      payload: payload as TPayload,
       timestamp: Date.now(),
       sourceId: 'host',
     };
@@ -257,11 +261,7 @@ export class BridgeHost {
   }
 
   emit<TPayload = unknown>(event: string, payload?: TPayload, options?: SendEventOptions): void {
-    if (payload !== undefined) {
-      this.sendEvent(event, payload, options);
-    } else {
-      this.sendEvent(event, undefined as unknown as TPayload, options);
-    }
+    this.sendEvent(event, payload, options);
   }
 
   /**

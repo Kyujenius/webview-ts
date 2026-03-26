@@ -60,7 +60,8 @@ export class TimeTracker {
         entry.endTime = performance.now();
         entry.duration = entry.endTime - entry.startTime;
         entry.success = false;
-        entry.error = (error as Error).message;
+        const err = error instanceof Error ? error : new Error(String(error));
+        entry.error = err.message;
         throw error;
       } finally {
         this.completeEntry(entry);

@@ -39,7 +39,7 @@ export class DevToolsMiddleware {
   }
 
   toMiddleware(): Middleware {
-    return { name: 'devtools', fn: this.createFn(), __skipTrace: true } as Middleware;
+    return { name: 'devtools', fn: this.createFn(), __skipTrace: true } satisfies Middleware;
   }
 
   get name(): string {

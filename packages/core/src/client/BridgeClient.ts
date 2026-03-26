@@ -12,6 +12,7 @@ import type {
   BridgeEvent,
   BridgeMessage,
   BridgeResponse,
+  BridgeSuccessResponse,
   ConnectionMode,
   EventMapBase,
   FallbackMap,
@@ -38,7 +39,6 @@ import { FallbackAdapter } from '../adapters/FallbackAdapter';
 import { generateMessageId } from '../utils/id-generator';
 import { CallbackRegistry } from './CallbackRegistry';
 import { executeOnionPipeline, type PipelineTrace } from './executeOnionPipeline';
-import { MessageQueue } from './MessageQueue';
 /**
  * Event handler type
  */
@@ -53,17 +53,17 @@ export class BridgeClient<
 > {
   private config: {
     timeout: number;
-    maxConcurrentRequests: number;
-    enableDeduplication: boolean;
     onError?: BridgeConfig['onError'];
     retry?: BridgeConfig['retry'];
     fallback?: BridgeConfig['fallback'];
   };
   private adapter: ClientAdapter;
   private callbacks: CallbackRegistry;
-  private queue: MessageQueue;
   private middleware: MiddlewarePipeline;
-  private eventHandlers = new Map<string, Set<EventHandler>>();
+  private eventHandlers = new Map<string, Set<(payload: unknown) => void>>();
+  /** Maps original handler → wrapper stored in eventHandlers, for off() lookup */
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  private handlerWrappers = new WeakMap<Function, (payload: unknown) => void>();
   /** Global event interceptors (for devtools, logging, etc.) */
   private eventInterceptors = new Set<(event: string, payload: unknown) => void>();
   /** Stores context per message id so the response phase can access it */
@@ -86,8 +86,6 @@ export class BridgeClient<
     this.sourceId = generateSourceId(config.name);
     this.config = {
       timeout: config.timeout ?? 0,
-      maxConcurrentRequests: config.maxConcurrentRequests ?? 100,
-      enableDeduplication: config.enableDeduplication ?? true,
       onError: config.onError,
       retry: config.retry,
       fallback: config.fallback,
@@ -106,10 +104,6 @@ export class BridgeClient<
     }
 
     this.callbacks = new CallbackRegistry();
-    this.queue = new MessageQueue({
-      enableDeduplication: this.config.enableDeduplication,
-      maxSize: this.config.maxConcurrentRequests,
-    });
     this.middleware = new MiddlewarePipeline();
   }
 
@@ -218,17 +212,26 @@ export class BridgeClient<
     this.pendingContexts.set(message.id, ctx);
 
     try {
+      type TResponse = InferResponse<TActions, TAction>;
+      let resolvedData: TResponse | undefined;
+
       // Core function: send message and wait for response
       const coreFn = async () => {
-        this.queue.enqueue(ctx.request);
+        const timeout =
+          options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
 
-        const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
-          // Priority: per-call > per-action > global (0 = disabled)
-          const timeout =
-            options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
+        const responsePromise = new Promise<BridgeSuccessResponse<TResponse>>((resolve, reject) => {
           this.callbacks.register(
             ctx.request.id,
-            resolve as (value: unknown) => void,
+            (raw: unknown) => {
+              // postMessage 경계 — JSON.parse 결과이므로 런타임 단언 불가피
+              const r = raw as BridgeResponse;
+              if (!r.success) {
+                reject(new BridgeCallError(r.error.message, r.error.code, r.error.details));
+                return;
+              }
+              resolve(r as BridgeSuccessResponse<TResponse>);
+            },
             reject,
             timeout
           );
@@ -237,17 +240,8 @@ export class BridgeClient<
         this.adapter.send(ctx.request);
 
         const response = await responsePromise;
-
-        if (!response.success) {
-          throw new BridgeCallError(
-            response.error.message,
-            response.error.code,
-            response.error.details
-          );
-        }
-
+        resolvedData = response.data;
         ctx.response = response;
-        this.queue.complete(ctx.request.id);
       };
 
       // Initialize trace collection
@@ -295,9 +289,9 @@ export class BridgeClient<
         ctx.metadata.set(METADATA_KEYS.HANDLER_SKIPPED, true);
       }
 
-      return (
-        ctx.response && ctx.response.success ? ctx.response.data : undefined
-      ) as InferResponse<TActions, TAction>;
+      // resolvedData는 coreFn이 성공했을 때만 설정됨.
+      // 실패 시 pipeline이 throw하므로 여기에 도달 불가.
+      return resolvedData!;
     } finally {
       this.pendingContexts.delete(message.id);
     }
@@ -311,11 +305,12 @@ export class BridgeClient<
       this.eventHandlers.set(event, new Set());
     }
 
-    this.eventHandlers.get(event)!.add(handler as EventHandler);
+    const wrapper = (payload: unknown) => handler(payload as TEvents[K]);
+    this.handlerWrappers.set(handler, wrapper);
+    this.eventHandlers.get(event)!.add(wrapper);
 
-    // Return unsubscribe function
     return () => {
-      this.off(event, handler as EventHandler<TEvents[K]>);
+      this.off(event, handler);
     };
   }
 
@@ -324,17 +319,14 @@ export class BridgeClient<
    */
   off<K extends string & keyof TEvents>(event: K, handler?: EventHandler<TEvents[K]>): void {
     if (!handler) {
-      // Remove all handlers for this event
       this.eventHandlers.delete(event);
       return;
     }
 
-    const handlers = this.eventHandlers.get(event);
-    if (handlers) {
-      handlers.delete(handler as EventHandler);
-      if (handlers.size === 0) {
-        this.eventHandlers.delete(event);
-      }
+    const wrapper = this.handlerWrappers.get(handler);
+    if (wrapper) {
+      this.eventHandlers.get(event)?.delete(wrapper);
+      this.handlerWrappers.delete(handler);
     }
   }
 
@@ -583,7 +575,6 @@ export class BridgeClient<
   destroy(): void {
     this.disconnect();
     this.callbacks.clear();
-    this.queue.clear();
     this.pendingContexts.clear();
   }
 
