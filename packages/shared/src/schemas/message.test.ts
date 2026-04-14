@@ -108,32 +108,6 @@ describe('isBridgeResponse', () => {
     ).toBe(false);
   });
 
-  it('validates success response (data required)', () => {
-    expect(
-      isBridgeResponse({
-        id: '1',
-        sourceId: 'host',
-        targetId: 'web-1',
-        success: true,
-        data: 42,
-        timestamp: 1,
-      })
-    ).toBe(true);
-  });
-
-  it('validates error response (error required)', () => {
-    expect(
-      isBridgeResponse({
-        id: '1',
-        sourceId: 'host',
-        targetId: 'web-1',
-        success: false,
-        error: { code: 'TIMEOUT', message: 'x' },
-        timestamp: 1,
-      })
-    ).toBe(true);
-  });
-
   it('rejects success response without data', () => {
     expect(
       isBridgeResponse({

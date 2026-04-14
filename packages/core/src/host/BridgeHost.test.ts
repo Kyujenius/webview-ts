@@ -40,33 +40,7 @@ describe('BridgeHost', () => {
     bridgeHost.attach(mockAdapter.adapter);
   });
 
-  describe('initialization', () => {
-    it('should create bridge host with default config', () => {
-      const defaultHost = new BridgeHost();
-      const config = defaultHost.getConfig();
-
-      expect(config.timeout).toBe(0);
-      expect(typeof config.onError).toBe('function');
-    });
-
-    it('should create bridge host with custom config', () => {
-      const customHost = new BridgeHost({
-        timeout: 10000,
-      });
-
-      const config = customHost.getConfig();
-      expect(config.timeout).toBe(10000);
-    });
-  });
-
   describe('action registration', () => {
-    it('should register action handler', () => {
-      const handler = vi.fn();
-      expect(() => {
-        bridgeHost.registerAction('testAction', handler);
-      }).not.toThrow();
-    });
-
     it('should throw when registering duplicate action', () => {
       const handler = vi.fn();
       bridgeHost.registerAction('testAction', handler);

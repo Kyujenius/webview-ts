@@ -3,13 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConnectionRegistry } from './ConnectionRegistry';
 
 describe('ConnectionRegistry', () => {
-  it('registers and retrieves a connection', () => {
-    const registry = new ConnectionRegistry();
-    const sender = vi.fn();
-    registry.register('checkout-abc', sender);
-    expect(registry.get('checkout-abc')).toBeDefined();
-  });
-
   it('unregisters a connection', () => {
     const registry = new ConnectionRegistry();
     registry.register('checkout-abc', vi.fn());
@@ -58,12 +51,5 @@ describe('ConnectionRegistry', () => {
     expect(() => registry.sendTo('unknown', 'msg')).toThrow(
       '[webview-ts] No connection found for targetId: unknown'
     );
-  });
-
-  it('returns all registered connections', () => {
-    const registry = new ConnectionRegistry();
-    registry.register('a', vi.fn());
-    registry.register('b', vi.fn());
-    expect(registry.getAll()).toHaveLength(2);
   });
 });

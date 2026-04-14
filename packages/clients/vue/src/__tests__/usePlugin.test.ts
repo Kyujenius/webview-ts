@@ -83,13 +83,11 @@ describe('usePlugin', () => {
       global: { provide: { [BRIDGE_KEY as symbol]: ctx } },
     });
 
-    expect(captured.getInfo).toBeDefined();
     expect(captured.getInfo.status.value).toBe('idle');
     expect(captured.getInfo.data.value).toBeNull();
     expect(captured.getInfo.error.value).toBeNull();
     expect(captured.getInfo.isLoading.value).toBe(false);
 
-    expect(captured.getBattery).toBeDefined();
     expect(captured.getBattery.status.value).toBe('idle');
   });
 

@@ -171,8 +171,6 @@ describe('useAction', () => {
     });
 
     expect(manager.watch).toHaveBeenCalledOnce();
-    const unwatch = manager.watch.mock.results[0].value;
-    expect(typeof unwatch).toBe('function');
 
     wrapper.unmount();
     // After unmount, the watch listener should have been cleaned up via onScopeDispose

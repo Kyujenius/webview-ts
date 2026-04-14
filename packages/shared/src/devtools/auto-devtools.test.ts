@@ -105,9 +105,8 @@ describe('tryAutoDevTools', () => {
 
   it('connects and subscribes to events on successful connection', async () => {
     const target = createTarget();
-    const cleanup = tryAutoDevTools(target);
+    tryAutoDevTools(target);
 
-    expect(cleanup).toBeTypeOf('function');
     expect(MockWebSocket.instances).toHaveLength(1);
     expect(MockWebSocket.instances[0].url).toBe('ws://localhost:4000?role=client');
 

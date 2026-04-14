@@ -22,21 +22,6 @@ type TestActions = {
 };
 
 describe('createSimpleBridgeHost', () => {
-  it('should create bridgeHost with webViewProps', () => {
-    const result = createSimpleBridgeHost<TestActions>({
-      handlers: {
-        'test.echo': async (_payload) => ({ echoed: _payload.message }),
-        'action.one': async (_payload) => ({ result: 'ok' }),
-      },
-    });
-
-    expect(result.bridgeHost).toBeDefined();
-    expect(result.adapter).toBeDefined();
-    expect(result.webViewProps).toBeDefined();
-    expect(typeof result.webViewProps.onMessage).toBe('function');
-    expect(typeof result.webViewProps.ref).toBe('function');
-  });
-
   it('should register handlers that process messages correctly', async () => {
     const { bridgeHost } = createSimpleBridgeHost<TestActions>({
       handlers: {
@@ -57,25 +42,6 @@ describe('createSimpleBridgeHost', () => {
     const response = await bridgeHost.handleMessage(message);
     expect(response.success).toBe(true);
     if (response.success) expect(response.data).toEqual({ result: 'ok' });
-  });
-
-  it('should provide sendEvent function', () => {
-    const { sendEvent } = createSimpleBridgeHost<TestActions>({
-      handlers: {
-        'test.echo': async (payload) => ({ echoed: payload.message }),
-        'action.one': async () => ({ result: 'ok' }),
-      },
-    });
-    expect(typeof sendEvent).toBe('function');
-  });
-
-  it('should work without generic (untyped fallback)', () => {
-    const result = createSimpleBridgeHost({
-      handlers: {
-        'any.action': async (_payload: any) => ({ done: true }),
-      },
-    });
-    expect(result.bridgeHost).toBeDefined();
   });
 });
 

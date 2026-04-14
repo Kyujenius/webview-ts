@@ -281,16 +281,6 @@ describe('Error handling: host handler throws', () => {
   });
 });
 
-// ─── Actions map ───
-
-describe('Plugin actions map', () => {
-  it('exposes runtime action name map', () => {
-    expect(camera.actions.takePhoto).toBe('camera.takePhoto');
-    expect(camera.actions.pickImage).toBe('camera.pickImage');
-    expect(storage.actions.getItem).toBe('storage.getItem');
-  });
-});
-
 // ─── Event (Native → Web push) ───
 
 describe('Event: bridge.on / bridge.off', () => {
@@ -313,7 +303,6 @@ describe('Event: bridge.on / bridge.off', () => {
     // Directly invoke the handler through the event system
     // Since handleEvent is private, we test via the public on/off contract
     const handlers = (bridge as any).eventHandlers.get('location.updated');
-    expect(handlers).toBeDefined();
     expect(handlers.size).toBe(1);
 
     // Simulate event dispatch

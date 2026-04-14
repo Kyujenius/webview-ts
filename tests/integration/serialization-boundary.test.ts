@@ -149,7 +149,6 @@ describe('Serialization boundary', () => {
 
     const response = JSON.parse(sent[0]);
     expect(response.success).toBe(false);
-    expect(response.error).toBeDefined();
     expect(response.error.code).toBeTypeOf('string');
     expect(response.error.message).toBe('something broke');
   });

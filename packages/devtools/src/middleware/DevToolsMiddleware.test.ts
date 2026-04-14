@@ -196,8 +196,6 @@ describe('DevToolsMiddleware', () => {
         payload: undefined,
         timestamp: Date.now(),
       });
-      expect(middleware.getStore().getMessages()).toHaveLength(1);
-
       middleware.clear();
       expect(middleware.getStore().getMessages()).toHaveLength(0);
     });

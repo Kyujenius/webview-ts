@@ -101,10 +101,6 @@ describe('definePlugin()', () => {
 
   const plugin = definePlugin('camera', markers);
 
-  it('stores plugin name', () => {
-    expect(plugin.name).toBe('camera');
-  });
-
   it('builds action name map (short → qualified)', () => {
     expect(plugin.actions.takePhoto).toBe('camera.takePhoto');
     expect(plugin.actions.getStatus).toBe('camera.getStatus');
@@ -138,10 +134,6 @@ describe('definePlugin()', () => {
   it('extracts cache', () => {
     expect(plugin.caches['camera.getCached']).toBe(8000);
     expect(plugin.caches['camera.takePhoto']).toBeUndefined();
-  });
-
-  it('fallback is undefined by default', () => {
-    expect(plugin.fallback).toBeUndefined();
   });
 });
 

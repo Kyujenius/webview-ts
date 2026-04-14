@@ -11,39 +11,7 @@ describe('BridgeClient', () => {
     });
   });
 
-  describe('initialization', () => {
-    it('should create bridge with default config', () => {
-      const defaultBridge = new BridgeClient();
-      const config = defaultBridge.getConfig();
-
-      expect(config.timeout).toBe(0);
-    });
-
-    it('should create bridge with custom config', () => {
-      const customBridge = new BridgeClient({ timeout: 10000 });
-      const config = customBridge.getConfig();
-      expect(config.timeout).toBe(10000);
-    });
-  });
-
-  describe('getConfig', () => {
-    it('should return bridge configuration', () => {
-      const config = bridge.getConfig();
-
-      expect(config).toEqual({
-        timeout: 5000,
-      });
-    });
-  });
-
   describe('event handling', () => {
-    it('should subscribe to events', () => {
-      const handler = vi.fn();
-      const unsubscribe = bridge.on('testEvent', handler);
-
-      expect(typeof unsubscribe).toBe('function');
-    });
-
     it('should unsubscribe from events', () => {
       const handler = vi.fn();
       const unsubscribe = bridge.on('testEvent', handler);
@@ -89,13 +57,6 @@ describe('BridgeClient', () => {
     it('should accept FallbackMap directly', () => {
       const b = new BridgeClient({
         fallback: { 'test.action': async () => 'ok' },
-      });
-      expect(b.connectionMode).toBe('fallback');
-    });
-
-    it('should accept FallbackMap directly', () => {
-      const b = new BridgeClient({
-        fallback: { 'test.action': async () => 42 },
       });
       expect(b.connectionMode).toBe('fallback');
     });

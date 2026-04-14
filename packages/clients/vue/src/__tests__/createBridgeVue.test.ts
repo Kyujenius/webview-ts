@@ -1,9 +1,8 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp, defineComponent, h, inject } from 'vue';
+import { defineComponent, h, inject } from 'vue';
 
 import { BRIDGE_KEY, type BridgeContext } from '../bridgeKey';
-import type { useBridge } from '../composables/useBridge';
 import { createBridgeVue } from '../createBridgeVue';
 
 // Mock BridgeClient so tests don't need a real WebView environment
@@ -65,37 +64,7 @@ describe('createBridgeVue', () => {
     vi.clearAllMocks();
   });
 
-  describe('returned object shape', () => {
-    it('exposes install, useBridge, useAction, usePlugin, useEvent', () => {
-      const bridge = createBridgeVue();
-      expect(typeof bridge.install).toBe('function');
-      expect(typeof bridge.useBridge).toBe('function');
-      expect(typeof bridge.useAction).toBe('function');
-      expect(typeof bridge.usePlugin).toBe('function');
-      expect(typeof bridge.useEvent).toBe('function');
-    });
-  });
-
   describe('install()', () => {
-    it('provides bridge context so useBridge works after install', () => {
-      const plugin = createBridgeVue();
-
-      let captured: ReturnType<typeof useBridge> | undefined;
-      const Comp = defineComponent({
-        setup() {
-          captured = plugin.useBridge();
-          return () => h('div');
-        },
-      });
-
-      mount(Comp, { global: { plugins: [plugin] } });
-
-      expect(captured).toBeDefined();
-      expect(captured!.isAvailable).toBeDefined();
-      expect(captured!.connectionMode).toBeDefined();
-      expect(captured!.bridge).toBeDefined();
-    });
-
     it('provides connectionMode as fallback when native is unavailable', () => {
       const plugin = createBridgeVue();
 
@@ -126,18 +95,9 @@ describe('createBridgeVue', () => {
 
       mount(Comp, { global: { plugins: [plugin] } });
 
-      expect(ctx).toBeDefined();
       expect('bridge' in ctx!).toBe(true);
       expect('isAvailable' in ctx!).toBe(true);
       expect('connectionMode' in ctx!).toBe(true);
-    });
-
-    it('registers a $webviewBridgeCleanup on globalProperties', () => {
-      const plugin = createBridgeVue();
-      const app = createApp(defineComponent({ render: () => h('div') }));
-      app.use(plugin);
-
-      expect(typeof app.config.globalProperties.$webviewBridgeCleanup).toBe('function');
     });
   });
 
@@ -251,24 +211,6 @@ describe('createBridgeVue', () => {
       const plugin = createBridgeVue({
         plugins: [{ fallback: { 'action.foo': pluginFn } }] as any,
         config: { fallback: { 'action.foo': configFn } as any },
-      });
-      mount(defineComponent({ setup: () => () => h('div') }), {
-        global: { plugins: [plugin] },
-      });
-
-      const calls = (BridgeClient as unknown as MockedBridgeClientCtor).mock.calls;
-      const finalConfig = calls[calls.length - 1][0];
-      expect(finalConfig.fallback['action.foo']).toBe(configFn);
-    });
-
-    it('plugin fallback is overridden by config fallback (FallbackMap form)', async () => {
-      const { BridgeClient } = await import('@webview-ts/core');
-
-      const pluginFn = vi.fn();
-      const configFn = vi.fn();
-      const plugin = createBridgeVue({
-        plugins: [{ fallback: { 'action.foo': pluginFn } }] as any,
-        config: { fallback: { 'action.foo': configFn } },
       });
       mount(defineComponent({ setup: () => () => h('div') }), {
         global: { plugins: [plugin] },

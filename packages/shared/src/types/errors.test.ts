@@ -14,7 +14,6 @@ describe('BridgeCallError', () => {
     expect(err.message).toBe('fail');
     expect(err.code).toBe('TIMEOUT');
     expect(err.details).toEqual({ elapsed: 5000 });
-    expect(err instanceof Error).toBe(true);
   });
 });
 

@@ -116,7 +116,6 @@ describe('auto-devtools — Strict Mode & race conditions', () => {
       await new Promise<void>((r) => queueMicrotask(r));
       // Should get subscriptions again from the new WS onopen
       expect(target.getHandlerCount('call:start')).toBe(1);
-      expect(cleanup2).toBeTypeOf('function');
 
       cleanup2();
     });

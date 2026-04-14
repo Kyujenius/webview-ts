@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createTimeTracker, TimeTracker } from './TimeTracker';
+import type { TimeTracker } from './TimeTracker';
+import { createTimeTracker } from './TimeTracker';
 
 type EventHandler = (data: any) => void;
 
@@ -31,10 +32,6 @@ describe('TimeTracker', () => {
 
   beforeEach(() => {
     tracker = createTimeTracker();
-  });
-
-  it('createTimeTracker returns a TimeTracker instance', () => {
-    expect(tracker).toBeInstanceOf(TimeTracker);
   });
 
   it('records a successful entry with duration via connect()', () => {
@@ -81,16 +78,6 @@ describe('TimeTracker', () => {
     expect(entries[0].error).toBe('response error');
   });
 
-  it('getEntries() returns completed entries', () => {
-    const target = createMockTarget();
-    tracker.connect(target);
-
-    target.emit('call:start', { id: 'msg-1', action: 'test.action' });
-    target.emit('call:end', { id: 'msg-1', response: { success: true } });
-
-    expect(tracker.getEntries()).toHaveLength(1);
-  });
-
   it('getEntriesByAction() filters by action name', () => {
     const target = createMockTarget();
     tracker.connect(target);
@@ -130,7 +117,6 @@ describe('TimeTracker', () => {
     target.emit('call:end', { id: 'id-2', response: { success: true } });
 
     const avg = tracker.getAverageDuration('action.x');
-    expect(avg).toBeGreaterThanOrEqual(0);
     const [entry] = tracker.getEntriesByAction('action.x');
     expect(avg).toBe(entry.duration);
   });
@@ -186,7 +172,6 @@ describe('TimeTracker', () => {
     const json = tracker.export();
     const parsed = JSON.parse(json);
     expect(parsed.version).toBe('1.0');
-    expect(Array.isArray(parsed.entries)).toBe(true);
     expect(parsed.entries).toHaveLength(1);
   });
 

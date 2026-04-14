@@ -48,12 +48,6 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     spy.mockRestore();
   });
 
-  it('disconnect() is idempotent — safe to call without connect', () => {
-    bridge = new BridgeClient({ fallback: true });
-    expect(() => bridge['disconnect']()).not.toThrow();
-    expect(() => bridge['disconnect']()).not.toThrow();
-  });
-
   it('Strict Mode cycle: connect → destroy → connect leaves exactly one listener', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');

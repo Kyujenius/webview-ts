@@ -1,16 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createStructuredLogger, LogLevel, StructuredLogger } from './StructuredLogger';
+import { LogLevel, StructuredLogger } from './StructuredLogger';
 
 describe('StructuredLogger', () => {
   let logger: StructuredLogger;
 
   beforeEach(() => {
     logger = new StructuredLogger();
-  });
-
-  it('createStructuredLogger returns a StructuredLogger instance', () => {
-    expect(createStructuredLogger()).toBeInstanceOf(StructuredLogger);
   });
 
   describe('log()', () => {
@@ -109,7 +105,6 @@ describe('StructuredLogger', () => {
       const raw = logger.export();
       const parsed = JSON.parse(raw);
       expect(parsed.version).toBe('1.0');
-      expect(Array.isArray(parsed.logs)).toBe(true);
       expect(parsed.logs).toHaveLength(1);
     });
   });
@@ -118,7 +113,6 @@ describe('StructuredLogger', () => {
     it('returns interceptor with the correct name', () => {
       const interceptor = logger.toRequestInterceptor();
       expect(interceptor.name).toBe('structured-logger');
-      expect(typeof interceptor.fn).toBe('function');
     });
 
     it('logs request at DEBUG level', () => {
@@ -165,7 +159,6 @@ describe('StructuredLogger', () => {
     it('returns interceptor with the correct name', () => {
       const interceptor = logger.toResponseInterceptor();
       expect(interceptor.name).toBe('structured-logger');
-      expect(typeof interceptor.fn).toBe('function');
     });
 
     it('logs success response at DEBUG level', () => {

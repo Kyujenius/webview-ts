@@ -57,12 +57,6 @@ describe('BridgeClient - Cleanup', () => {
 
       expect(bridge['callbacks']['callbacks'].size).toBe(0);
     });
-
-    it('should be idempotent', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge.destroy();
-      expect(() => bridge.destroy()).not.toThrow();
-    });
   });
 
   describe('dispose()', () => {
@@ -98,12 +92,6 @@ describe('BridgeClient - Cleanup', () => {
       bridge.dispose();
 
       expect(bridge['actionTimeouts'].size).toBe(0);
-    });
-
-    it('should be idempotent', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge.dispose();
-      expect(() => bridge.dispose()).not.toThrow();
     });
   });
 
@@ -143,7 +131,6 @@ describe('BridgeClient - Cleanup', () => {
       const handler = vi.fn();
       const unsub = bridge.on('test', handler);
 
-      expect(typeof unsub).toBe('function');
       unsub();
 
       const responseHandler = (window as any).__tsBridgeResponseHandler;

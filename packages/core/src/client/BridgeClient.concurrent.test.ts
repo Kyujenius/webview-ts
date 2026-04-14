@@ -22,7 +22,6 @@ describe('BridgeClient - Concurrent Requests', () => {
 
     const results = await Promise.all(Array.from({ length: 10 }, () => bridge.call('counter.get')));
 
-    expect(results).toHaveLength(10);
     results.forEach((r) => expect(r).toHaveProperty('count'));
   });
 
@@ -37,13 +36,8 @@ describe('BridgeClient - Concurrent Requests', () => {
       },
     });
 
-    const [r1, r2] = await Promise.all([
-      bridge.call('data.fetch', { id: 1 }),
-      bridge.call('data.fetch', { id: 1 }),
-    ]);
+    await Promise.all([bridge.call('data.fetch', { id: 1 }), bridge.call('data.fetch', { id: 1 })]);
 
     expect(callCount).toBe(2);
-    expect(r1).toHaveProperty('value');
-    expect(r2).toHaveProperty('value');
   });
 });

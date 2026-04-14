@@ -107,7 +107,6 @@ describe('DevToolsStore', () => {
 
       expect(parsed.version).toBe('2.0');
       expect(parsed.messages).toHaveLength(1);
-      expect(parsed.metrics).toBeDefined();
     });
 
     it('should import messages from JSON', () => {
