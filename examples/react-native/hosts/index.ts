@@ -1,8 +1,11 @@
-export { cameraHost } from './camera';
-export { locationHost } from './location';
 export { biometricHost } from './biometric';
-export { hapticsHost } from './haptics';
-export { phoneHost } from './phone';
 export { calendarHost } from './calendar';
+export { cameraHost } from './camera';
+export { clipboardHost } from './clipboard';
 export { deviceHost } from './device';
+export { hapticsHost } from './haptics';
+export { locationHost } from './location';
+export { phoneHost } from './phone';
 export { shareHost } from './share';
+export { storageHost } from './storage';
+export { validationDemoHost } from './validation-demo';
