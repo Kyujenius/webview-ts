@@ -1,4 +1,4 @@
-import { device } from '@example/plugins';
+import { calendar, device } from '@example/plugins';
 import type { RequestInterceptor } from '@webview-ts/shared';
 import { useEffect, useState } from 'react';
 
@@ -38,8 +38,10 @@ function createAuthInterceptor(getToken: () => string | null): RequestIntercepto
 export default function MiddlewarePage() {
   const { bridge } = useBridge();
   const { getInfo } = usePlugin(device);
+  const { addEvent } = usePlugin(calendar);
   const [logs, setLogs] = useState<string[]>([]);
   const [interceptorsRegistered, setInterceptorsRegistered] = useState(false);
+  const [lastEventId, setLastEventId] = useState<string | null>(null);
 
   const addLog = (msg: string) => setLogs((prev) => [...prev.slice(-19), msg]);
 
@@ -78,6 +80,27 @@ export default function MiddlewarePage() {
     }
   };
 
+  const handleAddEvent = async () => {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
+    addLog('→ Calling calendar.addEvent (stamp-source interceptor active)...');
+    try {
+      const result = await addEvent.execute({
+        title: 'Middleware Demo Event',
+        startDate: now.toISOString(),
+        endDate: end.toISOString(),
+      });
+      if (result) {
+        setLastEventId(result.id);
+        addLog(
+          `← Success: id=${result.id} (payload stamped with source="webview-ts-example" by per-action interceptor)`
+        );
+      }
+    } catch (err) {
+      addLog(`← Error: ${(err as Error).message}`);
+    }
+  };
+
   return (
     <div>
       <h1>Interceptor Examples</h1>
@@ -98,9 +121,19 @@ export default function MiddlewarePage() {
         <h2>Try It</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="button" onClick={handleFetchDevice}>
-            Fetch Device Info
+            Fetch Device Info (global interceptors)
+          </button>
+          <button className="button button-secondary" onClick={handleAddEvent}>
+            Add Calendar Event (per-action stamp-source)
           </button>
         </div>
+        {lastEventId && (
+          <div className="result success" style={{ marginTop: 8 }}>
+            Event created — id: <code>{lastEventId}</code>. The <code>stamp-source</code> per-action
+            interceptor injected <code>source: "webview-ts-example"</code> into the payload before
+            dispatch.
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -147,25 +180,32 @@ bridge.interceptors.response.use({
         </pre>
       </div>
       <div className="card">
-        <h2>Global vs Plugin Interceptor</h2>
+        <h2>Global vs Per-Action Interceptor</h2>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: '0.75rem' }}>
+          The <strong>Add Calendar Event</strong> button above triggers{' '}
+          <code>calendar.addEvent</code>, which has a per-action <code>stamp-source</code>{' '}
+          interceptor defined in the plugin itself — it appends{' '}
+          <code>source: "webview-ts-example"</code> to every <code>addEvent</code> payload
+          automatically.
+        </p>
         <pre style={{ fontSize: 11 }}>
           {`// ─── Global Interceptor ───
-// Runs on EVERY action. Use for cross-cutting concerns.
-// Registered via bridge.interceptors.request.use()
-// or createBridgeReact({ interceptors: { request: [...] } })
-
+// Runs on EVERY action. Registered at bridge level.
 bridge.interceptors.request.use(logger);   // Log all calls
 bridge.interceptors.request.use(auth);     // Inject token on all requests
 
-// ─── Plugin Interceptor ───
-// Runs on ONE specific action only. Use for per-action behavior.
-// Registered via action.use() in plugin definition.
-
-const camera = definePlugin('camera', {
-  takePhoto: action<Payload, Response>({ timeout: 30000 })
-    .use(compressionInterceptor)   // Only for takePhoto
-    .use(watermarkInterceptor),    // Only for takePhoto
-  getInfo: action<void, Info>(),   // No interceptors
+// ─── Per-Action Interceptor (real — calendar plugin) ───
+// Defined on the action inside definePlugin. Runs only for addEvent.
+const calendar = definePlugin('calendar', {
+  addEvent: action<AddEventPayload, AddEventResponse>()
+    .interceptors.request.use({
+      name: 'stamp-source',
+      fn: (req) => ({
+        ...req,
+        payload: { ...req.payload, source: 'webview-ts-example' },
+      }),
+    }),
+  getEvents: action<GetEventsPayload, GetEventsResponse>(), // no interceptor
 });`}
         </pre>
       </div>

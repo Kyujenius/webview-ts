@@ -7,10 +7,12 @@ import CalendarPage from './pages/CalendarPage';
 import CameraPage from './pages/CameraPage';
 import DevicePage from './pages/DevicePage';
 import HomePage from './pages/HomePage';
+import LifecyclePage from './pages/LifecyclePage';
 import LocationPage from './pages/LocationPage';
 import MiddlewarePage from './pages/MiddlewarePage';
 import PhonePage from './pages/PhonePage';
 import SharePage from './pages/SharePage';
+import ValidationPage from './pages/ValidationPage';
 
 const routes: { path: string; label: string; component: ComponentType }[] = [
   { path: '/', label: 'Home', component: HomePage },
@@ -23,6 +25,8 @@ const routes: { path: string; label: string; component: ComponentType }[] = [
   { path: '/share', label: 'Share', component: SharePage },
   { path: '/actions', label: 'useAction', component: ActionsPage },
   { path: '/middleware', label: 'Middleware', component: MiddlewarePage },
+  { path: '/lifecycle', label: 'Lifecycle', component: LifecyclePage },
+  { path: '/validation', label: 'Validation', component: ValidationPage },
 ];
 
 function App() {
