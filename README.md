@@ -16,14 +16,21 @@
 
 > *Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference.*
 
-## Features
+## The Core Idea
 
-- **End-to-end Type Safety** &mdash; Define payload and response once, TypeScript infers everywhere. No manual type casting.
+One `definePlugin` call is the single source of truth. Payload and response types flow from it to both ends &mdash; the web client's hooks and the native host's handlers &mdash; with zero manual casting:
+
+- **End-to-end Type Safety** &mdash; Define payload and response once, TypeScript infers everywhere.
 - **Plugin Architecture** &mdash; Capacitor-inspired. One plugin definition generates typed client hooks and host handlers.
-- **Koa-style Middleware** &mdash; Onion pipeline shared between web and native. Intercept, transform, short-circuit.
 - **Zero Dependencies** &mdash; `@webview-ts/shared` has zero runtime deps. Core is pure TypeScript.
+
+## Batteries Included (all optional)
+
+- **Axios-style Interceptors** &mdash; Transform requests and responses, globally or per-action.
+- **Lifecycle Events** &mdash; `onCall('call:start' | 'call:end' | 'call:error')` for logging, timing, and tracing.
 - **Fallback Mode** &mdash; Develop in the browser without a native app. Plugins ship their own mock handlers.
 - **DevTools** &mdash; Zero-config real-time message inspector. Auto-connects in development.
+- **And more** &mdash; per-action timeout/retry/cache, multi-WebView event routing, Vue composables.
 
 ## Architecture
 
@@ -35,7 +42,7 @@ graph TB
         direction TB
         S_Types["Types & Interfaces"]
         S_Plugin["Plugin System\n(definePlugin + action)"]
-        S_MW["MiddlewarePipeline\n(Koa onion model)"]
+        S_MW["InterceptorManager\n(request/response chain)"]
         S_State["ActionStateManager\n(Pull/Push subscription)"]
         S_Schema["Type Guards\n(isBridgeMessage etc.)"]
         S_Conn["ConnectionRegistry\n(multi-WebView routing)"]
@@ -43,8 +50,8 @@ graph TB
 
     subgraph core["@webview-ts/core"]
         direction TB
-        C_Client["BridgeClient\ncall() · on() · middleware"]
-        C_Host["BridgeHost\nregisterHandler() · emit() · middleware"]
+        C_Client["BridgeClient\ncall() · on() · interceptors · onCall()"]
+        C_Host["BridgeHost\nregisterHandler() · sendEvent()"]
         C_Adapter["Adapters\nRN WebView · Fallback · Disconnected"]
     end
 
@@ -176,50 +183,69 @@ function WebViewScreen() {
 
 | Package | Description |
 |---|---|
-| `@webview-ts/shared` | Types, plugin system, middleware pipeline, schemas (zero deps) |
+| `@webview-ts/shared` | Types, plugin system, interceptor chain, action state, schemas (zero deps) |
 | `@webview-ts/core` | BridgeClient + BridgeHost engine |
 | `@webview-ts/react` | React hooks &mdash; `createBridgeReact()`, `usePlugin`, `useAction`, `useEvent` |
 | `@webview-ts/vue` | Vue composables &mdash; `createBridgeVue()`, `usePlugin`, `useAction`, `useEvent` |
 | `@webview-ts/react-native` | React Native host &mdash; `useBridgeHost()`, `ReactNativeHostAdapter` |
 | `@webview-ts/devtools` | Real-time message inspector dashboard |
 
-## Middleware
+## Platform Support
 
-webview-ts uses a Koa-style onion middleware pipeline. The same pipeline runs on both web and native sides.
+| Side | Platform | Package | Status |
+|---|---|---|---|
+| Web (client) | React | `@webview-ts/react` | ✅ Supported |
+| Web (client) | Vue 3 | `@webview-ts/vue` | ✅ Supported |
+| Web (client) | Browser without native (fallback mode) | `@webview-ts/core` | ✅ Supported |
+| Native (host) | React Native WebView | `@webview-ts/react-native` | ✅ Supported |
+| Native (host) | iOS WKWebView | &mdash; | 🚧 Planned |
+| Native (host) | Android WebView | &mdash; | 🚧 Planned |
+
+New platforms only need to implement the `ClientAdapter` (web side) or `HostAdapter` (native side) interface from `@webview-ts/shared` &mdash; core stays untouched.
+
+## Interceptors
+
+webview-ts uses Axios-style interceptors: sequential transform chains for outgoing requests and incoming responses.
 
 ```typescript
-import type { Middleware } from '@webview-ts/shared';
+import type { RequestInterceptor, ResponseInterceptor } from '@webview-ts/shared';
 
-// Global middleware — runs on every action
-const logger: Middleware = {
-  name: 'logger',
-  fn: async (ctx, next) => {
-    console.log(`[->] ${ctx.request.action}`, ctx.request.payload);
-    await next();
-    console.log(`[<-] ${ctx.request.action}`, ctx.response?.data);
+const logRequest: RequestInterceptor = {
+  name: 'log-req',
+  fn: (req) => {
+    console.log(`[->] ${req.action}`, req.payload);
+    return req;
   },
 };
 
 const { BridgeProvider, usePlugin } = createBridgeReact({
   plugins: [camera],
-  middleware: [logger],
+  interceptors: { request: [logRequest] },
 });
 ```
 
-**Global vs Plugin Interceptor:**
+**Global vs per-action:**
 
 ```typescript
-// Global — runs on ALL actions
-bridge.use(authMiddleware);
+// Global — runs on ALL actions (returns an unsubscribe function)
+bridge.interceptors.request.use({ name: 'auth', fn: (req) => req });
+bridge.interceptors.response.use({ name: 'unwrap', fn: (res) => res });
 
-// Plugin interceptor — runs on ONE action only
+// Per-action — attached on the action marker, runs for that action only
 const camera = definePlugin('camera', {
-  takePhoto: action<P, R>()
-    .use(compressionInterceptor),  // only for takePhoto
+  takePhoto: action<P, R>().interceptors.request.use(compressionInterceptor),
 });
 
-// Execution order (onion):
-//   Global[0] → Global[1] → Plugin Interceptor → [core] → Plugin → Global[1] → Global[0]
+// Execution order (linear chain):
+//   global request → per-action request → [send to host] → per-action response → global response
+```
+
+**Lifecycle events** &mdash; for logging and timing, subscribe instead of transforming:
+
+```typescript
+bridge.onCall('call:start', ({ action, payload }) => console.log('[->]', action, payload));
+bridge.onCall('call:end', ({ action, duration }) => console.log('[<-]', action, `${duration}ms`));
+bridge.onCall('call:error', ({ action, error }) => console.error(action, error));
 ```
 
 ## DevTools
@@ -233,7 +259,7 @@ Zero-config real-time message inspector. Auto-connects to `ws://localhost:4000` 
 pnpm devtools
 ```
 
-All bridge traffic (requests, responses, events, middleware traces) is captured and displayed in a web dashboard. No code changes needed &mdash; just run the server.
+All bridge traffic (requests, responses, events, and call timings) is captured and displayed in a web dashboard. No code changes needed &mdash; just run the server.
 
 ## Development
 
