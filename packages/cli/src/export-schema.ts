@@ -40,9 +40,9 @@ export async function exportSchemas(contractPath: string, outDir: string): Promi
     );
   }
 
-  mkdirSync(outDir, { recursive: true });
-  const files: ExportResult['files'] = [];
+  // Pass 1: Convert all schemas to JSON in memory (throws on non-zod before touching filesystem)
   const warnings: string[] = [];
+  const envelopes: { plugin: string; envelope: unknown }[] = [];
 
   for (const plugin of plugins) {
     const actions: Record<string, { payload?: unknown; response?: unknown }> = {};
@@ -75,9 +75,17 @@ export async function exportSchemas(contractPath: string, outDir: string): Promi
       actions,
       ...(Object.keys(events).length > 0 && { events }),
     };
-    const filePath = join(outDir, `${plugin.name}.json`);
+    envelopes.push({ plugin: plugin.name, envelope });
+  }
+
+  // Pass 2: Create directory and write files only after all conversions succeeded
+  mkdirSync(outDir, { recursive: true });
+  const files: ExportResult['files'] = [];
+
+  for (const { plugin, envelope } of envelopes) {
+    const filePath = join(outDir, `${plugin}.json`);
     writeFileSync(filePath, `${JSON.stringify(envelope, null, 2)}\n`);
-    files.push({ plugin: plugin.name, path: filePath });
+    files.push({ plugin, path: filePath });
   }
 
   return { files, warnings };

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -38,5 +38,13 @@ describe('exportSchemas', () => {
     await expect(exportSchemas(join(FIXTURES, 'valibot-contract.ts'), outDir)).rejects.toThrow(
       /only zod schemas are supported for export.*validation works with any Standard Schema/is
     );
+  });
+
+  it('rejects on mixed-vendor contracts without creating partial files', async () => {
+    outDir = mkdtempSync(join(tmpdir(), 'wts-'));
+    await expect(exportSchemas(join(FIXTURES, 'mixed-contract.ts'), outDir)).rejects.toThrow(
+      /only zod schemas are supported for export/
+    );
+    expect(existsSync(join(outDir, 'zodish.json'))).toBe(false);
   });
 });
