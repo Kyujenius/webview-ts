@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/vue",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "sideEffects": false,
   "description": "Vue 3 composables for webview-ts",

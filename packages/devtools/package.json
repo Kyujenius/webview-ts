@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/devtools",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Visual debugging tools for webview-ts communication",
   "license": "MIT",
   "repository": {

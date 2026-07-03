@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/core",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Web-side bridge engine with middleware pipeline",
   "license": "MIT",
   "repository": {

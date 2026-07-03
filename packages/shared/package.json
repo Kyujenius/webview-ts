@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/shared",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Shared types for webview-ts — zero runtime dependencies",
   "license": "MIT",
   "repository": {

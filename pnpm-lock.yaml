@@ -158,6 +158,9 @@ importers:
       '@webview-ts/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
 
   examples/react:
     dependencies:

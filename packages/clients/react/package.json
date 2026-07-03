@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/react",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "sideEffects": false,
   "description": "React hooks and provider for webview-ts",

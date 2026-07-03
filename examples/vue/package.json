@@ -1,6 +1,6 @@
 {
   "name": "@example/vue",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Vue 3 example app demonstrating webview-ts usage",
   "type": "module",
