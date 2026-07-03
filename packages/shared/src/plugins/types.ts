@@ -221,6 +221,15 @@ export type RetryMap = Record<string, RetryConfig>;
 /** Per-action cache map: { 'camera.takePhoto': 5000 | true } */
 export type CacheMap = Record<string, number | boolean>;
 
+export interface ActionSchemaEntry {
+  payload?: StandardSchemaV1;
+  response?: StandardSchemaV1;
+}
+/** Per-action schemas: { 'camera.takePhoto': { payload, response } } */
+export type ActionSchemaMap = Record<string, ActionSchemaEntry>;
+/** Per-event schemas: { 'location.updated': schema } */
+export type EventSchemaMap = Record<string, StandardSchemaV1>;
+
 /** Options for definePlugin */
 export interface DefinePluginOptions<TEvents extends EventMarkerMap = EmptyEventMap> {
   events?: TEvents;
@@ -244,6 +253,8 @@ export interface PluginInstance<
   readonly timeouts: TimeoutMap;
   readonly retries: RetryMap;
   readonly caches: CacheMap;
+  readonly actionSchemas: ActionSchemaMap;
+  readonly eventSchemas: EventSchemaMap;
   readonly fallback?: FallbackMap;
   readonly host: (handlers: ShortHostHandlers<TMarkers, TEvents>) => HostPluginResult;
   /** Attach fallback handlers to this plugin (chainable) */

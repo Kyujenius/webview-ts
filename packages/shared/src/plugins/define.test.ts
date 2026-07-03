@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import { definePlugin } from './define';
@@ -204,5 +205,73 @@ describe('definePlugin() with empty events option', () => {
   it('does not produce event names for empty events object', () => {
     const plugin = definePlugin('test', { act: action() }, { events: {} });
     expect(Object.keys(plugin.events)).toHaveLength(0);
+  });
+});
+
+// ─── definePlugin — schemas ───
+
+describe('definePlugin — schemas', () => {
+  const payloadSchema = z.object({ quality: z.number().default(0.8) });
+  const responseSchema = z.object({ uri: z.string() });
+  const positionSchema = z.object({ lat: z.number(), lng: z.number() });
+
+  const plugin = definePlugin(
+    'camera',
+    {
+      takePhoto: action({ payload: payloadSchema, response: responseSchema }),
+      plain: action<{ id: string }, void>(),
+    },
+    { events: { moved: event(positionSchema) } }
+  );
+
+  it('extracts actionSchemas map with fully-qualified names', () => {
+    expect(plugin.actionSchemas['camera.takePhoto']).toEqual({
+      payload: payloadSchema,
+      response: responseSchema,
+    });
+    expect(plugin.actionSchemas['camera.plain']).toBeUndefined();
+  });
+
+  it('extracts eventSchemas map', () => {
+    expect(plugin.eventSchemas['camera.moved']).toBe(positionSchema);
+  });
+
+  it('host() validates inbound payload and passes schema output to the handler', async () => {
+    const received: unknown[] = [];
+    const { handlers } = plugin.host({
+      takePhoto: async (payload) => {
+        received.push(payload);
+        return { uri: 'file://x' };
+      },
+      plain: async () => undefined,
+    });
+    await handlers['camera.takePhoto']({}, { messageId: 'm1', timestamp: 1 });
+    expect(received[0]).toEqual({ quality: 0.8 }); // default applied
+  });
+
+  it('host() rejects invalid payload with VALIDATION_ERROR before the handler runs', async () => {
+    let handlerRan = false;
+    const { handlers } = plugin.host({
+      takePhoto: async () => {
+        handlerRan = true;
+        return { uri: 'x' };
+      },
+      plain: async () => undefined,
+    });
+    await expect(
+      handlers['camera.takePhoto']({ quality: 'high' }, { messageId: 'm1', timestamp: 1 })
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    expect(handlerRan).toBe(false);
+  });
+
+  it('schema-less actions behave exactly as before', async () => {
+    const { handlers } = plugin.host({
+      takePhoto: async () => ({ uri: 'x' }),
+      plain: async (payload) => {
+        expect(payload).toEqual({ id: 'raw' }); // untouched
+        return undefined;
+      },
+    });
+    await handlers['camera.plain']({ id: 'raw' }, { messageId: 'm2', timestamp: 2 });
   });
 });
