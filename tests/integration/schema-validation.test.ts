@@ -1,5 +1,6 @@
 import type { BridgeError } from '@webview-ts/shared';
 import { action, definePlugin, event } from '@webview-ts/shared';
+import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -90,6 +91,39 @@ describe('schema validation — event boundary', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(received).toEqual([]); // not delivered
     expect(errors[0]?.code).toBe('VALIDATION_ERROR');
+    destroy();
+  });
+});
+
+const valibotContract = definePlugin('vb', {
+  greet: action({
+    payload: v.object({ name: v.optional(v.string(), 'anon') }),
+    response: v.object({ message: v.string() }),
+  }),
+});
+
+describe('schema validation — Standard Schema neutrality (valibot)', () => {
+  it('round-trips with valibot schemas: default applied, response validated', async () => {
+    const { bridge, registerHostHandler, destroy } = createLoopbackPair();
+    bridge.applyPlugins([valibotContract]);
+    const hostHandlers = valibotContract.host({
+      greet: async ({ name }) => ({ message: `hi ${name}` }),
+    });
+    registerHostHandler('vb.greet', hostHandlers.handlers['vb.greet']);
+
+    await expect(bridge.call('vb.greet', {})).resolves.toEqual({ message: 'hi anon' });
+    destroy();
+  });
+
+  it('rejects invalid payloads identically to zod', async () => {
+    const { bridge, registerHostHandler, destroy } = createLoopbackPair();
+    bridge.applyPlugins([valibotContract]);
+    const hostHandlers = valibotContract.host({ greet: async () => ({ message: 'x' }) });
+    registerHostHandler('vb.greet', hostHandlers.handlers['vb.greet']);
+
+    await expect(bridge.call('vb.greet', { name: 42 } as never)).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+    });
     destroy();
   });
 });
