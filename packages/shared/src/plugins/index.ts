@@ -32,3 +32,5 @@ export type {
   TypedEventSubscriber,
 } from './types';
 export { action, event } from './types';
+export type { ValidationIssue, ValidationSide } from './validate';
+export { validateWithSchema } from './validate';

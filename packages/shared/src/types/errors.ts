@@ -8,6 +8,7 @@ export type BridgeErrorCode =
   | 'MIDDLEWARE_ERROR'
   | 'FALLBACK_ERROR'
   | 'NO_FALLBACK'
+  | 'VALIDATION_ERROR'
   | 'UNKNOWN_ERROR';
 
 export class BridgeCallError extends Error {
@@ -32,6 +33,7 @@ const VALID_ERROR_CODES: Set<string> = new Set([
   'MIDDLEWARE_ERROR',
   'FALLBACK_ERROR',
   'NO_FALLBACK',
+  'VALIDATION_ERROR',
   'UNKNOWN_ERROR',
 ]);
 
