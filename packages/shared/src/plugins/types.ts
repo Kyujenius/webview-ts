@@ -96,8 +96,6 @@ export function action(options?: ActionOptions & SchemaFields): ActionMarker<any
     __timeout: options?.timeout,
     __retry: options?.retry,
     __cache: options?.cache,
-    __payloadSchema: options?.payload,
-    __responseSchema: options?.response,
     interceptors: {
       request: {
         use(interceptor: RequestInterceptor) {
@@ -113,6 +111,12 @@ export function action(options?: ActionOptions & SchemaFields): ActionMarker<any
       },
     },
   };
+  if (options?.payload) {
+    marker.__payloadSchema = options.payload;
+  }
+  if (options?.response) {
+    marker.__responseSchema = options.response;
+  }
   return marker as ActionMarker<any, any, any, any>;
 }
 
@@ -133,7 +137,7 @@ export function event<S extends StandardSchemaV1>(
 ): EventMarker<StandardSchemaV1.InferOutput<S>, StandardSchemaV1.InferInput<S>>;
 export function event<TPayload = void>(): EventMarker<TPayload>;
 export function event(schema?: StandardSchemaV1): EventMarker<any, any> {
-  return { __schema: schema } as EventMarker<any, any>;
+  return (schema ? { __schema: schema } : {}) as EventMarker<any, any>;
 }
 
 /** A record of short-name event markers */

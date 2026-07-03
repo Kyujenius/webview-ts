@@ -31,6 +31,7 @@ expectTypeOf<ExtractPayloadIn<typeof withSchema>>().toEqualTypeOf<{ quality?: nu
 // Host handler always sees quality (output type)
 expectTypeOf<ExtractPayload<typeof withSchema>>().toEqualTypeOf<{ quality: number }>();
 expectTypeOf<ExtractResponse<typeof withSchema>>().toEqualTypeOf<{ uri: string }>();
+expectTypeOf<ExtractResponseIn<typeof withSchema>>().toEqualTypeOf<{ uri: string }>();
 
 // ─── Partial schema: payload only ───
 const payloadOnly = action({ payload: payloadSchema });

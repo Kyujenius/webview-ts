@@ -26,6 +26,12 @@ describe('action()', () => {
     expect(m.__cache).toBeUndefined();
   });
 
+  it('phantom-mode marker has no schema keys', () => {
+    const m = action();
+    expect(Object.hasOwn(m, '__payloadSchema')).toBe(false);
+    expect(Object.hasOwn(m, '__responseSchema')).toBe(false);
+  });
+
   it('stores timeout option', () => {
     const m = action({ timeout: 3000 });
     expect(m.__timeout).toBe(3000);
@@ -76,6 +82,11 @@ describe('event()', () => {
   it('creates a basic event marker', () => {
     const e = event();
     expect(e).toBeDefined();
+  });
+
+  it('phantom-mode event has no schema key', () => {
+    const e = event();
+    expect(Object.keys(e)).toEqual([]);
   });
 });
 
