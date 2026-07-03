@@ -383,13 +383,6 @@ export class BridgeClient<
   }
 
   /**
-   * Get bridge configuration
-   */
-  getConfig(): BridgeConfig {
-    return { ...this.config };
-  }
-
-  /**
    * Register per-action timeouts (from plugin definitions)
    */
   private registerTimeouts(timeoutMap: Record<string, number>): void {
@@ -602,22 +595,5 @@ export class BridgeClient<
   destroy(): void {
     this.disconnect();
     this.callbacks.clear();
-  }
-
-  /**
-   * Full disposal — clears everything including configuration.
-   * Call only on true unmount.
-   */
-  dispose(): void {
-    this.destroy();
-    this.interceptors.request.clear();
-    this.interceptors.response.clear();
-    this.actionRequestInterceptors.clear();
-    this.actionResponseInterceptors.clear();
-    this.eventHandlers.clear();
-    this.eventInterceptors.clear();
-    this.actionTimeouts.clear();
-    this.actionRetries.clear();
-    this.actionCaches.clear();
   }
 }

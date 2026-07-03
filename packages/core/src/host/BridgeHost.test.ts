@@ -43,29 +43,18 @@ describe('BridgeHost', () => {
   describe('action registration', () => {
     it('should throw when registering duplicate action', () => {
       const handler = vi.fn();
-      bridgeHost.registerAction('testAction', handler);
+      bridgeHost.registerHandler('testAction', handler);
 
       expect(() => {
-        bridgeHost.registerAction('testAction', handler);
+        bridgeHost.registerHandler('testAction', handler);
       }).toThrow("Action 'testAction' is already registered");
-    });
-
-    it('should unregister action handler', () => {
-      const handler = vi.fn();
-      bridgeHost.registerAction('testAction', handler);
-      bridgeHost.unregisterAction('testAction');
-
-      // Should be able to register again after unregistering
-      expect(() => {
-        bridgeHost.registerAction('testAction', handler);
-      }).not.toThrow();
     });
   });
 
   describe('message handling', () => {
     it('should handle valid message and send response', async () => {
       const handler = vi.fn().mockResolvedValue({ result: 'success' });
-      bridgeHost.registerAction('testAction', handler);
+      bridgeHost.registerHandler('testAction', handler);
 
       const message: BridgeMessage = {
         id: 'msg-1',
@@ -104,7 +93,7 @@ describe('BridgeHost', () => {
 
     it('should send error response when handler throws', async () => {
       const handler = vi.fn().mockRejectedValue(new Error('Handler error'));
-      bridgeHost.registerAction('testAction', handler);
+      bridgeHost.registerHandler('testAction', handler);
 
       const message: BridgeMessage = {
         id: 'msg-1',
@@ -139,28 +128,14 @@ describe('BridgeHost', () => {
   describe('destroy', () => {
     it('should detach adapter but preserve handlers', () => {
       const handler = vi.fn();
-      bridgeHost.registerAction('testAction', handler);
+      bridgeHost.registerHandler('testAction', handler);
 
       bridgeHost.destroy();
 
       // Handlers preserved — re-registering same action should throw
       expect(() => {
-        bridgeHost.registerAction('testAction', handler);
+        bridgeHost.registerHandler('testAction', handler);
       }).toThrow("Action 'testAction' is already registered");
-    });
-  });
-
-  describe('dispose', () => {
-    it('should clean up everything including handlers', () => {
-      const handler = vi.fn();
-      bridgeHost.registerAction('testAction', handler);
-
-      bridgeHost.dispose();
-
-      // After dispose, should be able to register same action again
-      expect(() => {
-        bridgeHost.registerAction('testAction', handler);
-      }).not.toThrow();
     });
   });
 
@@ -210,21 +185,6 @@ describe('BridgeHost', () => {
       expect(sentB).toHaveLength(1);
       expect(JSON.parse(sentA[0]).event).toBe('auth.expired');
       expect(JSON.parse(sentB[0]).event).toBe('auth.expired');
-    });
-
-    it('broadcastEvent is a shortcut for sendEvent with broadcast target', () => {
-      const registry = new ConnectionRegistry();
-      const sentA: string[] = [];
-      const sentB: string[] = [];
-      registry.register('webview-a', (msg: string) => sentA.push(msg));
-      registry.register('webview-b', (msg: string) => sentB.push(msg));
-
-      const host = new BridgeHost({ registry });
-      host.attach(mockAdapter.adapter);
-      host.broadcastEvent('sync.update', { version: 2 });
-
-      expect(sentA).toHaveLength(1);
-      expect(sentB).toHaveLength(1);
     });
 
     it('sendEvent without target falls back to attached adapter', () => {

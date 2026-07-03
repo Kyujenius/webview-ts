@@ -8,7 +8,6 @@
 
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
-import { Platform } from '@webview-ts/shared';
 
 interface ReactNativeWebViewInterface {
   postMessage(message: string): void;
@@ -44,10 +43,6 @@ export class ReactNativeWebViewAdapter implements ClientAdapter {
 
   isAvailable(): boolean {
     return this.bridge !== undefined;
-  }
-
-  getPlatform(): Platform {
-    return Platform.REACT_NATIVE;
   }
 
   get connectionMode(): ConnectionMode {

@@ -35,11 +35,6 @@ export class InterceptorManager<T> {
     return result;
   }
 
-  /** Get a copy of all registered interceptors */
-  getAll(): NamedInterceptor<T>[] {
-    return [...this.interceptors];
-  }
-
   /** Remove all interceptors */
   clear(): void {
     this.interceptors = [];

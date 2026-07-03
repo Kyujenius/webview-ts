@@ -6,7 +6,7 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
   let bridge: BridgeClient;
 
   afterEach(() => {
-    bridge?.dispose();
+    bridge?.destroy();
   });
 
   it('connect() adds a message listener', () => {
@@ -70,9 +70,16 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     removeSpy.mockRestore();
   });
 
-  it('configuration survives connect/disconnect cycles', () => {
+  it('configuration survives connect/disconnect cycles', async () => {
     bridge = new BridgeClient({ fallback: true });
-    bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
+    const seen = vi.fn();
+    bridge.interceptors.request.use({
+      name: 'test',
+      fn: (req) => {
+        seen();
+        return req;
+      },
+    });
     bridge['actionRequestInterceptors'].set('test.action', [
       { name: 'test', fn: async (req) => req },
     ]);
@@ -84,7 +91,8 @@ describe('BridgeClient - connect/disconnect lifecycle (Strict Mode)', () => {
     bridge.destroy();
     bridge.connect();
 
-    expect(bridge.interceptors.request.getAll()).toHaveLength(1);
+    await bridge.interceptors.request.execute({} as never);
+    expect(seen).toHaveBeenCalledOnce();
     expect(bridge['actionRequestInterceptors'].size).toBe(1);
     expect(bridge['actionTimeouts'].size).toBe(1);
     expect(bridge['eventHandlers'].size).toBe(1);

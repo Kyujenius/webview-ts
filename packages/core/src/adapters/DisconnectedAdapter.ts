@@ -4,7 +4,6 @@
  */
 
 import type { BridgeMessage, ClientAdapter, ConnectionMode } from '@webview-ts/shared';
-import { Platform } from '@webview-ts/shared';
 
 export class DisconnectedAdapter implements ClientAdapter {
   send(_message: BridgeMessage): void {
@@ -13,10 +12,6 @@ export class DisconnectedAdapter implements ClientAdapter {
 
   isAvailable(): boolean {
     return false;
-  }
-
-  getPlatform(): Platform {
-    return Platform.WEB;
   }
 
   get connectionMode(): ConnectionMode {

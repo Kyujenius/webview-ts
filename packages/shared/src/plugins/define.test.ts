@@ -75,12 +75,7 @@ describe('action()', () => {
 describe('event()', () => {
   it('creates a basic event marker', () => {
     const e = event();
-    expect(e.__routing).toBeUndefined();
-  });
-
-  it('stores routing option', () => {
-    const e = event({ routing: 'broadcast' });
-    expect(e.__routing).toBe('broadcast');
+    expect(e).toBeDefined();
   });
 });
 
@@ -143,7 +138,7 @@ describe('definePlugin() with events', () => {
   const plugin = definePlugin(
     'location',
     { getPosition: action() },
-    { events: { updated: event(), failed: event({ routing: 'targeted' }) } }
+    { events: { updated: event(), failed: event() } }
   );
 
   it('builds event name map', () => {

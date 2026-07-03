@@ -58,19 +58,10 @@ describe('InterceptorManager', () => {
     expect(order).toEqual([]);
   });
 
-  it('getAll returns a copy of the interceptor array', () => {
+  it('clear removes all interceptors', async () => {
     const manager = new InterceptorManager<string>();
-    manager.use({ name: 'a', fn: (v) => v });
-    const all = manager.getAll();
-    expect(all).toHaveLength(1);
-    all.push({ name: 'b', fn: (v) => v });
-    expect(manager.getAll()).toHaveLength(1);
-  });
-
-  it('clear removes all interceptors', () => {
-    const manager = new InterceptorManager<string>();
-    manager.use({ name: 'a', fn: (v) => v });
+    manager.use({ name: 'upper', fn: (v) => v.toUpperCase() });
     manager.clear();
-    expect(manager.getAll()).toHaveLength(0);
+    await expect(manager.execute('start')).resolves.toBe('start');
   });
 });

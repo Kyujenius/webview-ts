@@ -40,30 +40,3 @@ export function toBridgeErrorCode(code: unknown): BridgeErrorCode {
     ? (code as BridgeErrorCode)
     : 'UNKNOWN_ERROR';
 }
-
-export type ErrorCategory = 'transient' | 'client' | 'server' | 'auth';
-
-const ERROR_CATEGORY: Record<BridgeErrorCode, ErrorCategory> = {
-  TIMEOUT: 'transient',
-  NETWORK_ERROR: 'transient',
-  HANDLER_NOT_FOUND: 'server',
-  HANDLER_ERROR: 'server',
-  MIDDLEWARE_ERROR: 'server',
-  PERMISSION_DENIED: 'auth',
-  NATIVE_UNAVAILABLE: 'client',
-  FALLBACK_ERROR: 'client',
-  NO_FALLBACK: 'client',
-  UNKNOWN_ERROR: 'server',
-};
-
-export function getErrorCategory(error: BridgeCallError): ErrorCategory {
-  return ERROR_CATEGORY[error.code];
-}
-
-export function isRetryable(error: BridgeCallError): boolean {
-  return getErrorCategory(error) === 'transient';
-}
-
-export function isAuthError(error: BridgeCallError): boolean {
-  return getErrorCategory(error) === 'auth';
-}

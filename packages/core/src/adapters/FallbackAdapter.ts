@@ -5,7 +5,6 @@ import type {
   FallbackMap,
 } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
-import { Platform } from '@webview-ts/shared';
 
 export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;
@@ -78,10 +77,6 @@ export class FallbackAdapter implements ClientAdapter {
 
   isAvailable(): boolean {
     return true;
-  }
-
-  getPlatform(): Platform {
-    return Platform.WEB;
   }
 
   get connectionMode(): ConnectionMode {

@@ -6,17 +6,25 @@ describe('BridgeClient - Cleanup', () => {
   let bridge: BridgeClient;
 
   afterEach(() => {
-    bridge?.dispose();
+    bridge?.destroy();
   });
 
   describe('destroy()', () => {
-    it('should preserve request interceptors after destroy', () => {
+    it('should preserve request interceptors after destroy', async () => {
       bridge = new BridgeClient({ fallback: true });
-      bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
+      const seen = vi.fn();
+      bridge.interceptors.request.use({
+        name: 'test',
+        fn: (req) => {
+          seen();
+          return req;
+        },
+      });
       bridge.destroy();
 
-      expect(bridge.interceptors.request.getAll()).toHaveLength(1);
-      expect(bridge.interceptors.request.getAll()[0].name).toBe('test');
+      // Interceptor registered before destroy still runs — configuration preserved
+      await bridge.interceptors.request.execute({} as never);
+      expect(seen).toHaveBeenCalledOnce();
     });
 
     it('should preserve event handlers after destroy', () => {
@@ -56,42 +64,6 @@ describe('BridgeClient - Cleanup', () => {
       bridge.destroy();
 
       expect(bridge['callbacks']['callbacks'].size).toBe(0);
-    });
-  });
-
-  describe('dispose()', () => {
-    it('should clear request interceptors after dispose', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge.interceptors.request.use({ name: 'test', fn: (req) => req });
-      bridge.dispose();
-
-      expect(bridge.interceptors.request.getAll()).toHaveLength(0);
-    });
-
-    it('should clear event handlers after dispose', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge.on('testEvent', vi.fn());
-      bridge.dispose();
-
-      expect(bridge['eventHandlers'].size).toBe(0);
-    });
-
-    it('should clear action request interceptors after dispose', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge['actionRequestInterceptors'].set('camera.takePhoto', [
-        { name: 'auth', fn: async (req) => req },
-      ]);
-      bridge.dispose();
-
-      expect(bridge['actionRequestInterceptors'].size).toBe(0);
-    });
-
-    it('should clear action timeouts after dispose', () => {
-      bridge = new BridgeClient({ fallback: true });
-      bridge['registerTimeouts']({ 'camera.getInfo': 5000 });
-      bridge.dispose();
-
-      expect(bridge['actionTimeouts'].size).toBe(0);
     });
   });
 

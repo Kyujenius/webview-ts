@@ -1,4 +1,4 @@
-import type { ConnectionMode, Platform } from './bridge';
+import type { ConnectionMode } from './bridge';
 import type { BridgeMessage } from './message';
 
 /**
@@ -11,9 +11,6 @@ export interface ClientAdapter {
 
   /** Check if adapter is available */
   isAvailable(): boolean;
-
-  /** Get platform identifier */
-  getPlatform(): Platform;
 
   /** Current connection mode */
   connectionMode: ConnectionMode;

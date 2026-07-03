@@ -1,6 +1,5 @@
-import type { BridgeCallOptions, FallbackMap, RetryConfig } from '../types/bridge';
+import type { FallbackMap, RetryConfig } from '../types/bridge';
 import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
-import type { RoutingStrategy } from '../types/routing';
 import type { StrictKeyOf } from '../types/utils';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -19,8 +18,6 @@ export interface ActionOptions {
    * - `true`: cache indefinitely
    */
   cache?: number | boolean;
-  /** Routing strategy for this action */
-  routing?: RoutingStrategy;
 }
 
 /** Branded type marker — carries Payload/Response at type level, empty at runtime */
@@ -35,8 +32,6 @@ export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __retry?: RetryConfig;
   /** Per-action cache TTL (runtime) */
   readonly __cache?: number | boolean;
-  /** Per-action routing strategy (runtime) */
-  readonly __routing?: RoutingStrategy;
   readonly interceptors: {
     readonly request: {
       use(interceptor: RequestInterceptor): ActionMarker<TPayload, TResponse>;
@@ -59,7 +54,6 @@ export function action<TPayload = void, TResponse = void>(
     __timeout: options?.timeout,
     __retry: options?.retry,
     __cache: options?.cache,
-    __routing: options?.routing,
     interceptors: {
       request: {
         use(interceptor: RequestInterceptor) {
@@ -83,21 +77,14 @@ export type ActionMarkerMap = Record<string, ActionMarker<any, any>>;
 
 // ─── event() type marker ───
 
-/** Options for event() marker */
-export interface EventOptions {
-  /** Routing strategy for this event */
-  routing?: RoutingStrategy;
-}
-
 /** Branded type marker — carries event payload type at type level */
 export interface EventMarker<TPayload = void> {
   readonly __eventPayload: TPayload;
-  readonly __routing?: RoutingStrategy;
 }
 
 /** Zero-runtime type marker for defining plugin events */
-export function event<TPayload = void>(options?: EventOptions): EventMarker<TPayload> {
-  return { __routing: options?.routing } as EventMarker<TPayload>;
+export function event<TPayload = void>(): EventMarker<TPayload> {
+  return {} as EventMarker<TPayload>;
 }
 
 /** A record of short-name event markers */
@@ -128,21 +115,6 @@ export type ActionNameMap<TName extends string, TMarkers extends ActionMarkerMap
 /** Runtime event name map: { updated: 'location.updated' } */
 export type EventNameMap<TName extends string, TEvents extends EventMarkerMap> = {
   readonly [K in StrictKeyOf<TEvents>]: `${TName}.${K}`;
-};
-
-/** Auto-generated client methods from markers — returns action state objects */
-export type AutoMethods<TMarkers extends ActionMarkerMap> = {
-  [K in StrictKeyOf<TMarkers>]: {
-    execute: (
-      payload: ExtractPayload<TMarkers[K]>,
-      options?: BridgeCallOptions
-    ) => Promise<ExtractResponse<TMarkers[K]>>;
-    data: ExtractResponse<TMarkers[K]> | null;
-    error: Error | null;
-    isLoading: boolean;
-    status: ActionStatus;
-    reset: () => void;
-  };
 };
 
 /** Typed event subscriber from usePlugin().on */
@@ -257,12 +229,6 @@ export type MergePluginActions<T extends AnyPluginList> = T extends [
 ]
   ? First['_types'] & MergePluginActions<Rest>
   : Record<string, never>;
-
-/** Extract plugin from a plugins array by reference */
-export type PluginFromArray<
-  TPlugins extends AnyPluginList,
-  TPlugin extends AnyPlugin,
-> = TPlugin extends TPlugins[number] ? TPlugin : never;
 
 /** Expand short-name event markers to fully-qualified event map.
  *  e.g. Name='location', { updated: EventMarker<Position> }

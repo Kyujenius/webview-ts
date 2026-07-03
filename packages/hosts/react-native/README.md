@@ -1,20 +1,20 @@
-# @webview-ts/native
+# @webview-ts/react-native
 
-![npm](https://img.shields.io/npm/v/@webview-ts/native)
+![npm](https://img.shields.io/npm/v/@webview-ts/react-native)
 
 React Native host for `@webview-ts` -- receives messages from the WebView, executes handlers, and sends responses and events back.
 
 ## Installation
 
 ```bash
-npm install @webview-ts/native @webview-ts/shared react-native-webview
+npm install @webview-ts/react-native @webview-ts/shared react-native-webview
 ```
 
 ## Quick Start with Plugins
 
 ```typescript
 import { definePlugin, action } from '@webview-ts/shared';
-import { useBridgeHost } from '@webview-ts/native';
+import { useBridgeHost } from '@webview-ts/react-native';
 import { WebView } from 'react-native-webview';
 
 // Define plugin (shared with web side)
@@ -120,7 +120,7 @@ const { webViewProps } = useBridgeHost({
 Use `createSimpleBridgeHost` outside of React components:
 
 ```typescript
-import { createSimpleBridgeHost } from '@webview-ts/native';
+import { createSimpleBridgeHost } from '@webview-ts/react-native';
 
 const { bridgeHost, webViewProps, sendEvent } = createSimpleBridgeHost({
   plugins: [cameraHost],

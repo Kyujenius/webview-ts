@@ -98,13 +98,6 @@ export class CallbackRegistry {
   }
 
   /**
-   * Get number of pending callbacks
-   */
-  size(): number {
-    return this.callbacks.size;
-  }
-
-  /**
    * Clear all callbacks
    */
   clear(): void {
@@ -116,12 +109,5 @@ export class CallbackRegistry {
     }
 
     this.callbacks.clear();
-  }
-
-  /**
-   * Get all pending message IDs
-   */
-  getPendingIds(): string[] {
-    return Array.from(this.callbacks.keys());
   }
 }

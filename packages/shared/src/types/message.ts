@@ -106,20 +106,3 @@ export interface BridgeEvent<T = unknown> {
    */
   timestamp: number;
 }
-
-/**
- * Message types for distinguishing message kinds
- */
-export enum MessageType {
-  REQUEST = 'request',
-  RESPONSE = 'response',
-  EVENT = 'event',
-}
-
-/**
- * Wrapper for all bridge messages with type discrimination
- */
-export interface TypedBridgeMessage<T = unknown> {
-  type: MessageType;
-  data: BridgeMessage<T> | BridgeResponse<T> | BridgeEvent<T>;
-}

@@ -7,7 +7,7 @@ describe('ConnectionRegistry', () => {
     const registry = new ConnectionRegistry();
     registry.register('checkout-abc', vi.fn());
     registry.unregister('checkout-abc');
-    expect(registry.get('checkout-abc')).toBeUndefined();
+    expect(() => registry.sendTo('checkout-abc', 'msg')).toThrow();
   });
 
   it('routes to specific target', () => {

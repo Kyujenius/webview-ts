@@ -16,14 +16,6 @@ export class ConnectionRegistry {
     this.connections.delete(sourceId);
   }
 
-  get(sourceId: string): ConnectionEntry | undefined {
-    return this.connections.get(sourceId);
-  }
-
-  getAll(): ConnectionEntry[] {
-    return [...this.connections.values()];
-  }
-
   sendTo(targetId: string, message: string): void {
     const entry = this.connections.get(targetId);
     if (!entry) {

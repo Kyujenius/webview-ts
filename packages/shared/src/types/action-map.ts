@@ -18,5 +18,3 @@ export type InferResponse<
 > = TMap[TAction]['response'];
 
 export type ActionNames<TMap extends ActionMapBase> = StrictKeyOf<TMap>;
-
-export type ActionMap<T extends ActionMapBase> = T;
