@@ -3,6 +3,7 @@ export interface AddEventPayload {
   startDate: string;
   endDate: string;
   notes?: string;
+  source?: string;
 }
 
 export interface AddEventResponse {

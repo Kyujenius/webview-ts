@@ -1,20 +1,15 @@
-export interface SetItemPayload {
-  key: string;
-  value: string;
-}
+import type { z } from 'zod';
 
-export interface GetItemPayload {
-  key: string;
-}
+import type {
+  getAllKeysResponse,
+  getItemPayload,
+  getItemResponse,
+  removeItemPayload,
+  setItemPayload,
+} from './plugin';
 
-export interface GetItemResponse {
-  value: string | null;
-}
-
-export interface RemoveItemPayload {
-  key: string;
-}
-
-export interface GetAllKeysResponse {
-  keys: string[];
-}
+export type SetItemPayload = z.input<typeof setItemPayload>;
+export type GetItemPayload = z.input<typeof getItemPayload>;
+export type GetItemResponse = z.output<typeof getItemResponse>;
+export type RemoveItemPayload = z.input<typeof removeItemPayload>;
+export type GetAllKeysResponse = z.output<typeof getAllKeysResponse>;

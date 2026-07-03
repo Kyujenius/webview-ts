@@ -5,7 +5,7 @@ import type { AppStateStatus, DeviceInfoResponse } from './types';
 export const device = definePlugin(
   'device',
   {
-    getInfo: action<void, DeviceInfoResponse>(),
+    getInfo: action<void, DeviceInfoResponse>({ cache: true }),
   },
   {
     events: {

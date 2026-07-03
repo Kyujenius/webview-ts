@@ -1,21 +1,22 @@
 import { action, definePlugin } from '@webview-ts/shared';
-
-import type {
-  GetAllKeysResponse,
-  GetItemPayload,
-  GetItemResponse,
-  RemoveItemPayload,
-  SetItemPayload,
-} from './types';
+import { z } from 'zod';
 
 const memoryStore = new Map<string, string>();
 
+export const setItemPayload = z.object({ key: z.string(), value: z.string() });
+export const setItemResponse = z.object({});
+export const getItemPayload = z.object({ key: z.string() });
+export const getItemResponse = z.object({ value: z.string().nullable() });
+export const removeItemPayload = z.object({ key: z.string() });
+export const removeItemResponse = z.object({});
+export const getAllKeysResponse = z.object({ keys: z.array(z.string()) });
+
 export const storage = definePlugin('storage', {
-  setItem: action<SetItemPayload, Record<string, never>>(),
-  getItem: action<GetItemPayload, GetItemResponse>(),
-  removeItem: action<RemoveItemPayload, Record<string, never>>(),
+  setItem: action({ payload: setItemPayload, response: setItemResponse }),
+  getItem: action({ payload: getItemPayload, response: getItemResponse }),
+  removeItem: action({ payload: removeItemPayload, response: removeItemResponse }),
   clear: action<void, Record<string, never>>(),
-  getAllKeys: action<void, GetAllKeysResponse>(),
+  getAllKeys: action({ response: getAllKeysResponse }),
 }).withFallback({
   setItem: async (payload) => {
     memoryStore.set(payload.key, payload.value);

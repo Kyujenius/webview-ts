@@ -11,7 +11,13 @@ import type {
 const events: CalendarEvent[] = [];
 
 export const calendar = definePlugin('calendar', {
-  addEvent: action<AddEventPayload, AddEventResponse>(),
+  addEvent: action<AddEventPayload, AddEventResponse>().interceptors.request.use({
+    name: 'stamp-source',
+    fn: (req) => ({
+      ...req,
+      payload: { ...(req.payload as AddEventPayload), source: 'webview-ts-example' },
+    }),
+  }),
   getEvents: action<GetEventsPayload, GetEventsResponse>(),
 }).withFallback({
   addEvent: async (payload) => {

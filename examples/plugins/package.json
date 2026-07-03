@@ -5,8 +5,14 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "schema:export": "webview-ts schema export ./src/index.ts -o ./schemas"
+  },
   "dependencies": {
     "@webview-ts/shared": "workspace:*",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@webview-ts/cli": "workspace:*"
   }
 }

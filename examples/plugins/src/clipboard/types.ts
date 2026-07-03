@@ -1,7 +1,6 @@
-export interface SetClipboardPayload {
-  text: string;
-}
+import type { z } from 'zod';
 
-export interface GetClipboardResponse {
-  text: string | null;
-}
+import type { getClipboardResponse, setClipboardPayload } from './plugin';
+
+export type SetClipboardPayload = z.input<typeof setClipboardPayload>;
+export type GetClipboardResponse = z.output<typeof getClipboardResponse>;

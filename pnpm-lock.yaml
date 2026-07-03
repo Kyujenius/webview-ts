@@ -161,6 +161,10 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@webview-ts/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
 
   examples/react:
     dependencies:
