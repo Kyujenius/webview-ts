@@ -1,0 +1,7 @@
+# @webview-ts/devtools
+
+## 1.0.0
+
+### Major Changes
+
+- 54bbaf8: v1.0.0 — contract-first typed bridge with optional Standard Schema validation at receiving boundaries, JSON Schema contract export CLI, interceptors, lifecycle events, fallback mode, and DevTools.
