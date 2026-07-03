@@ -24,6 +24,7 @@ import type {
   RequestInterceptor,
   ResponseInterceptor,
   RetryConfig,
+  StandardSchemaV1,
   UseActionOptions,
 } from '@webview-ts/shared';
 import {
@@ -35,6 +36,7 @@ import {
   isBridgeResponse,
   TARGET,
   tryAutoDevTools,
+  validateWithSchema,
 } from '@webview-ts/shared';
 
 import { createClientAdapter } from '../adapters/createClientAdapter';
@@ -92,6 +94,10 @@ export class BridgeClient<
   private actionRetries = new Map<string, RetryConfig>();
   /** Per-action caches from plugins */
   private actionCaches = new Map<string, number | boolean>();
+  /** Per-action response schemas from plugins */
+  private actionResponseSchemas = new Map<string, StandardSchemaV1>();
+  /** Per-event payload schemas from plugins */
+  private eventSchemas = new Map<string, StandardSchemaV1>();
   private readonly sourceId: string;
   /** Message event listener reference for cleanup */
   private messageListener?: (event: MessageEvent) => void;
@@ -270,6 +276,18 @@ export class BridgeClient<
         );
       }
 
+      // Validate inbound response against the contract (schema output replaces data)
+      const responseSchema = this.actionResponseSchemas.get(action as string);
+      if (responseSchema) {
+        const data = validateWithSchema(
+          responseSchema,
+          response.data,
+          'client-response',
+          action as string
+        );
+        response = { ...response, data };
+      }
+
       // Run per-action response interceptors
       const actionResInterceptors = this.actionResponseInterceptors.get(action as string);
       if (actionResInterceptors) {
@@ -423,6 +441,18 @@ export class BridgeClient<
         }
         if (plugin.caches && Object.keys(plugin.caches).length > 0) {
           this.registerCaches(plugin.caches);
+        }
+        if (plugin.actionSchemas && Object.keys(plugin.actionSchemas).length > 0) {
+          for (const [actionName, entry] of Object.entries(plugin.actionSchemas)) {
+            if (entry.response) {
+              this.actionResponseSchemas.set(actionName, entry.response);
+            }
+          }
+        }
+        if (plugin.eventSchemas && Object.keys(plugin.eventSchemas).length > 0) {
+          for (const [eventName, schema] of Object.entries(plugin.eventSchemas)) {
+            this.eventSchemas.set(eventName, schema);
+          }
         }
       }
     }

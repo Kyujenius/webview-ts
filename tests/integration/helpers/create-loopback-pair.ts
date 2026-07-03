@@ -5,6 +5,7 @@ import type {
   RequestInterceptor,
   ResponseInterceptor,
 } from '@webview-ts/shared';
+import { BridgeCallError } from '@webview-ts/shared';
 
 export interface LoopbackPairOptions {
   clientInterceptors?: {
@@ -78,7 +79,11 @@ export function createLoopbackPair(options: LoopbackPairOptions = {}) {
       };
       const response = await host.handleMessage(message);
       if (!response.success) {
-        throw new Error(response.error.message);
+        throw new BridgeCallError(
+          response.error.message,
+          response.error.code,
+          response.error.details
+        );
       }
       return response.data;
     };

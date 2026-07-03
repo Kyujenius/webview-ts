@@ -5,6 +5,7 @@ import type {
   FallbackMap,
 } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
+import { BridgeCallError } from '@webview-ts/shared';
 
 export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;
@@ -47,12 +48,18 @@ export class FallbackAdapter implements ClientAdapter {
         });
       })
       .catch((error) => {
+        const code = error instanceof BridgeCallError ? error.code : 'FALLBACK_ERROR';
+        const details =
+          error instanceof BridgeCallError
+            ? (error.details as Record<string, unknown> | undefined)
+            : undefined;
         this.responseCallback({
           id,
           success: false,
           error: {
-            code: 'FALLBACK_ERROR',
+            code,
             message: error instanceof Error ? error.message : String(error),
+            ...(details !== undefined && { details }),
           },
           timestamp: Date.now(),
           sourceId: 'fallback',
