@@ -10,11 +10,13 @@
 
 ## Why?
 
-`postMessage` is the only way WebView and Native talk. But it's just strings &mdash; no types, no request-response matching, no structure.
+`postMessage` is the only way WebView and Native talk. But it's just strings — no types, no request-response matching, no runtime guarantees.
 
-**webview-ts** turns `postMessage` into typed function calls. Define a plugin once, both sides share the types. The compiler enforces the contract, not documentation.
+**webview-ts** turns `postMessage` into typed, validated function calls. Define a plugin once in a neutral contract file — both sides compile against it, and (optionally) validate against it at runtime.
 
-> *Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference.*
+Built for teams where **web and native live in separate repos**: the native shell team and the web teams share only the contract package. Web development starts before any native code exists (fallback mocks), the compiler enforces the contract across repo boundaries, and schema validation catches version skew — the day your web app ships with a contract the installed native app doesn't have yet.
+
+> *Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference — plus runtime contract validation neither of them has for WebViews.*
 
 ## How is this different?
 
@@ -25,6 +27,8 @@
 | Browser-only dev | ✅ per-plugin fallback mocks | ❌ | Partial | ❌ | ✅ (web impl) |
 | Per-action timeout/retry/cache | ✅ declared in the contract | ❌ | ❌ | ❌ | ❌ |
 | RN WebView transport | ✅ | manual | ✅ | ❌ (workers/iframes) | N/A (owns the shell) |
+| Runtime validation at the boundary | ✅ optional per-action schemas | ❌ | ❌ | ❌ | ❌ |
+| Contract export (JSON Schema) | ✅ `webview-ts schema export` | — | ❌ | ❌ | ❌ |
 | Scope | Typed transport layer | — | Transport + shared state | Worker RPC | Full app runtime |
 
 The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports `typeof appBridge`), so native code must exist before web types do. In webview-ts the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists. If your team co-locates everything in one repo and wants shared state out of the box, webview-bridge is a great choice; webview-ts optimizes for contract-first workflows.
@@ -41,6 +45,7 @@ One `definePlugin` call is the single source of truth. Payload and response type
 
 ## Batteries Included (all optional)
 
+- **Schema Validation** — Standard Schema (zod/valibot/arktype) at both receiving boundaries, with `.default()`/`.transform()` support.
 - **Axios-style Interceptors** &mdash; Transform requests and responses, globally or per-action.
 - **Lifecycle Events** &mdash; `onCall('call:start' | 'call:end' | 'call:error')` for logging, timing, and tracing.
 - **Fallback Mode** &mdash; Develop in the browser without a native app. Plugins ship their own mock handlers.
@@ -206,6 +211,7 @@ function WebViewScreen() {
 | `@webview-ts/vue` | Vue composables &mdash; `createBridgeVue()`, `usePlugin`, `useAction`, `useEvent` |
 | `@webview-ts/react-native` | React Native host &mdash; `useBridgeHost()`, `ReactNativeHostAdapter` |
 | `@webview-ts/devtools` | Real-time message inspector dashboard |
+| `@webview-ts/cli` | Contract-to-JSON-Schema export CLI |
 
 ## Platform Support
 
@@ -215,10 +221,41 @@ function WebViewScreen() {
 | Web (client) | Vue 3 | `@webview-ts/vue` | ✅ Supported |
 | Web (client) | Browser without native (fallback mode) | `@webview-ts/core` | ✅ Supported |
 | Native (host) | React Native WebView | `@webview-ts/react-native` | ✅ Supported |
-| Native (host) | iOS WKWebView | &mdash; | 🚧 Planned |
-| Native (host) | Android WebView | &mdash; | 🚧 Planned |
+| Native (host) | iOS / Android (native SDKs) | — | Contract spec available — SDK contributions welcome |
+
+There is no official iOS/Android SDK today, and none is promised. What exists is the **extension seam**: `webview-ts schema export` turns your contract into versioned JSON Schema files (`{ "webviewTs": { "specVersion": 1 } }`), so a Swift/Kotlin SDK can generate typed handlers from the same source of truth. If you want to build one, open an issue — the spec is stable.
 
 New platforms only need to implement the `ClientAdapter` (web side) or `HostAdapter` (native side) interface from `@webview-ts/shared` &mdash; core stays untouched.
+
+## Schema Validation (optional)
+
+Pass any [Standard Schema](https://standardschema.dev) library (zod, valibot, arktype) to `action()` / `event()`. Types are inferred from the schema — no generics needed — and payloads are validated at the **receiving boundary**:
+
+```typescript
+import { action, definePlugin, event } from '@webview-ts/shared';
+import { z } from 'zod';
+
+export const camera = definePlugin('camera', {
+  takePhoto: action({
+    payload: z.object({ quality: z.number().min(0).max(1).default(0.8) }),
+    response: z.object({ uri: z.string(), width: z.number(), height: z.number() }),
+  }),
+});
+```
+
+- **Host validates inbound payloads** before your handler runs — malformed calls never reach native code.
+- **Client validates inbound responses and events** — catches version skew when the installed native app predates your contract.
+- **Schema output replaces the value**: `.default()`, `.transform()`, and `z.coerce` work across the bridge. Senders use the schema's input type; receivers get the output type.
+- Failures surface as `BridgeCallError` with `code: 'VALIDATION_ERROR'` and structured `details.issues` (message + path, never the raw value).
+- No schema? Nothing changes — phantom-typed `action<P, R>()` works exactly as before.
+
+## Contract Export
+
+```bash
+npx @webview-ts/cli schema export ./src/plugins/index.ts -o ./schemas
+```
+
+Exports each plugin to a versioned JSON Schema file — the machine-readable form of your contract, ready for codegen, docs, or cross-language validation. Export requires zod (v4); runtime validation works with any Standard Schema library.
 
 ## Interceptors
 
