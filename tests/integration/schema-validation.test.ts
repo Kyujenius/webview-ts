@@ -57,9 +57,12 @@ describe('schema validation — response boundary', () => {
     });
     registerHostHandler('camera.takePhoto', hostHandlers.handlers['camera.takePhoto']);
 
-    await expect(bridge.call('camera.takePhoto', { quality: 9 } as never)).rejects.toMatchObject({
+    const err = await bridge.call('camera.takePhoto', { quality: 9 } as never).catch((e) => e);
+    expect(err).toMatchObject({
       code: 'VALIDATION_ERROR',
+      details: { side: 'host-payload' },
     });
+    expect(Array.isArray(err.details?.issues) && err.details.issues.length > 0).toBe(true);
 
     destroy();
   });
@@ -91,6 +94,11 @@ describe('schema validation — event boundary', () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(received).toEqual([]); // not delivered
     expect(errors[0]?.code).toBe('VALIDATION_ERROR');
+    expect(errors[0]?.details).toMatchObject({ side: 'client-event' });
+    expect(
+      Array.isArray((errors[0]?.details as { issues?: unknown[] })?.issues) &&
+        (errors[0]?.details as { issues?: unknown[] }).issues!.length > 0
+    ).toBe(true);
     destroy();
   });
 });

@@ -182,7 +182,12 @@ export class BridgeHost {
                 error instanceof Error && 'code' in error ? error.code : 'HANDLER_ERROR'
               ),
         message: error instanceof Error ? error.message : String(error),
-        details: error instanceof Error ? { stack: error.stack } : undefined,
+        details:
+          error instanceof BridgeCallError
+            ? (error.details as Record<string, unknown> | undefined)
+            : error instanceof Error
+              ? { stack: error.stack }
+              : undefined,
       };
 
       this.config.onError(error instanceof Error ? error : new Error(String(error)), {

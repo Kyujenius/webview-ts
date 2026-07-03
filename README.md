@@ -246,7 +246,7 @@ export const camera = definePlugin('camera', {
 - **Host validates inbound payloads** before your handler runs — malformed calls never reach native code.
 - **Client validates inbound responses and events** — catches version skew when the installed native app predates your contract.
 - **Schema output replaces the value**: `.default()`, `.transform()`, and `z.coerce` work across the bridge. Senders use the schema's input type; receivers get the output type.
-- Failures surface as `BridgeCallError` with `code: 'VALIDATION_ERROR'` and structured `details.issues` (message + path, never the raw value).
+- Failures surface as `BridgeCallError` with `code: 'VALIDATION_ERROR'` and structured `details.issues` (message + path). webview-ts never attaches the raw payload to errors — though some schema libraries (e.g. valibot) may include received values in their own issue messages.
 - No schema? Nothing changes — phantom-typed `action<P, R>()` works exactly as before.
 
 ## Contract Export
