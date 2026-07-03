@@ -1,8 +1,15 @@
-import { action, definePlugin } from '@webview-ts/shared';
+import type { BridgeError } from '@webview-ts/shared';
+import { action, definePlugin, event } from '@webview-ts/shared';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createLoopbackPair } from './helpers/create-loopback-pair';
+
+const locationContract = definePlugin(
+  'location',
+  { noop: action<void, void>() },
+  { events: { updated: event(z.object({ lat: z.number(), lng: z.number() })) } }
+);
 
 const contract = definePlugin('camera', {
   takePhoto: action({
@@ -53,6 +60,36 @@ describe('schema validation — response boundary', () => {
       code: 'VALIDATION_ERROR',
     });
 
+    destroy();
+  });
+});
+
+describe('schema validation — event boundary', () => {
+  it('delivers valid events with schema output', async () => {
+    const { bridge, sendEvent, destroy } = createLoopbackPair();
+    bridge.applyPlugins([locationContract]);
+    const received: unknown[] = [];
+    bridge.on('location.updated', (payload) => received.push(payload));
+
+    sendEvent('location.updated', { lat: 37.5, lng: 127.0 });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(received).toEqual([{ lat: 37.5, lng: 127.0 }]);
+    destroy();
+  });
+
+  it('drops invalid events and reports through onError', async () => {
+    const errors: BridgeError[] = [];
+    const { bridge, sendEvent, destroy } = createLoopbackPair({
+      clientConfig: { onError: (error) => errors.push(error) },
+    });
+    bridge.applyPlugins([locationContract]);
+    const received: unknown[] = [];
+    bridge.on('location.updated', (payload) => received.push(payload));
+
+    sendEvent('location.updated', { lat: 'nope' });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(received).toEqual([]); // not delivered
+    expect(errors[0]?.code).toBe('VALIDATION_ERROR');
     destroy();
   });
 });

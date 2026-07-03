@@ -583,11 +583,35 @@ export class BridgeClient<
       }
     }
 
+    // Validate inbound event payload — invalid events are dropped, not delivered
+    let payload = event.payload;
+    const schema = this.eventSchemas.get(event.event);
+    if (schema) {
+      try {
+        payload = validateWithSchema(schema, payload, 'client-event', event.event);
+      } catch (error) {
+        const bridgeError: BridgeError = {
+          code: 'VALIDATION_ERROR',
+          message: error instanceof Error ? error.message : String(error),
+          details:
+            error instanceof BridgeCallError
+              ? (error.details as Record<string, unknown> | undefined)
+              : undefined,
+        };
+        this.config.onError?.(bridgeError, {
+          action: event.event,
+          attempt: 0,
+          timestamp: Date.now(),
+        });
+        return;
+      }
+    }
+
     const handlers = this.eventHandlers.get(event.event);
     if (handlers) {
       handlers.forEach((handler) => {
         try {
-          handler(event.payload);
+          handler(payload);
         } catch (error) {
           console.error(`[webview-ts] Error in event handler for '${event.event}':`, error);
         }

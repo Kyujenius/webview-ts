@@ -1,5 +1,6 @@
 import { BridgeClient, BridgeHost } from '@webview-ts/core';
 import type {
+  BridgeConfig,
   BridgeMessage,
   HostAdapter,
   RequestInterceptor,
@@ -13,7 +14,7 @@ export interface LoopbackPairOptions {
     response?: ResponseInterceptor[];
   };
   hostConfig?: { timeout?: number; debug?: boolean };
-  clientConfig?: { timeout?: number; debug?: boolean };
+  clientConfig?: Pick<BridgeConfig, 'timeout' | 'onError'>;
 }
 
 /**
