@@ -1,0 +1,55 @@
+{
+  "name": "@webview-ts/cli",
+  "version": "0.0.0",
+  "description": "Contract-to-JSON-Schema export CLI for webview-ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kyujenius/webview-ts",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "webview",
+    "bridge",
+    "typescript",
+    "json-schema",
+    "codegen"
+  ],
+  "type": "module",
+  "bin": {
+    "webview-ts": "./dist/cli.js"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@webview-ts/shared": "workspace:*",
+    "jiti": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "valibot": "catalog:",
+    "vitest": "catalog:"
+  }
+}
