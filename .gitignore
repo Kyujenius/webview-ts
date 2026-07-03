@@ -48,5 +48,7 @@ lerna-debug.log*
 # AI
 .claude
 *.md
+!**/README.md
+!**/CHANGELOG.md
 .omc/
 .understand-anything/
