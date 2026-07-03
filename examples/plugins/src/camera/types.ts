@@ -1,26 +1,17 @@
-export interface TakePhotoPayload {
-  quality?: number;
-}
+import type { z } from 'zod';
 
-export interface TakePhotoResponse {
-  uri: string;
-  width: number;
-  height: number;
-}
+import type {
+  pickImagePayload,
+  pickImageResponse,
+  recordVideoPayload,
+  recordVideoResponse,
+  takePhotoPayload,
+  takePhotoResponse,
+} from './plugin';
 
-export interface PickImagePayload {
-  multiple?: boolean;
-}
-
-export interface PickImageResponse {
-  images: { uri: string }[];
-}
-
-export interface RecordVideoPayload {
-  maxDuration?: number;
-}
-
-export interface RecordVideoResponse {
-  uri: string;
-  duration: number;
-}
+export type TakePhotoPayload = z.input<typeof takePhotoPayload>;
+export type TakePhotoResponse = z.output<typeof takePhotoResponse>;
+export type PickImagePayload = z.input<typeof pickImagePayload>;
+export type PickImageResponse = z.output<typeof pickImageResponse>;
+export type RecordVideoPayload = z.input<typeof recordVideoPayload>;
+export type RecordVideoResponse = z.output<typeof recordVideoResponse>;

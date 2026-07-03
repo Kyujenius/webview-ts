@@ -6,6 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@webview-ts/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:*",
+    "zod": "catalog:"
   }
 }
