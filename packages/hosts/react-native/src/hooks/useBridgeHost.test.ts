@@ -14,16 +14,16 @@ vi.mock('react-native-webview', () => ({}));
 
 import { action, definePlugin } from '@webview-ts/shared';
 
-import { createSimpleBridgeHost } from './useBridgeHost';
+import { createBridgeHost } from './useBridgeHost';
 
 type TestActions = {
   'test.echo': { payload: { message: string }; response: { echoed: string } };
   'action.one': { payload: { key: string }; response: { result: string } };
 };
 
-describe('createSimpleBridgeHost', () => {
+describe('createBridgeHost', () => {
   it('should register handlers that process messages correctly', async () => {
-    const { bridgeHost } = createSimpleBridgeHost<TestActions>({
+    const { bridgeHost } = createBridgeHost<TestActions>({
       handlers: {
         'test.echo': async (_payload) => ({ echoed: _payload.message }),
         'action.one': async (_payload) => ({ result: 'ok' }),
@@ -51,9 +51,9 @@ const mockPlugin = definePlugin('mock', {
   echo: action<{ msg: string }, { echoed: string }>(),
 });
 
-describe('createSimpleBridgeHost with plugins', () => {
+describe('createBridgeHost with plugins', () => {
   it('should register plugin handlers', async () => {
-    const result = createSimpleBridgeHost({
+    const result = createBridgeHost({
       plugins: [
         mockPlugin.host({
           echo: async (payload) => ({ echoed: payload.msg }),
@@ -76,7 +76,7 @@ describe('createSimpleBridgeHost with plugins', () => {
   });
 
   it('should support plugins alongside handlers', async () => {
-    const result = createSimpleBridgeHost({
+    const result = createBridgeHost({
       plugins: [
         mockPlugin.host({
           echo: async (payload) => ({ echoed: payload.msg }),
@@ -110,7 +110,7 @@ describe('createSimpleBridgeHost with plugins', () => {
 
   it('should throw on duplicate action names', () => {
     expect(() =>
-      createSimpleBridgeHost({
+      createBridgeHost({
         plugins: [mockPlugin.host({ echo: async (p) => ({ echoed: p.msg }) })],
         handlers: {
           'mock.echo': async () => ({ echoed: 'duplicate' }),

@@ -18,7 +18,7 @@ export type TypedHandlers<TActions extends ActionMapBase> = {
 
 // ---- Pure function (non-React) ----
 
-export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = ActionMapBase> {
+export interface CreateBridgeHostOptions<TActions extends ActionMapBase = ActionMapBase> {
   /** Action handlers — fully typed when TActions is provided */
   handlers?: TypedHandlers<TActions>;
   /** Plugins that provide additional handlers */
@@ -31,7 +31,7 @@ export interface SimpleBridgeHostOptions<TActions extends ActionMapBase = Action
   name?: string;
 }
 
-export interface SimpleBridgeHostResult {
+export interface CreateBridgeHostResult {
   bridgeHost: BridgeHost;
   adapter: ReactNativeHostAdapter;
   /** Spread these onto your WebView component */
@@ -52,7 +52,7 @@ export interface SimpleBridgeHostResult {
  *   'camera.take': { payload: { quality: number }; response: { uri: string } };
  * };
  *
- * const { webViewProps } = createSimpleBridgeHost<MyActions>({
+ * const { webViewProps } = createBridgeHost<MyActions>({
  *   handlers: {
  *     'camera.take': async (payload) => {
  *       //            ^? { quality: number }
@@ -62,9 +62,9 @@ export interface SimpleBridgeHostResult {
  * });
  * ```
  */
-export function createSimpleBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
-  options: SimpleBridgeHostOptions<TActions>
-): SimpleBridgeHostResult {
+export function createBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
+  options: CreateBridgeHostOptions<TActions>
+): CreateBridgeHostResult {
   const { handlers, plugins, config } = options;
 
   const bridgeHost = new BridgeHost({ ...config });
@@ -160,11 +160,11 @@ export interface UseBridgeHostReturn {
  * ```
  */
 export function useBridgeHost<TActions extends ActionMapBase = ActionMapBase>(
-  options: SimpleBridgeHostOptions<TActions>
+  options: CreateBridgeHostOptions<TActions>
 ): UseBridgeHostReturn {
   const { registry, name } = options;
   const sourceId = useMemo(() => generateSourceId(name), [name]);
-  const result = useMemo(() => createSimpleBridgeHost(options), []);
+  const result = useMemo(() => createBridgeHost(options), []);
 
   // Register with ConnectionRegistry if provided (multi-webview routing)
   useEffect(() => {

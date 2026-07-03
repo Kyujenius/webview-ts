@@ -117,12 +117,12 @@ const { webViewProps } = useBridgeHost({
 
 ## Non-React Usage
 
-Use `createSimpleBridgeHost` outside of React components:
+Use `createBridgeHost` outside of React components:
 
 ```typescript
-import { createSimpleBridgeHost } from '@webview-ts/react-native';
+import { createBridgeHost } from '@webview-ts/react-native';
 
-const { bridgeHost, webViewProps, sendEvent } = createSimpleBridgeHost({
+const { bridgeHost, webViewProps, sendEvent } = createBridgeHost({
   plugins: [cameraHost],
   config: { debug: true, timeout: 10000 },
 });
@@ -151,7 +151,7 @@ React hook that creates and manages a bridge host. Handlers are captured on moun
 | `sendEvent` | `(event, payload) => void` | Push event to web side |
 | `bridgeHost` | `BridgeHost` | Direct access (advanced) |
 
-### `createSimpleBridgeHost<TActions>(options)`
+### `createBridgeHost<TActions>(options)`
 
 Pure function equivalent of `useBridgeHost`. Same options, same return shape plus `messageHandler`.
 
