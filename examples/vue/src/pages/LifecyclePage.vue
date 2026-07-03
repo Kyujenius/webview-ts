@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { camera, device, location } from '@example/plugins';
+import { camera, haptics, location } from '@example/plugins';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 import { useBridge, usePlugin } from '../bridge';
@@ -13,7 +13,7 @@ interface LogEntry {
 }
 
 const { bridge } = useBridge();
-const { getInfo } = usePlugin(device);
+const { impact } = usePlugin(haptics);
 const { takePhoto } = usePlugin(camera);
 const { getCurrentPosition } = usePlugin(location);
 const logs = ref<LogEntry[]>([]);
@@ -61,8 +61,8 @@ function statusLabel(status: LogEntry['status']): string {
   return 'running…';
 }
 
-function handleGetDeviceInfo() {
-  getInfo.execute().catch(() => {});
+function handleHapticsImpact() {
+  impact.execute({ style: 'medium' }).catch(() => {});
 }
 
 function handleTakePhoto() {
@@ -86,7 +86,7 @@ function handleGetLocation() {
     <div class="card">
       <h2>Trigger Actions</h2>
       <div style="display: flex; gap: 8px; flex-wrap: wrap">
-        <button class="button" @click="handleGetDeviceInfo">device.getInfo</button>
+        <button class="button" @click="handleHapticsImpact">haptics.impact</button>
         <button class="button secondary" @click="handleTakePhoto">camera.takePhoto</button>
         <button class="button secondary" @click="handleGetLocation">
           location.getCurrentPosition

@@ -4,23 +4,23 @@ This directory contains feature-complete example applications demonstrating all 
 
 ## Feature Coverage Map
 
-| Feature                         | React Web            | Vue Web              | React Native          | Plugins                    | Notes                                                      |
-| ------------------------------- | -------------------- | -------------------- | --------------------- | -------------------------- | ---------------------------------------------------------- |
-| **Contract & Types**            | ✅ All plugins       | ✅ All plugins       | ✅ Host handlers      | ✅ Defined                 | Single source of truth shared across frameworks            |
-| **Schema Validation**           | ✅ ValidationPage    | ✅ ValidationPage    | ✅ Host handlers      | ✅ Zod schemas             | Runtime validation on inbound payloads and responses       |
-| **VALIDATION_ERROR Handling**   | ✅ ValidationPage    | ✅ ValidationPage    | ✅ storage, clipboard | —                          | Structured error details with message + path               |
-| **Fallback Mode (Browser Dev)** | ✅ All actions       | ✅ All actions       | —                     | ✅ All plugins             | Develop without native app via `withFallback()`            |
-| **Global Interceptors**         | ✅ MiddlewarePage    | ✅ MiddlewarePage    | —                     | —                          | Request/response transform chains at bridge level          |
-| **Per-Action Interceptors**     | ✅ calendar.addEvent | ✅ calendar.addEvent | —                     | ✅ calendar plugin         | Modify or inspect individual action requests               |
-| **Lifecycle onCall (Client)**   | ✅ LifecyclePage     | ✅ LifecyclePage     | —                     | —                          | Subscribe to `call:start`, `call:end`, `call:error` events |
-| **Lifecycle onCall (Host)**     | —                    | —                    | ✅ App.tsx call log   | ✅ Host handlers           | Log/telemetry on handler execution (client+host sides)     |
-| **Per-Action Timeout**          | ✅ PhonePage         | ✅ PhonePage         | ✅ Host               | ✅ phone.call (5000ms)     | Configurable timeout per action in contract                |
-| **Per-Action Retry**            | ✅ PhonePage         | ✅ PhonePage         | ✅ Host               | ✅ phone.call (2 attempts) | Automatic retry with exponential backoff config            |
-| **Per-Action Cache**            | ✅ DevicePage        | ✅ DevicePage        | ✅ Host               | ✅ device.getInfo          | Cache response for duplicate calls within TTL              |
-| **Host→Client Events**          | ✅ LocationPage      | ✅ LocationPage      | —                     | ✅ location, device events | Subscribe to server-initiated `event()` messages           |
-| **Multi-WebView Routing**       | —                    | —                    | ✅ App.tsx (A/B)      | —                          | ConnectionRegistry routes events between WebViews          |
-| **DevTools**                    | ✅ Auto-connects     | ✅ Auto-connects     | —                     | —                          | Zero-config real-time inspector at ws://localhost:4000     |
-| **CLI Schema Export**           | —                    | —                    | —                     | ✅ `pnpm schema:export`    | Export contract as JSON Schema for codegen/docs            |
+| Feature                         | React Web            | Vue Web              | React Native                     | Plugins                    | Notes                                                               |
+| ------------------------------- | -------------------- | -------------------- | -------------------------------- | -------------------------- | ------------------------------------------------------------------- |
+| **Contract & Types**            | ✅ All plugins       | ✅ All plugins       | ✅ Host handlers                 | ✅ Defined                 | Single source of truth shared across frameworks                     |
+| **Schema Validation**           | ✅ ValidationPage    | ✅ ValidationPage    | ✅ Host handlers                 | ✅ Zod schemas             | Runtime validation on inbound payloads and responses                |
+| **VALIDATION_ERROR Handling**   | ✅ ValidationPage    | ✅ ValidationPage    | ✅ hosts/validation-demo.ts      | —                          | Structured error details with message + path                        |
+| **Fallback Mode (Browser Dev)** | ✅ All actions       | ✅ All actions       | —                                | ✅ All plugins             | Develop without native app via `withFallback()`                     |
+| **Global Interceptors**         | ✅ MiddlewarePage    | ✅ MiddlewarePage    | —                                | —                          | Request/response transform chains at bridge level                   |
+| **Per-Action Interceptors**     | ✅ calendar.addEvent | ✅ calendar.addEvent | —                                | ✅ calendar plugin         | Modify or inspect individual action requests                        |
+| **Lifecycle onCall (Client)**   | ✅ LifecyclePage     | ✅ LifecyclePage     | —                                | —                          | Subscribe to `call:start`, `call:end`, `call:error` events          |
+| **Lifecycle onCall (Host)**     | —                    | —                    | ✅ App.tsx call log              | ✅ Host handlers           | Log/telemetry on handler execution (client+host sides)              |
+| **Per-Action Timeout**          | ✅ PhonePage         | ✅ PhonePage         | ✅ Client (WebView)              | ✅ phone.call (5000ms)     | Configurable timeout per action in contract; enforced client-side   |
+| **Per-Action Retry**            | ✅ PhonePage         | ✅ PhonePage         | ✅ Client (WebView)              | ✅ phone.call (2 attempts) | Automatic retry with exponential backoff; enforced client-side      |
+| **Per-Action Cache**            | ✅ DevicePage        | ✅ DevicePage        | ✅ Client (WebView)              | ✅ device.getInfo          | Cache response for duplicate calls within TTL; enforced client-side |
+| **Host→Client Events**          | ✅ LocationPage      | ✅ LocationPage      | ✅ App.tsx (Event→A/B/Broadcast) | ✅ location, device events | Subscribe to server-initiated `event()` messages                    |
+| **Multi-WebView Routing**       | —                    | —                    | ✅ App.tsx (A/B)                 | —                          | ConnectionRegistry routes events between WebViews                   |
+| **DevTools**                    | ✅ Auto-connects     | ✅ Auto-connects     | —                                | —                          | Zero-config real-time inspector at ws://localhost:4000              |
+| **CLI Schema Export**           | —                    | —                    | —                                | ✅ `pnpm schema:export`    | Export contract as JSON Schema for codegen/docs                     |
 
 ## Quick Reference
 
@@ -28,7 +28,7 @@ This directory contains feature-complete example applications demonstrating all 
 
 - **Location:** `examples/react/`
 - **Run:** `pnpm dev` (starts at http://localhost:3000)
-- **Pages:** HomePage, CameraPage, LocationPage, StoragePage, BiometricPage, PhonePage, CalendarPage, DevicePage, SharePage, **LifecyclePage**, **MiddlewarePage**, **ValidationPage**
+- **Pages:** HomePage, ActionsPage, CameraPage, LocationPage, BiometricPage, PhonePage, CalendarPage, DevicePage, SharePage, **LifecyclePage**, **MiddlewarePage**, **ValidationPage**
 - **Highlights:** All plugin demos, global/per-action interceptors, client-side lifecycle logging, validation error handling
 
 ### Vue Web Example
@@ -41,7 +41,7 @@ This directory contains feature-complete example applications demonstrating all 
 ### React Native Example
 
 - **Location:** `examples/react-native/`
-- **Run:** `npx react-native run-ios` or `run-android`
+- **Run:** `npx expo start` (then press `i` for iOS / `a` for Android)
 - **Highlights:** Two WebViews with shared ConnectionRegistry, host-side `onCall()` lifecycle logging (useful for telemetry), validation demo handlers
 
 ### Plugin Definitions
@@ -66,10 +66,9 @@ pnpm devtools
 # Export plugin contracts to JSON Schema
 cd examples/plugins && pnpm schema:export
 
-# Run React Native example
-npx react-native run-ios
-# or
-npx react-native run-android
+# Run React Native example (Expo)
+cd examples/react-native && npx expo start
+# then press i (iOS) or a (Android) in the Expo CLI
 ```
 
 ## Key Concepts Demonstrated
@@ -128,14 +127,15 @@ All plugins in `examples/plugins/src/` have `.withFallback()` mocks. Develop the
 
 1. Terminal 1: `pnpm devtools` (starts ws://localhost:4000)
 2. Terminal 2: `pnpm dev` in React example
-3. Open http://localhost:5173 (or wherever your DevTools dashboard is)
+3. Open http://localhost:4000 (the DevTools dashboard)
 4. Navigate any example page and watch messages appear in real-time
 
 ### Test Multi-WebView
 
 1. Open `examples/react-native/App.tsx`
 2. Note the two `useBridgeHost()` calls with shared `ConnectionRegistry`
-3. Events from one WebView can route to the other via `sendEvent(target: TARGET.BROADCAST)`
+3. Navigate **both WebViews to `/device`** — the routed `device.appStateChanged` event is observable on the React app's `/device` page (Vue has no listener for it)
+4. Press **Event→A**, **Event→B**, or **Broadcast** to see each WebView receive a distinct `AppStateStatus` value (`'active'`, `'background'`, or `'inactive'`)
 
 ## Next Steps
 
@@ -151,7 +151,7 @@ examples/
 ├── plugins/             # Contract definitions (single source of truth)
 │   ├── src/
 │   │   ├── camera/      # Zod schema + plugin definition + fallback
-│   │   ├── location/    # Event schema, per-action timeout/retry/cache
+│   │   ├── location/    # Event schema, location.updated streaming event
 │   │   ├── validation-demo/
 │   │   └── ... 9 more
 │   ├── schemas/         # Generated JSON Schema (run pnpm schema:export)

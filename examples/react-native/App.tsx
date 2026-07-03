@@ -117,28 +117,24 @@ export default function App() {
     return () => unsubs.forEach((u) => u());
   }, [hostA.bridgeHost, hostB.bridgeHost, addLog]);
 
+  // Each button sends a different AppStateStatus string so the /device page in each WebView
+  // shows a clearly distinct value. Navigate both WebViews to /device to observe routing.
   const sendToA = useCallback(() => {
-    hostA.bridgeHost.sendEvent(
-      'device.appStateChanged',
-      { state: 'active' },
-      { target: hostA.sourceId }
-    );
+    hostA.bridgeHost.sendEvent('device.appStateChanged', 'active' as const, {
+      target: hostA.sourceId,
+    });
   }, [hostA]);
 
   const sendToB = useCallback(() => {
-    hostA.bridgeHost.sendEvent(
-      'device.appStateChanged',
-      { state: 'active' },
-      { target: hostB.sourceId }
-    );
+    hostA.bridgeHost.sendEvent('device.appStateChanged', 'background' as const, {
+      target: hostB.sourceId,
+    });
   }, [hostA, hostB]);
 
   const broadcast = useCallback(() => {
-    hostA.bridgeHost.sendEvent(
-      'device.appStateChanged',
-      { state: 'active' },
-      { target: TARGET.BROADCAST }
-    );
+    hostA.bridgeHost.sendEvent('device.appStateChanged', 'inactive' as const, {
+      target: TARGET.BROADCAST,
+    });
   }, [hostA]);
 
   return (
@@ -150,7 +146,7 @@ export default function App() {
         <Text style={styles.headerText}>React Native — Multi-WebView</Text>
       </View>
 
-      {/* Event routing buttons */}
+      {/* Event routing buttons — navigate both WebViews to /device to observe appStateChanged */}
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.btn} onPress={sendToA}>
           <Text style={styles.btnText}>Event → A</Text>
@@ -161,6 +157,11 @@ export default function App() {
         <TouchableOpacity style={[styles.btn, styles.btnBroadcast]} onPress={broadcast}>
           <Text style={styles.btnText}>Broadcast</Text>
         </TouchableOpacity>
+      </View>
+      <View style={styles.hintRow}>
+        <Text style={styles.hintText}>
+          Tip: navigate both WebViews to /device to see routed events appear in real time
+        </Text>
       </View>
 
       {/* Two WebViews split vertically */}
@@ -271,6 +272,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  hintRow: {
+    paddingHorizontal: 6,
+    paddingBottom: 4,
+  },
+  hintText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontStyle: 'italic',
   },
   webviewRow: {
     flex: 1,

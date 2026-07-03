@@ -1,4 +1,4 @@
-import { camera, device, location } from '@example/plugins';
+import { camera, haptics, location } from '@example/plugins';
 import { useEffect, useState } from 'react';
 
 import { useBridge, usePlugin } from '../bridge';
@@ -13,7 +13,7 @@ interface LogEntry {
 
 export default function LifecyclePage() {
   const { bridge } = useBridge();
-  const { getInfo } = usePlugin(device);
+  const { impact } = usePlugin(haptics);
   const { takePhoto } = usePlugin(camera);
   const { getCurrentPosition } = usePlugin(location);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -49,8 +49,8 @@ export default function LifecyclePage() {
     };
   }, [bridge]);
 
-  const handleGetDeviceInfo = () => {
-    getInfo.execute().catch(() => {});
+  const handleHapticsImpact = () => {
+    impact.execute({ style: 'medium' }).catch(() => {});
   };
 
   const handleTakePhoto = () => {
@@ -85,8 +85,8 @@ export default function LifecyclePage() {
       <div className="card">
         <h2>Trigger Actions</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="button" onClick={handleGetDeviceInfo}>
-            device.getInfo
+          <button className="button" onClick={handleHapticsImpact}>
+            haptics.impact
           </button>
           <button className="button button-secondary" onClick={handleTakePhoto}>
             camera.takePhoto

@@ -119,6 +119,12 @@ export default function MiddlewarePage() {
 
       <div className="card">
         <h2>Try It</h2>
+        <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>
+          Note: <code>device.getInfo</code> has <code>cache: true</code> — only the{' '}
+          <strong>first</strong> click crosses the bridge and fires interceptors. Subsequent clicks
+          are served from cache (no interceptor logs). Use this as a cache demo, or click{' '}
+          <strong>Add Calendar Event</strong> for uncached interceptor calls.
+        </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="button" onClick={handleFetchDevice}>
             Fetch Device Info (global interceptors)

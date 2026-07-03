@@ -107,6 +107,12 @@ function handleCleanup() {
 
     <div class="card">
       <h2>Try It</h2>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px">
+        Note: <code>device.getInfo</code> has <code>cache: true</code> — only the
+        <strong>first</strong> click crosses the bridge and fires interceptors. Subsequent clicks are
+        served from cache (no interceptor logs). Use this as a cache demo, or click
+        <strong>Add Calendar Event</strong> for uncached interceptor calls.
+      </p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap">
         <button class="button" @click="handleFetchDevice">
           Fetch Device Info (global interceptors)
