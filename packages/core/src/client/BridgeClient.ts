@@ -12,6 +12,10 @@ import type {
   BridgeEvent,
   BridgeMessage,
   BridgeResponse,
+  CallEndEvent,
+  CallErrorEvent,
+  CallEventMap,
+  CallStartEvent,
   ConnectionMode,
   EventMapBase,
   FallbackMap,
@@ -43,34 +47,8 @@ import { CallbackRegistry } from './CallbackRegistry';
  */
 type EventHandler<T = unknown> = (payload: T) => void;
 
-// ─── Lifecycle event types ───
-
-export interface CallStartEvent {
-  id: string;
-  action: string;
-  payload: unknown;
-  timestamp: number;
-}
-
-export interface CallEndEvent {
-  id: string;
-  action: string;
-  response: BridgeResponse;
-  duration: number;
-}
-
-export interface CallErrorEvent {
-  id: string;
-  action: string;
-  error: Error;
-  duration: number;
-}
-
-type CallEventMap = {
-  'call:start': CallStartEvent;
-  'call:end': CallEndEvent;
-  'call:error': CallErrorEvent;
-};
+// ─── Lifecycle event types (shared with BridgeHost) ───
+export type { CallEndEvent, CallErrorEvent, CallStartEvent } from '@webview-ts/shared';
 
 /**
  * Bridge client implementation

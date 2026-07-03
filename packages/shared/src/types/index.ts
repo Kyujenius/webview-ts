@@ -9,6 +9,7 @@ export * from './errors';
 export * from './event-map';
 export * from './host-adapter';
 export * from './interceptor';
+export * from './lifecycle';
 export * from './message';
 export * from './routing';
 export * from './utils';

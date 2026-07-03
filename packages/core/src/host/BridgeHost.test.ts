@@ -139,6 +139,65 @@ describe('BridgeHost', () => {
     });
   });
 
+  describe('onCall lifecycle events', () => {
+    const message: BridgeMessage = {
+      id: 'msg-1',
+      sourceId: 'client-1',
+      targetId: 'host',
+      action: 'testAction',
+      payload: { x: 1 },
+      timestamp: Date.now(),
+    };
+
+    it('emits call:start and call:end around a successful handler', async () => {
+      bridgeHost.registerHandler('testAction', async () => ({ ok: true }));
+      const started = vi.fn();
+      const ended = vi.fn();
+      bridgeHost.onCall('call:start', started);
+      bridgeHost.onCall('call:end', ended);
+
+      await bridgeHost.handleMessage(message);
+
+      expect(started).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'msg-1', action: 'testAction', payload: { x: 1 } })
+      );
+      expect(ended).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'msg-1',
+          action: 'testAction',
+          response: expect.objectContaining({ success: true }),
+        })
+      );
+    });
+
+    it('emits call:error when the handler throws', async () => {
+      bridgeHost.registerHandler('testAction', async () => {
+        throw new Error('boom');
+      });
+      const errored = vi.fn();
+      const ended = vi.fn();
+      bridgeHost.onCall('call:error', errored);
+      bridgeHost.onCall('call:end', ended);
+
+      await bridgeHost.handleMessage(message);
+
+      expect(errored).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'msg-1', action: 'testAction', error: expect.any(Error) })
+      );
+      expect(ended).not.toHaveBeenCalled();
+    });
+
+    it('onCall returns a working unsubscribe function', async () => {
+      bridgeHost.registerHandler('testAction', async () => ({ ok: true }));
+      const started = vi.fn();
+      const unsub = bridgeHost.onCall('call:start', started);
+      unsub();
+
+      await bridgeHost.handleMessage(message);
+      expect(started).not.toHaveBeenCalled();
+    });
+  });
+
   describe('event sending', () => {
     it('sendEvent sends event JSON via adapter', () => {
       bridgeHost.sendEvent('test.event', { data: 1 });
