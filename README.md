@@ -16,6 +16,21 @@
 
 > *Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference.*
 
+## How is this different?
+
+| | webview-ts | Manual `postMessage` | [webview-bridge](https://github.com/gronxb/webview-bridge) | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
+|---|---|---|---|---|---|
+| Type safety | ✅ contract-first | ❌ strings | ✅ native-first | ✅ proxy-based | ✅ plugin API |
+| Source of truth | Neutral plugin file — both sides compile against it | — | Native bridge object — web imports its `typeof` | Exposed object | Plugin definition |
+| Browser-only dev | ✅ per-plugin fallback mocks | ❌ | Partial | ❌ | ✅ (web impl) |
+| Per-action timeout/retry/cache | ✅ declared in the contract | ❌ | ❌ | ❌ | ❌ |
+| RN WebView transport | ✅ | manual | ✅ | ❌ (workers/iframes) | N/A (owns the shell) |
+| Scope | Typed transport layer | — | Transport + shared state | Worker RPC | Full app runtime |
+
+The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports `typeof appBridge`), so native code must exist before web types do. In webview-ts the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists. If your team co-locates everything in one repo and wants shared state out of the box, webview-bridge is a great choice; webview-ts optimizes for contract-first workflows.
+
+webview-ts is deliberately **not** a Capacitor alternative: it doesn't ship native capabilities (camera, permissions) — it types and structures the transport between *your* web app and *your* native app.
+
 ## The Core Idea
 
 One `definePlugin` call is the single source of truth. Payload and response types flow from it to both ends &mdash; the web client's hooks and the native host's handlers &mdash; with zero manual casting:
@@ -99,6 +114,8 @@ pnpm add @webview-ts/react-native
 
 ```typescript
 // plugins/camera.ts — shared between web and native
+// (also re-exported from @webview-ts/react, @webview-ts/vue, @webview-ts/react-native,
+//  so single-package apps never need to import shared directly)
 import { action, definePlugin } from '@webview-ts/shared';
 
 interface TakePhotoPayload {
@@ -247,6 +264,8 @@ bridge.onCall('call:start', ({ action, payload }) => console.log('[->]', action,
 bridge.onCall('call:end', ({ action, duration }) => console.log('[<-]', action, `${duration}ms`));
 bridge.onCall('call:error', ({ action, error }) => console.error(action, error));
 ```
+
+The same `onCall` API exists on `BridgeHost` (native side), where the events wrap handler execution &mdash; useful for shipping bridge telemetry to Datadog, Sentry, or any collector from either side.
 
 ## DevTools
 
