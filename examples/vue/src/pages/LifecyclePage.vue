@@ -126,23 +126,24 @@ function handleGetLocation() {
     <div class="card">
       <h2>Code</h2>
       <pre style="font-size: 11px">const { bridge } = useBridge();
+let unsubStart, unsubEnd, unsubError;
 
 onMounted(() => {
-  const unsubStart = bridge.onCall('call:start', (data) => {
+  unsubStart = bridge.onCall('call:start', (data) => {
     // data: { id, action, payload, timestamp }
   });
-  const unsubEnd = bridge.onCall('call:end', (data) => {
+  unsubEnd = bridge.onCall('call:end', (data) => {
     // data: { id, action, response, duration }
   });
-  const unsubError = bridge.onCall('call:error', (data) => {
+  unsubError = bridge.onCall('call:error', (data) => {
     // data: { id, action, error, duration }
   });
+});
 
-  onUnmounted(() => {
-    unsubStart();
-    unsubEnd();
-    unsubError();
-  });
+onUnmounted(() => {
+  unsubStart?.();
+  unsubEnd?.();
+  unsubError?.();
 });</pre>
     </div>
   </div>
