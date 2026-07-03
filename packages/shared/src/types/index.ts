@@ -12,4 +12,5 @@ export * from './interceptor';
 export * from './lifecycle';
 export * from './message';
 export * from './routing';
+export type { StandardSchemaV1 } from './standard-schema';
 export * from './utils';

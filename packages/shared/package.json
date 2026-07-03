@@ -45,6 +45,8 @@
     "@types/node": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "valibot": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
   }
 }

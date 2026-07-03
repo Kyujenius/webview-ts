@@ -1,5 +1,6 @@
 import type { FallbackMap, RetryConfig } from '../types/bridge';
 import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
+import type { StandardSchemaV1 } from '../types/standard-schema';
 import type { StrictKeyOf } from '../types/utils';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -20,10 +21,28 @@ export interface ActionOptions {
   cache?: number | boolean;
 }
 
-/** Branded type marker — carries Payload/Response at type level, empty at runtime */
-export interface ActionMarker<TPayload = void, TResponse = void> {
+/** Schema-mode options — payload/response are Standard Schema objects */
+export interface SchemaFields {
+  payload?: StandardSchemaV1;
+  response?: StandardSchemaV1;
+}
+
+/** Branded type marker — carries Payload/Response at type level.
+ *  TPayload/TResponse: what the RECEIVER sees (schema output).
+ *  TPayloadIn/TResponseIn: what the SENDER provides (schema input).
+ *  Without schemas the pairs are identical. */
+export interface ActionMarker<
+  TPayload = void,
+  TResponse = void,
+  TPayloadIn = TPayload,
+  TResponseIn = TResponse,
+> {
   readonly __payload: TPayload;
   readonly __response: TResponse;
+  readonly __payloadIn: TPayloadIn;
+  readonly __responseIn: TResponseIn;
+  readonly __payloadSchema?: StandardSchemaV1;
+  readonly __responseSchema?: StandardSchemaV1;
   readonly __requestInterceptors?: RequestInterceptor[];
   readonly __responseInterceptors?: ResponseInterceptor[];
   /** Per-action timeout in ms (runtime) */
@@ -34,18 +53,41 @@ export interface ActionMarker<TPayload = void, TResponse = void> {
   readonly __cache?: number | boolean;
   readonly interceptors: {
     readonly request: {
-      use(interceptor: RequestInterceptor): ActionMarker<TPayload, TResponse>;
+      use(
+        interceptor: RequestInterceptor
+      ): ActionMarker<TPayload, TResponse, TPayloadIn, TResponseIn>;
     };
     readonly response: {
-      use(interceptor: ResponseInterceptor): ActionMarker<TPayload, TResponse>;
+      use(
+        interceptor: ResponseInterceptor
+      ): ActionMarker<TPayload, TResponse, TPayloadIn, TResponseIn>;
     };
   };
 }
 
-/** Zero-runtime type marker for defining plugin actions */
+// Schema mode: both payload and response
+export function action<PS extends StandardSchemaV1, RS extends StandardSchemaV1>(
+  options: ActionOptions & { payload: PS; response: RS }
+): ActionMarker<
+  StandardSchemaV1.InferOutput<PS>,
+  StandardSchemaV1.InferOutput<RS>,
+  StandardSchemaV1.InferInput<PS>,
+  StandardSchemaV1.InferInput<RS>
+>;
+// Schema mode: payload only
+export function action<PS extends StandardSchemaV1>(
+  options: ActionOptions & { payload: PS; response?: undefined }
+): ActionMarker<StandardSchemaV1.InferOutput<PS>, void, StandardSchemaV1.InferInput<PS>, void>;
+// Schema mode: response only
+export function action<RS extends StandardSchemaV1>(
+  options: ActionOptions & { payload?: undefined; response: RS }
+): ActionMarker<void, StandardSchemaV1.InferOutput<RS>, void, StandardSchemaV1.InferInput<RS>>;
+// Phantom mode: unchanged public signature
 export function action<TPayload = void, TResponse = void>(
   options?: ActionOptions
-): ActionMarker<TPayload, TResponse> {
+): ActionMarker<TPayload, TResponse>;
+// Implementation
+export function action(options?: ActionOptions & SchemaFields): ActionMarker<any, any, any, any> {
   const requestInterceptors: RequestInterceptor[] = [];
   const responseInterceptors: ResponseInterceptor[] = [];
   const marker: any = {
@@ -54,6 +96,8 @@ export function action<TPayload = void, TResponse = void>(
     __timeout: options?.timeout,
     __retry: options?.retry,
     __cache: options?.cache,
+    __payloadSchema: options?.payload,
+    __responseSchema: options?.response,
     interceptors: {
       request: {
         use(interceptor: RequestInterceptor) {
@@ -69,40 +113,48 @@ export function action<TPayload = void, TResponse = void>(
       },
     },
   };
-  return marker as ActionMarker<TPayload, TResponse>;
+  return marker as ActionMarker<any, any, any, any>;
 }
 
 /** A record of short-name action markers */
-export type ActionMarkerMap = Record<string, ActionMarker<any, any>>;
+export type ActionMarkerMap = Record<string, ActionMarker<any, any, any, any>>;
 
 // ─── event() type marker ───
 
 /** Branded type marker — carries event payload type at type level */
-export interface EventMarker<TPayload = void> {
+export interface EventMarker<TPayload = void, TPayloadIn = TPayload> {
   readonly __eventPayload: TPayload;
+  readonly __eventPayloadIn: TPayloadIn;
+  readonly __schema?: StandardSchemaV1;
 }
 
-/** Zero-runtime type marker for defining plugin events */
-export function event<TPayload = void>(): EventMarker<TPayload> {
-  return {} as EventMarker<TPayload>;
+export function event<S extends StandardSchemaV1>(
+  schema: S
+): EventMarker<StandardSchemaV1.InferOutput<S>, StandardSchemaV1.InferInput<S>>;
+export function event<TPayload = void>(): EventMarker<TPayload>;
+export function event(schema?: StandardSchemaV1): EventMarker<any, any> {
+  return { __schema: schema } as EventMarker<any, any>;
 }
 
 /** A record of short-name event markers */
-export type EventMarkerMap = Record<string, EventMarker<any>>;
+export type EventMarkerMap = Record<string, EventMarker<any, any>>;
 
 /** Extract event payload type from an EventMarker */
-export type ExtractEventPayload<T> = T extends EventMarker<infer P> ? P : never;
+export type ExtractEventPayload<T> = T extends EventMarker<infer P, any> ? P : never;
 
 // ─── Type extraction utilities ───
 
-export type ExtractPayload<T> = T extends ActionMarker<infer P, any> ? P : never;
-export type ExtractResponse<T> = T extends ActionMarker<any, infer R> ? R : never;
+export type ExtractPayload<T> = T extends ActionMarker<infer P, any, any, any> ? P : never;
+export type ExtractResponse<T> = T extends ActionMarker<any, infer R, any, any> ? R : never;
+export type ExtractPayloadIn<T> = T extends ActionMarker<any, any, infer PIn, any> ? PIn : never;
+export type ExtractResponseIn<T> = T extends ActionMarker<any, any, any, infer RIn> ? RIn : never;
+export type ExtractEventPayloadIn<T> = T extends EventMarker<any, infer PIn> ? PIn : never;
 
 /** Expand short-name markers to fully-qualified ActionDefinitionShape map.
- *  e.g. Name='camera', { takePhoto: ActionMarker<P,R> } → { 'camera.takePhoto': { payload: P; response: R } } */
+ *  e.g. Name='camera', { takePhoto: ActionMarker<P,R> } → { 'camera.takePhoto': { payload: PIn; response: R } } */
 export type ExpandActions<TName extends string, TMarkers extends ActionMarkerMap> = {
   [K in StrictKeyOf<TMarkers> as `${TName}.${K}`]: {
-    payload: ExtractPayload<TMarkers[K]>;
+    payload: ExtractPayloadIn<TMarkers[K]>;
     response: ExtractResponse<TMarkers[K]>;
   };
 };
@@ -131,7 +183,7 @@ export type ShortHostHandlers<
   [K in StrictKeyOf<TMarkers>]: (
     payload: ExtractPayload<TMarkers[K]>,
     context: HostHandlerContext<TEvents>
-  ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
+  ) => Promise<ExtractResponseIn<TMarkers[K]>> | ExtractResponseIn<TMarkers[K]>;
 };
 
 /** Context passed to host handlers — includes emit when plugin defines events */
@@ -142,7 +194,7 @@ export type HostHandlerContext<TEvents extends EventMarkerMap = EmptyEventMap> =
     : {
         emit: <K extends StrictKeyOf<TEvents>>(
           event: K,
-          payload: ExtractEventPayload<TEvents[K]>
+          payload: ExtractEventPayloadIn<TEvents[K]>
         ) => void;
       });
 
@@ -203,8 +255,8 @@ export type AnyPluginList = AnyPlugin[];
 /** Fallback handlers using short names — typed from action markers */
 export type ShortFallbackHandlers<TMarkers extends ActionMarkerMap> = {
   [K in StrictKeyOf<TMarkers>]: (
-    payload: ExtractPayload<TMarkers[K]>
-  ) => Promise<ExtractResponse<TMarkers[K]>> | ExtractResponse<TMarkers[K]>;
+    payload: ExtractPayloadIn<TMarkers[K]>
+  ) => Promise<ExtractResponseIn<TMarkers[K]>> | ExtractResponseIn<TMarkers[K]>;
 };
 
 // ─── Shared types ───
