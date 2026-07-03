@@ -10,6 +10,8 @@ const navLinks = [
   { to: '/share', label: 'Share' },
   { to: '/actions', label: 'useAction' },
   { to: '/middleware', label: 'Middleware' },
+  { to: '/lifecycle', label: 'Lifecycle' },
+  { to: '/validation', label: 'Validation' },
 ] as const;
 </script>
 
