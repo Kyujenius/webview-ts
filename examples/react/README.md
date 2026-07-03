@@ -38,6 +38,14 @@ pnpm build
 pnpm preview
 ```
 
+### Export Plugin Contracts
+
+```bash
+cd ../plugins && pnpm schema:export
+```
+
+This exports all plugin contracts to JSON Schema files in the `plugins/schemas` directory, useful for documentation and cross-language codegen.
+
 ## Project Structure
 
 ```
@@ -49,7 +57,14 @@ src/
 │   ├── LocationPage.tsx
 │   ├── StoragePage.tsx
 │   ├── BiometricPage.tsx
-│   └── DevToolsPage.tsx
+│   ├── DevicePage.tsx
+│   ├── PhonePage.tsx
+│   ├── CalendarPage.tsx
+│   ├── SharePage.tsx
+│   ├── ActionsPage.tsx
+│   ├── LifecyclePage.tsx          # Demonstrates onCall lifecycle events
+│   ├── MiddlewarePage.tsx         # Demonstrates request/response interceptors
+│   └── ValidationPage.tsx         # Demonstrates schema validation and error handling
 ├── hooks/           # Custom React hooks
 │   └── useBridge.ts # Bridge manager hook
 ├── App.tsx          # Main app component with routing
