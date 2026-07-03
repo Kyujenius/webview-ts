@@ -14,7 +14,11 @@ npm install @webview-ts/devtools
 
 ```tsx
 import { createBridge } from '@webview-ts/core';
-import { createDevToolsMiddleware, createTimeTracker, TsBridgeDevtools } from '@webview-ts/devtools';
+import {
+  createDevToolsMiddleware,
+  createTimeTracker,
+  TsBridgeDevtools,
+} from '@webview-ts/devtools';
 
 const bridge = createBridge();
 
@@ -75,10 +79,10 @@ import { TsBridgeDevtools } from '@webview-ts/devtools';
 <TsBridgeDevtools
   bridge={bridge}
   initialOpen={false}
-  position="bottom-left"   // or 'bottom-right'
+  position="bottom-left" // or 'bottom-right'
   panelHeight={420}
   buttonLabel="ts-bridge"
-/>
+/>;
 ```
 
 The component auto-attaches a `DevToolsMiddleware` to the bridge instance on mount.
@@ -97,7 +101,7 @@ bridge.use(tracker);
 tracker.getEntries();
 tracker.getEntriesByAction('camera.takePhoto');
 tracker.getAverageDuration('camera.takePhoto'); // ms
-tracker.getSuccessRate();                       // 0-1
+tracker.getSuccessRate(); // 0-1
 tracker.getPendingEntries();
 tracker.export(); // JSON string
 ```
@@ -129,30 +133,30 @@ logger.export(); // JSON string
 
 ### Middleware Factories
 
-| Factory | Description |
-|---|---|
-| `createDevToolsMiddleware(config?)` | Message recording and metrics |
-| `createTimeTracker(maxEntries?)` | Per-action performance tracking |
-| `createStructuredLogger(config?)` | Structured logging with levels |
+| Factory                             | Description                     |
+| ----------------------------------- | ------------------------------- |
+| `createDevToolsMiddleware(config?)` | Message recording and metrics   |
+| `createTimeTracker(maxEntries?)`    | Per-action performance tracking |
+| `createStructuredLogger(config?)`   | Structured logging with levels  |
 
 ### React Components
 
-| Component | Description |
-|---|---|
+| Component          | Description                                 |
+| ------------------ | ------------------------------------------- |
 | `TsBridgeDevtools` | Floating debug panel (timeline + inspector) |
-| `MessageTimeline` | Standalone message timeline |
-| `RequestInspector` | Standalone request/response inspector |
+| `MessageTimeline`  | Standalone message timeline                 |
+| `RequestInspector` | Standalone request/response inspector       |
 
 ### DevToolsConfig
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `enabled` | `boolean` | `true` | Enable/disable recording |
-| `maxRecords` | `number` | `1000` | Max stored messages |
-| `trackPerformance` | `boolean` | `true` | Track durations |
-| `captureStackTraces` | `boolean` | `true` | Capture error stacks |
-| `filter` | `(msg) => boolean` | -- | Message filter |
-| `onMessage` | `(record) => void` | -- | New record callback |
+| Option               | Type               | Default | Description              |
+| -------------------- | ------------------ | ------- | ------------------------ |
+| `enabled`            | `boolean`          | `true`  | Enable/disable recording |
+| `maxRecords`         | `number`           | `1000`  | Max stored messages      |
+| `trackPerformance`   | `boolean`          | `true`  | Track durations          |
+| `captureStackTraces` | `boolean`          | `true`  | Capture error stacks     |
+| `filter`             | `(msg) => boolean` | --      | Message filter           |
+| `onMessage`          | `(record) => void` | --      | New record callback      |
 
 ## Production
 

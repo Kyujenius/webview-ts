@@ -24,13 +24,7 @@ import { createBridgeReact } from '@webview-ts/react';
 import { camera, storage, location } from '@example/plugins';
 import { cameraFallback, storageFallback } from '@example/plugins';
 
-export const {
-  BridgeProvider,
-  useBridge,
-  useAction,
-  useEvent,
-  usePlugin,
-} = createBridgeReact({
+export const { BridgeProvider, useBridge, useAction, useEvent, usePlugin } = createBridgeReact({
   plugins: [camera, storage, location],
   config: {
     timeout: 5000,

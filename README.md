@@ -16,24 +16,24 @@
 
 Built for teams where **web and native live in separate repos**: the native shell team and the web teams share only the contract package. Web development starts before any native code exists (fallback mocks), the compiler enforces the contract across repo boundaries, and schema validation catches version skew — the day your web app ships with a contract the installed native app doesn't have yet.
 
-> *Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference — plus runtime contract validation neither of them has for WebViews.*
+> _Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference — plus runtime contract validation neither of them has for WebViews._
 
 ## How is this different?
 
-| | webview-ts | Manual `postMessage` | [webview-bridge](https://github.com/gronxb/webview-bridge) | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
-|---|---|---|---|---|---|
-| Type safety | ✅ contract-first | ❌ strings | ✅ native-first | ✅ proxy-based | ✅ plugin API |
-| Source of truth | Neutral plugin file — both sides compile against it | — | Native bridge object — web imports its `typeof` | Exposed object | Plugin definition |
-| Browser-only dev | ✅ per-plugin fallback mocks | ❌ | Partial | ❌ | ✅ (web impl) |
-| Per-action timeout/retry/cache | ✅ declared in the contract | ❌ | ❌ | ❌ | ❌ |
-| RN WebView transport | ✅ | manual | ✅ | ❌ (workers/iframes) | N/A (owns the shell) |
-| Runtime validation at the boundary | ✅ optional per-action schemas | ❌ | ❌ | ❌ | ❌ |
-| Contract export (JSON Schema) | ✅ `webview-ts schema export` | — | ❌ | ❌ | ❌ |
-| Scope | Typed transport layer | — | Transport + shared state | Worker RPC | Full app runtime |
+|                                    | webview-ts                                          | Manual `postMessage` | [webview-bridge](https://github.com/gronxb/webview-bridge) | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
+| ---------------------------------- | --------------------------------------------------- | -------------------- | ---------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
+| Type safety                        | ✅ contract-first                                   | ❌ strings           | ✅ native-first                                            | ✅ proxy-based                                         | ✅ plugin API                        |
+| Source of truth                    | Neutral plugin file — both sides compile against it | —                    | Native bridge object — web imports its `typeof`            | Exposed object                                         | Plugin definition                    |
+| Browser-only dev                   | ✅ per-plugin fallback mocks                        | ❌                   | Partial                                                    | ❌                                                     | ✅ (web impl)                        |
+| Per-action timeout/retry/cache     | ✅ declared in the contract                         | ❌                   | ❌                                                         | ❌                                                     | ❌                                   |
+| RN WebView transport               | ✅                                                  | manual               | ✅                                                         | ❌ (workers/iframes)                                   | N/A (owns the shell)                 |
+| Runtime validation at the boundary | ✅ optional per-action schemas                      | ❌                   | ❌                                                         | ❌                                                     | ❌                                   |
+| Contract export (JSON Schema)      | ✅ `webview-ts schema export`                       | —                    | ❌                                                         | ❌                                                     | ❌                                   |
+| Scope                              | Typed transport layer                               | —                    | Transport + shared state                                   | Worker RPC                                             | Full app runtime                     |
 
 The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports `typeof appBridge`), so native code must exist before web types do. In webview-ts the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists. If your team co-locates everything in one repo and wants shared state out of the box, webview-bridge is a great choice; webview-ts optimizes for contract-first workflows.
 
-webview-ts is deliberately **not** a Capacitor alternative: it doesn't ship native capabilities (camera, permissions) — it types and structures the transport between *your* web app and *your* native app.
+webview-ts is deliberately **not** a Capacitor alternative: it doesn't ship native capabilities (camera, permissions) — it types and structures the transport between _your_ web app and _your_ native app.
 
 ## The Core Idea
 
@@ -203,25 +203,25 @@ function WebViewScreen() {
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| `@webview-ts/shared` | Types, plugin system, interceptor chain, action state, schemas (zero deps) |
-| `@webview-ts/core` | BridgeClient + BridgeHost engine |
-| `@webview-ts/react` | React hooks &mdash; `createBridgeReact()`, `usePlugin`, `useAction`, `useEvent` |
-| `@webview-ts/vue` | Vue composables &mdash; `createBridgeVue()`, `usePlugin`, `useAction`, `useEvent` |
-| `@webview-ts/react-native` | React Native host &mdash; `useBridgeHost()`, `ReactNativeHostAdapter` |
-| `@webview-ts/devtools` | Real-time message inspector dashboard |
-| `@webview-ts/cli` | Contract-to-JSON-Schema export CLI |
+| Package                    | Description                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| `@webview-ts/shared`       | Types, plugin system, interceptor chain, action state, schemas (zero deps)        |
+| `@webview-ts/core`         | BridgeClient + BridgeHost engine                                                  |
+| `@webview-ts/react`        | React hooks &mdash; `createBridgeReact()`, `usePlugin`, `useAction`, `useEvent`   |
+| `@webview-ts/vue`          | Vue composables &mdash; `createBridgeVue()`, `usePlugin`, `useAction`, `useEvent` |
+| `@webview-ts/react-native` | React Native host &mdash; `useBridgeHost()`, `ReactNativeHostAdapter`             |
+| `@webview-ts/devtools`     | Real-time message inspector dashboard                                             |
+| `@webview-ts/cli`          | Contract-to-JSON-Schema export CLI                                                |
 
 ## Platform Support
 
-| Side | Platform | Package | Status |
-|---|---|---|---|
-| Web (client) | React | `@webview-ts/react` | ✅ Supported |
-| Web (client) | Vue 3 | `@webview-ts/vue` | ✅ Supported |
-| Web (client) | Browser without native (fallback mode) | `@webview-ts/core` | ✅ Supported |
-| Native (host) | React Native WebView | `@webview-ts/react-native` | ✅ Supported |
-| Native (host) | iOS / Android (native SDKs) | — | Contract spec available — SDK contributions welcome |
+| Side          | Platform                               | Package                    | Status                                              |
+| ------------- | -------------------------------------- | -------------------------- | --------------------------------------------------- |
+| Web (client)  | React                                  | `@webview-ts/react`        | ✅ Supported                                        |
+| Web (client)  | Vue 3                                  | `@webview-ts/vue`          | ✅ Supported                                        |
+| Web (client)  | Browser without native (fallback mode) | `@webview-ts/core`         | ✅ Supported                                        |
+| Native (host) | React Native WebView                   | `@webview-ts/react-native` | ✅ Supported                                        |
+| Native (host) | iOS / Android (native SDKs)            | —                          | Contract spec available — SDK contributions welcome |
 
 There is no official iOS/Android SDK today, and none is promised. What exists is the **extension seam**: `webview-ts schema export` turns your contract into versioned JSON Schema files (`{ "webviewTs": { "specVersion": 1 } }`), so a Swift/Kotlin SDK can generate typed handlers from the same source of truth. If you want to build one, open an issue — the spec is stable.
 

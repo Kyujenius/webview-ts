@@ -91,9 +91,7 @@ sendEvent('location.updated', {
 
 ```typescript
 const { webViewProps } = useBridgeHost({
-  plugins: [
-    camera.host({ takePhoto: async (p) => ({ uri: '/photo.jpg' }) }),
-  ],
+  plugins: [camera.host({ takePhoto: async (p) => ({ uri: '/photo.jpg' }) })],
   handlers: {
     'custom.action': async () => ({ ok: true }),
   },
@@ -136,20 +134,20 @@ React hook that creates and manages a bridge host. Handlers are captured on moun
 
 **Options:**
 
-| Option | Type | Description |
-|---|---|---|
-| `handlers` | `TypedHandlers<TActions>` | Direct action handlers |
-| `plugins` | `HostPluginResult[]` | Plugin host results from `plugin.host()` |
-| `middleware` | `Middleware[]` | Koa-style middleware array |
-| `config` | `BridgeHostConfig` | Host configuration (`debug`, `timeout`, `onError`) |
+| Option       | Type                      | Description                                        |
+| ------------ | ------------------------- | -------------------------------------------------- |
+| `handlers`   | `TypedHandlers<TActions>` | Direct action handlers                             |
+| `plugins`    | `HostPluginResult[]`      | Plugin host results from `plugin.host()`           |
+| `middleware` | `Middleware[]`            | Koa-style middleware array                         |
+| `config`     | `BridgeHostConfig`        | Host configuration (`debug`, `timeout`, `onError`) |
 
 **Returns:**
 
-| Property | Type | Description |
-|---|---|---|
-| `webViewProps` | `{ onMessage, ref }` | Spread onto `<WebView>` |
-| `sendEvent` | `(event, payload) => void` | Push event to web side |
-| `bridgeHost` | `BridgeHost` | Direct access (advanced) |
+| Property       | Type                       | Description              |
+| -------------- | -------------------------- | ------------------------ |
+| `webViewProps` | `{ onMessage, ref }`       | Spread onto `<WebView>`  |
+| `sendEvent`    | `(event, payload) => void` | Push event to web side   |
+| `bridgeHost`   | `BridgeHost`               | Direct access (advanced) |
 
 ### `createBridgeHost<TActions>(options)`
 

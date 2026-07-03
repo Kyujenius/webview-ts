@@ -98,26 +98,26 @@ const myMiddleware: Middleware = {
 
 ### Plugin Primitives
 
-| Export | Description |
-|---|---|
-| `definePlugin(name, markers)` | Create a plugin with typed actions |
+| Export                        | Description                            |
+| ----------------------------- | -------------------------------------- |
+| `definePlugin(name, markers)` | Create a plugin with typed actions     |
 | `action<Payload, Response>()` | Zero-runtime type marker for an action |
 
 ### Key Types
 
-| Type | Description |
-|---|---|
-| `PluginInstance` | Plugin object returned by `definePlugin` |
-| `ActionMarker<P, R>` | Branded type marker carrying payload/response types |
-| `HostPluginResult` | Return type of `plugin.host()` |
-| `ShortHostHandlers<T>` | Host handler map with short action names |
-| `BridgeMessage` | Request message (web to native) |
-| `BridgeResponse` | Response message (native to web) |
-| `BridgeEvent` | Event notification (native to web) |
-| `BridgeConfig` | Bridge configuration options |
-| `Middleware` | Named middleware (`{ name, fn }`) |
-| `MiddlewareFn` | Koa-style middleware function |
-| `MiddlewareContext` | Context shared across the request-response lifecycle |
+| Type                   | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `PluginInstance`       | Plugin object returned by `definePlugin`             |
+| `ActionMarker<P, R>`   | Branded type marker carrying payload/response types  |
+| `HostPluginResult`     | Return type of `plugin.host()`                       |
+| `ShortHostHandlers<T>` | Host handler map with short action names             |
+| `BridgeMessage`        | Request message (web to native)                      |
+| `BridgeResponse`       | Response message (native to web)                     |
+| `BridgeEvent`          | Event notification (native to web)                   |
+| `BridgeConfig`         | Bridge configuration options                         |
+| `Middleware`           | Named middleware (`{ name, fn }`)                    |
+| `MiddlewareFn`         | Koa-style middleware function                        |
+| `MiddlewareContext`    | Context shared across the request-response lifecycle |
 
 ## License
 

@@ -112,15 +112,15 @@ Creates a `BridgeManager` instance.
 
 **Config:**
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `timeout` | `number` | `30000` | Default timeout (ms) |
-| `debug` | `boolean` | `false` | Enable debug logging |
-| `maxConcurrentRequests` | `number` | `100` | Max concurrent requests |
-| `enableDeduplication` | `boolean` | `true` | Deduplicate identical requests |
-| `retry` | `RetryConfig` | -- | Retry configuration |
-| `fallback` | `true \| FallbackMap` | -- | Fallback handlers for non-native environments |
-| `onError` | `(error, context) => void` | -- | Global error handler |
+| Option                  | Type                       | Default | Description                                   |
+| ----------------------- | -------------------------- | ------- | --------------------------------------------- |
+| `timeout`               | `number`                   | `30000` | Default timeout (ms)                          |
+| `debug`                 | `boolean`                  | `false` | Enable debug logging                          |
+| `maxConcurrentRequests` | `number`                   | `100`   | Max concurrent requests                       |
+| `enableDeduplication`   | `boolean`                  | `true`  | Deduplicate identical requests                |
+| `retry`                 | `RetryConfig`              | --      | Retry configuration                           |
+| `fallback`              | `true \| FallbackMap`      | --      | Fallback handlers for non-native environments |
+| `onError`               | `(error, context) => void` | --      | Global error handler                          |
 
 ### `bridge.call(action, payload?, options?)`
 
@@ -144,9 +144,9 @@ Clean up all listeners, callbacks, and middleware.
 
 ### Built-in Middleware
 
-| Factory | Description |
-|---|---|
-| `createLogger(options?)` | Log requests, responses, and errors |
+| Factory                     | Description                                            |
+| --------------------------- | ------------------------------------------------------ |
+| `createLogger(options?)`    | Log requests, responses, and errors                    |
 | `createValidator(options?)` | Validate message structure before send / after receive |
 
 ## Platform Adapters
