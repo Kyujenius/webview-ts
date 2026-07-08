@@ -29,6 +29,7 @@ Built for teams where **web and native live in separate repos**: the native shel
 | RN WebView transport               | ✅                                                  | manual               | ✅                                                         | ❌ (workers/iframes)                                   | N/A (owns the shell)                 |
 | Runtime validation at the boundary | ✅ optional per-action schemas                      | ❌                   | ❌                                                         | ❌                                                     | ❌                                   |
 | Contract export (JSON Schema)      | ✅ `webview-ts schema export`                       | —                    | ❌                                                         | ❌                                                     | ❌                                   |
+| Multi-WebView routing              | ✅ target / broadcast via `ConnectionRegistry`      | manual               | ❌                                                         | ❌                                                     | —                                    |
 | Scope                              | Typed transport layer                               | —                    | Transport + shared state                                   | Worker RPC                                             | Full app runtime                     |
 
 The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports `typeof appBridge`), so native code must exist before web types do. In webview-ts the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists. If your team co-locates everything in one repo and wants shared state out of the box, webview-bridge is a great choice; webview-ts optimizes for contract-first workflows.
@@ -49,8 +50,9 @@ One `definePlugin` call is the single source of truth. Payload and response type
 - **Axios-style Interceptors** &mdash; Transform requests and responses, globally or per-action.
 - **Lifecycle Events** &mdash; `onCall('call:start' | 'call:end' | 'call:error')` for logging, timing, and tracing.
 - **Fallback Mode** &mdash; Develop in the browser without a native app. Plugins ship their own mock handlers.
+- **Multi-WebView Routing** &mdash; one native host, many WebViews: target events to a specific WebView or broadcast to all.
 - **DevTools** &mdash; Zero-config real-time message inspector. Auto-connects in development.
-- **And more** &mdash; per-action timeout/retry/cache, multi-WebView event routing, Vue composables.
+- **And more** &mdash; per-action timeout/retry/cache, Vue composables.
 
 ## Architecture
 
@@ -256,6 +258,28 @@ npx @webview-ts/cli schema export ./src/plugins/index.ts -o ./schemas
 ```
 
 Exports each plugin to a versioned JSON Schema file — the machine-readable form of your contract, ready for codegen, docs, or cross-language validation. Export requires zod (v4); runtime validation works with any Standard Schema library.
+
+## Multi-WebView Routing
+
+Apps that keep several WebViews alive at once — tab bars, main view + modal, mini-app shells — hit the same question fast: _which WebView should receive this event?_ webview-ts answers it with a `ConnectionRegistry`: each WebView registers under its own `sourceId`, responses automatically route back to the WebView that sent the request, and the host can target or broadcast events:
+
+```tsx
+import { ConnectionRegistry, TARGET } from '@webview-ts/shared';
+import { useBridgeHost } from '@webview-ts/react-native';
+
+const registry = useMemo(() => new ConnectionRegistry(), []);
+
+const hostA = useBridgeHost({ name: 'webview-A', registry, config: { registry }, plugins });
+const hostB = useBridgeHost({ name: 'webview-B', registry, config: { registry }, plugins });
+
+// Target one WebView
+hostA.bridgeHost.sendEvent('cart.updated', payload, { target: hostB.sourceId });
+
+// Broadcast to every connected WebView
+hostA.bridgeHost.sendEvent('session.expired', payload, { target: TARGET.BROADCAST });
+```
+
+Routing is host-mediated: WebViews never talk to each other directly — the native host relays every message, which keeps a single audit point for all cross-WebView traffic (interceptors and `onCall` telemetry see everything). See [`examples/react-native`](./examples/react-native) for a runnable two-WebView demo.
 
 ## Interceptors
 
