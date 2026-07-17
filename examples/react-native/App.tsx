@@ -1,6 +1,6 @@
 import { useBridgeHost } from '@webview-ts/react-native';
 import { ConnectionRegistry, TARGET } from '@webview-ts/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -34,23 +34,12 @@ const PLUGINS = [
   validationDemoHost,
 ];
 
-type CallLog = {
-  id: string;
-  type: 'start' | 'end' | 'error';
-  action: string;
-  detail: string;
-  ts: number;
-};
-
 export default function App() {
   // Shared registry — one instance for both WebViews
   const registry = useMemo(() => new ConnectionRegistry(), []);
 
-  const [logs, setLogs] = useState<CallLog[]>([]);
-
-  const addLog = useCallback((entry: CallLog) => {
-    setLogs((prev) => [entry, ...prev].slice(0, 5));
-  }, []);
+  // Both WebViews stay mounted (bridge connections alive); tabs only toggle visibility
+  const [activeTab, setActiveTab] = useState<'A' | 'B'>('A');
 
   const hostA = useBridgeHost({
     registry,
@@ -66,56 +55,6 @@ export default function App() {
     plugins: PLUGINS,
     config: { registry },
   });
-
-  // Subscribe to onCall lifecycle events on both hosts.
-  // In production this is where you would ship telemetry to Datadog / Sentry.
-  useEffect(() => {
-    const unsubs = [
-      hostA.bridgeHost.onCall('call:start', (d) =>
-        addLog({ id: d.id, type: 'start', action: d.action, detail: 'A ▶', ts: d.timestamp })
-      ),
-      hostA.bridgeHost.onCall('call:end', (d) =>
-        addLog({
-          id: d.id,
-          type: 'end',
-          action: d.action,
-          detail: `A ✓ ${d.duration}ms`,
-          ts: Date.now(),
-        })
-      ),
-      hostA.bridgeHost.onCall('call:error', (d) =>
-        addLog({
-          id: d.id,
-          type: 'error',
-          action: d.action,
-          detail: `A ✗ ${d.error.message}`,
-          ts: Date.now(),
-        })
-      ),
-      hostB.bridgeHost.onCall('call:start', (d) =>
-        addLog({ id: d.id, type: 'start', action: d.action, detail: 'B ▶', ts: d.timestamp })
-      ),
-      hostB.bridgeHost.onCall('call:end', (d) =>
-        addLog({
-          id: d.id,
-          type: 'end',
-          action: d.action,
-          detail: `B ✓ ${d.duration}ms`,
-          ts: Date.now(),
-        })
-      ),
-      hostB.bridgeHost.onCall('call:error', (d) =>
-        addLog({
-          id: d.id,
-          type: 'error',
-          action: d.action,
-          detail: `B ✗ ${d.error.message}`,
-          ts: Date.now(),
-        })
-      ),
-    ];
-    return () => unsubs.forEach((u) => u());
-  }, [hostA.bridgeHost, hostB.bridgeHost, addLog]);
 
   // Each button sends a different AppStateStatus string so the /device page in each WebView
   // shows a clearly distinct value. Navigate both WebViews to /device to observe routing.
@@ -164,15 +103,24 @@ export default function App() {
         </Text>
       </View>
 
-      {/* Two WebViews split vertically */}
+      {/* Tab bar — both WebViews stay mounted below; tabs only switch which one is visible */}
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'A' && styles.tabActiveA]}
+          onPress={() => setActiveTab('A')}
+        >
+          <Text style={[styles.tabText, activeTab === 'A' && styles.tabTextActive]}>WebView A</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'B' && styles.tabActiveB]}
+          onPress={() => setActiveTab('B')}
+        >
+          <Text style={[styles.tabText, activeTab === 'B' && styles.tabTextActive]}>WebView B</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.webviewRow}>
-        <View style={styles.webviewPane}>
-          <View style={styles.clientHeader}>
-            <View style={styles.clientBadge}>
-              <Text style={styles.badgeText}>A</Text>
-            </View>
-            <Text style={styles.clientHeaderText}>WebView A</Text>
-          </View>
+        <View style={[styles.webviewPane, activeTab !== 'A' && styles.paneHidden]}>
           <WebView
             {...hostA.webViewProps}
             source={{ uri: WEB_APP_URL }}
@@ -183,13 +131,7 @@ export default function App() {
           />
         </View>
 
-        <View style={styles.webviewPane}>
-          <View style={styles.clientHeader}>
-            <View style={[styles.clientBadge, styles.clientBadgeB]}>
-              <Text style={styles.badgeText}>B</Text>
-            </View>
-            <Text style={styles.clientHeaderText}>WebView B</Text>
-          </View>
+        <View style={[styles.webviewPane, activeTab !== 'B' && styles.paneHidden]}>
           <WebView
             {...hostB.webViewProps}
             source={{ uri: WEB_APP_URL }}
@@ -199,24 +141,6 @@ export default function App() {
             domStorageEnabled
           />
         </View>
-      </View>
-
-      {/* Host-side call log — last 5 entries.
-          In production this is where you would forward telemetry to Datadog / Sentry. */}
-      <View style={styles.logPanel}>
-        <Text style={styles.logTitle}>Bridge call log (last 5)</Text>
-        {logs.length === 0 ? (
-          <Text style={styles.logEmpty}>No calls yet — interact with either WebView</Text>
-        ) : (
-          logs.map((log, i) => (
-            <Text
-              key={`${log.id}-${i}`}
-              style={[styles.logEntry, log.type === 'error' && styles.logError]}
-            >
-              {log.detail} · {log.action}
-            </Text>
-          ))
-        )}
       </View>
     </SafeAreaView>
   );
@@ -282,10 +206,35 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontStyle: 'italic',
   },
+  tabRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 6,
+    paddingBottom: 6,
+  },
+  tab: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  tabActiveA: {
+    backgroundColor: '#22c55e',
+  },
+  tabActiveB: {
+    backgroundColor: '#3b82f6',
+  },
+  tabText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
   webviewRow: {
     flex: 1,
-    flexDirection: 'column',
-    gap: 4,
   },
   webviewPane: {
     flex: 1,
@@ -293,57 +242,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  clientHeader: {
-    backgroundColor: '#e2e8f0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    gap: 8,
-  },
-  clientBadge: {
-    backgroundColor: '#22c55e',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  clientBadgeB: {
-    backgroundColor: '#3b82f6',
-  },
-  clientHeaderText: {
-    color: '#475569',
-    fontSize: 12,
-    fontWeight: '600',
+  paneHidden: {
+    display: 'none',
   },
   webview: {
     flex: 1,
-  },
-  logPanel: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 10,
-    padding: 8,
-    marginTop: 4,
-    minHeight: 80,
-  },
-  logTitle: {
-    color: '#cbd5e1',
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  logEmpty: {
-    color: '#94a3b8',
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
-  logEntry: {
-    color: '#e2e8f0',
-    fontSize: 11,
-    fontFamily: 'monospace',
-    lineHeight: 16,
-  },
-  logError: {
-    color: '#fca5a5',
   },
 });
