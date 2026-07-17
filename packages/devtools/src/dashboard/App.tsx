@@ -18,7 +18,9 @@ export function App() {
   const [tab, setTab] = useState<InspectorTab>('response');
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
   const [sourceFilter, setSourceFilter] = useState('');
+  const [inspectorWidth, setInspectorWidth] = useState(40);
   const wsRef = useRef<WebSocket | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   // ---- WebSocket connection ----
 
@@ -94,8 +96,8 @@ export function App() {
     const errs = all.filter((m) => m.status === 'error').length;
     const events = all.filter((m) => m.status === 'event').length;
     const successes = all.filter((m) => m.status === 'success').length;
-    const calls = total - events;
-    const rate = calls ? Math.round((successes / calls) * 100) : 0;
+    const completed = successes + errs;
+    const rate = completed ? Math.round((successes / completed) * 100) : 0;
     const durations = all.filter((m) => m.duration != null).map((m) => m.duration!);
     const avg = durations.length
       ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
@@ -128,6 +130,26 @@ export function App() {
     setTab('response');
   }, []);
 
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const onMove = (ev: MouseEvent) => {
+      const rect = bodyRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const pct = ((rect.right - ev.clientX) / rect.width) * 100;
+      setInspectorWidth(Math.min(80, Math.max(20, pct)));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
   const toggleEventExpand = useCallback((recordId: string) => {
     setExpandedEvents((prev) => {
       const next = new Set(prev);
@@ -152,14 +174,15 @@ export function App() {
         sourceFilter={sourceFilter}
         onSourceFilterChange={setSourceFilter}
       />
-      <div id="body">
+      <div id="body" ref={bodyRef}>
         <Timeline
           records={filtered}
           selectedId={selectedId}
           hasAnyRecords={records.size > 0}
           onSelect={handleSelect}
         />
-        <div id="inspector">
+        <div id="resizer" onMouseDown={startResize} />
+        <div id="inspector" style={{ width: `${inspectorWidth}%` }}>
           {!selected ? (
             <div className="empty">Select a message to inspect</div>
           ) : selected.status === 'event' ? (
