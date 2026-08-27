@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BridgeCallError, toBridgeErrorCode } from './errors';
+import { BridgeCallError, ERROR_CODE, toBridgeErrorCode } from './errors';
 
 describe('BridgeCallError', () => {
   it('should carry code and details', () => {
@@ -34,5 +34,18 @@ describe('toBridgeErrorCode', () => {
     expect(toBridgeErrorCode(null)).toBe('UNKNOWN_ERROR');
     expect(toBridgeErrorCode(undefined)).toBe('UNKNOWN_ERROR');
     expect(toBridgeErrorCode({})).toBe('UNKNOWN_ERROR');
+  });
+});
+
+describe('ERROR_CODE constant', () => {
+  it('every key maps to itself and validates as a known code', () => {
+    for (const [key, value] of Object.entries(ERROR_CODE)) {
+      expect(value).toBe(key);
+      expect(toBridgeErrorCode(value)).toBe(value);
+    }
+  });
+
+  it('unknown strings normalize to UNKNOWN_ERROR', () => {
+    expect(toBridgeErrorCode('nope')).toBe(ERROR_CODE.UNKNOWN_ERROR);
   });
 });

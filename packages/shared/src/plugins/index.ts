@@ -1,36 +1,54 @@
 export { definePlugin } from './define';
 export type {
+  PluginActionExecute,
+  PluginActionHandle,
+  PluginActionPayloadIn,
+  PluginActionResponse,
+  TypedEventSubscriber,
+  UsePluginResult,
+} from './handles';
+export type {
+  HostHandlerContext,
+  HostPluginResult,
+  HostSendEvent,
+  MergeHostPluginEvents,
+  RequestContext,
+  ShortHostHandlers,
+} from './host';
+export type {
+  ActionNameMap,
+  ActionSchemaEntry,
+  ActionSchemaMap,
+  AnyPlugin,
+  AnyPluginList,
+  CacheMap,
+  DefinePluginOptions,
+  EventNameMap,
+  EventSchemaMap,
+  ExpandActions,
+  ExpandEvents,
+  MergePluginActions,
+  MergePluginEvents,
+  PluginInstance,
+  RetryMap,
+  ShortFallbackHandlers,
+  TimeoutMap,
+} from './instance';
+export type {
   ActionMarker,
   ActionMarkerMap,
   ActionOptions,
-  ActionStatus,
-  AnyPlugin,
-  AnyPluginList,
-  DefinePluginOptions,
   EmptyEventMap,
   EventMarker,
   EventMarkerMap,
-  EventNameMap,
-  ExpandActions,
-  ExpandEvents,
   ExtractEventPayload,
   ExtractEventPayloadIn,
   ExtractPayload,
   ExtractPayloadIn,
   ExtractResponse,
   ExtractResponseIn,
-  HostHandlerContext,
-  HostPluginResult,
-  MergePluginActions,
-  MergePluginEvents,
-  PluginInstance,
-  RequestContext,
   SchemaFields,
-  ShortFallbackHandlers,
-  ShortHostHandlers,
-  TimeoutMap,
-  TypedEventSubscriber,
-} from './types';
-export { action, event } from './types';
+} from './markers';
+export { action, event } from './markers';
 export type { ValidationIssue, ValidationSide } from './validate';
 export { validateWithSchema } from './validate';

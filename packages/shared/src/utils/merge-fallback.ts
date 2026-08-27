@@ -1,4 +1,4 @@
-import type { AnyPlugin } from '../plugins/types';
+import type { AnyPlugin } from '../plugins/instance';
 import type { BridgeConfig, FallbackMap } from '../types/bridge';
 
 /**

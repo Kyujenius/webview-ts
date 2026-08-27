@@ -1,1 +1,7 @@
-export { type ActionState, ActionStateManager } from './ActionStateManager';
+export {
+  ActionCache,
+  type ActionState,
+  ActionStateManager,
+  type ActionStatus,
+  type CacheEntry,
+} from './ActionStateManager';

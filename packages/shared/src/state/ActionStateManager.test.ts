@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ActionStateManager } from './ActionStateManager';
+import { ActionCache, ActionStateManager } from './ActionStateManager';
 
 describe('ActionStateManager', () => {
   function makeManager(result: unknown = { ok: true }) {
@@ -129,7 +129,7 @@ describe('ActionStateManager', () => {
 describe('ActionStateManager cache', () => {
   it('returns cached result on second execute with same payload (cache: true)', async () => {
     const callFn = vi.fn().mockResolvedValue({ value: 1 });
-    const manager = new ActionStateManager(callFn, true);
+    const manager = new ActionStateManager(callFn, new ActionCache(Infinity));
 
     await manager.execute({ id: 1 });
     await manager.execute({ id: 1 });
@@ -152,7 +152,7 @@ describe('ActionStateManager cache', () => {
     const callFn = vi
       .fn()
       .mockImplementation((payload: { id: number }) => Promise.resolve({ value: payload.id }));
-    const manager = new ActionStateManager(callFn, true);
+    const manager = new ActionStateManager(callFn, new ActionCache(Infinity));
 
     await manager.execute({ id: 1 });
     await manager.execute({ id: 2 });
@@ -164,7 +164,7 @@ describe('ActionStateManager cache', () => {
 
   it('expires cache after TTL', async () => {
     const callFn = vi.fn().mockResolvedValue({ value: 1 });
-    const manager = new ActionStateManager(callFn, 50);
+    const manager = new ActionStateManager(callFn, new ActionCache(50));
 
     await manager.execute({ id: 1 });
     expect(callFn).toHaveBeenCalledTimes(1);
@@ -177,7 +177,7 @@ describe('ActionStateManager cache', () => {
 
   it('invalidateCache clears cache but keeps state', async () => {
     const callFn = vi.fn().mockResolvedValue({ value: 1 });
-    const manager = new ActionStateManager(callFn, true);
+    const manager = new ActionStateManager(callFn, new ActionCache(Infinity));
 
     await manager.execute({ id: 1 });
     expect(manager.getSnapshot().status).toBe('success');
@@ -194,7 +194,7 @@ describe('ActionStateManager cache', () => {
 
   it('reset clears both cache and state', async () => {
     const callFn = vi.fn().mockResolvedValue({ value: 1 });
-    const manager = new ActionStateManager(callFn, true);
+    const manager = new ActionStateManager(callFn, new ActionCache(Infinity));
 
     await manager.execute({ id: 1 });
     expect(manager.getSnapshot().status).toBe('success');
@@ -218,11 +218,71 @@ describe('ActionStateManager cache', () => {
 
   it('handles unstringifiable payload for cache key', async () => {
     const callFn = vi.fn().mockResolvedValue('ok');
-    const manager = new ActionStateManager(callFn, true);
+    const manager = new ActionStateManager(callFn, new ActionCache(Infinity));
     const circular: any = {};
     circular.self = circular;
     // Should not throw — falls back to '__unstringifiable__'
     await manager.execute(circular);
     expect(callFn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ActionStateManager latest-wins', () => {
+  it('a stale response must not overwrite a newer result', async () => {
+    const resolvers: Array<(v: { value: number }) => void> = [];
+    const callFn = vi.fn(
+      () => new Promise<{ value: number }>((resolve) => resolvers.push(resolve))
+    );
+    const manager = new ActionStateManager(callFn);
+
+    const first = manager.execute({ q: 'a' });
+    const second = manager.execute({ q: 'ab' });
+
+    // Resolve in REVERSE order: second (newer) first, then first (stale)
+    resolvers[1]({ value: 2 });
+    await second;
+    resolvers[0]({ value: 1 });
+    await first;
+
+    expect(manager.getSnapshot().data).toEqual({ value: 2 }); // newer wins
+  });
+
+  it('a completion arriving after reset() does not resurrect state', async () => {
+    let resolveCall!: (v: string) => void;
+    const manager = new ActionStateManager<string, void>(
+      () => new Promise<string>((r) => (resolveCall = r))
+    );
+
+    const pending = manager.execute(undefined);
+    manager.reset();
+    resolveCall('late');
+    await pending;
+
+    expect(manager.getSnapshot().status).toBe('idle');
+    expect(manager.getSnapshot().data).toBeNull();
+  });
+
+  it('a stale error does not clobber a newer success', async () => {
+    const rejecters: Array<(e: Error) => void> = [];
+    const resolvers: Array<(v: string) => void> = [];
+    const callFn = vi.fn(
+      () =>
+        new Promise<string>((resolve, reject) => {
+          resolvers.push(resolve);
+          rejecters.push(reject);
+        })
+    );
+    const manager = new ActionStateManager(callFn);
+
+    const first = manager.execute({ n: 1 }).catch(() => 'swallowed');
+    const second = manager.execute({ n: 2 });
+
+    resolvers[1]('fresh');
+    await second;
+    rejecters[0](new Error('stale failure'));
+    await first;
+
+    expect(manager.getSnapshot().status).toBe('success');
+    expect(manager.getSnapshot().data).toBe('fresh');
   });
 });

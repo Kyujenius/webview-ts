@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import { definePlugin } from './define';
-import { action, event } from './types';
+import { action, event } from './index';
 
 const mockRequestInterceptor = (label: string): RequestInterceptor => ({
   name: label,

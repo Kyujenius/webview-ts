@@ -1,26 +1,24 @@
 import type { FallbackMap, RetryConfig } from '../types/bridge';
 import type { RequestInterceptor, ResponseInterceptor } from '../types/interceptor';
 import type { StandardSchemaV1 } from '../types/standard-schema';
+import type { HostPluginResult, ShortHostHandlers } from './host';
 import type {
-  ActionMarkerMap,
   ActionNameMap,
   ActionSchemaMap,
   CacheMap,
   DefinePluginOptions,
-  EmptyEventMap,
-  EventMarkerMap,
   EventNameMap,
   EventSchemaMap,
   ExpandActions,
-  HostPluginResult,
+  ExpandEvents,
   PluginInstance,
   RequestInterceptorMap,
   ResponseInterceptorMap,
   RetryMap,
   ShortFallbackHandlers,
-  ShortHostHandlers,
   TimeoutMap,
-} from './types';
+} from './instance';
+import type { ActionMarkerMap, EmptyEventMap, EventMarkerMap } from './markers';
 import { validateWithSchema } from './validate';
 
 export function definePlugin<
@@ -135,7 +133,9 @@ export function definePlugin<
     eventSchemas,
     fallback: undefined,
 
-    host(handlers: ShortHostHandlers<TMarkers, TEvents>): HostPluginResult {
+    host(
+      handlers: ShortHostHandlers<TMarkers, TEvents>
+    ): HostPluginResult<ExpandEvents<TName, TEvents>> {
       const wrappedHandlers: Record<string, (payload: any, context: any) => Promise<any>> = {};
       for (const short of shortNames) {
         const fullName = `${name}.${short}`;

@@ -9,6 +9,15 @@ export interface ClientAdapter {
   /** Send message to native host */
   send(message: BridgeMessage): void;
 
+  /**
+   * Subscribe to raw messages from the native host. Returns an unsubscribe
+   * function. How messages arrive is transport-specific (e.g. window/document
+   * `message` events for React Native WebView) — the adapter owns that
+   * knowledge; BridgeClient only parses and dispatches what the callback
+   * delivers. Adapters with no inbound channel (disconnected) omit this.
+   */
+  onMessage?(callback: (raw: string) => void): () => void;
+
   /** Check if adapter is available */
   isAvailable(): boolean;
 

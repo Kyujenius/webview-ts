@@ -1,5 +1,7 @@
-import type { ActionStatus } from '../plugins/types';
 import type { BridgeCallOptions } from '../types/bridge';
+
+/** Lifecycle of one action's async state */
+export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 import { BridgeCallError } from '../types/errors';
 
 export interface ActionState<TData> {
@@ -9,9 +11,49 @@ export interface ActionState<TData> {
   isLoading: boolean;
 }
 
-interface CacheEntry<TData> {
+export interface CacheEntry<TData> {
   data: TData;
   timestamp: number;
+}
+
+/**
+ * Owns the cache for one action — TTL policy and entries in one place.
+ * Created by BridgeClient (one per action) and shared by every
+ * ActionStateManager of that action, so components caching the same action
+ * hit the cache instead of each calling native independently.
+ */
+export class ActionCache<TData = unknown> {
+  private readonly entries = new Map<string, CacheEntry<TData>>();
+
+  /** @param ttl - milliseconds; Infinity = cache forever */
+  constructor(readonly ttl: number) {}
+
+  /** Normalize the contract's cache option (`number` TTL | `true` forever) into a cache, or undefined when disabled. */
+  static from<TData = unknown>(
+    cache: number | boolean | undefined
+  ): ActionCache<TData> | undefined {
+    const ttl = cache === true ? Infinity : typeof cache === 'number' && cache > 0 ? cache : 0;
+    return ttl > 0 ? new ActionCache<TData>(ttl) : undefined;
+  }
+
+  get(key: string): CacheEntry<TData> | undefined {
+    const entry = this.entries.get(key);
+    if (!entry) return undefined;
+    if (this.ttl !== Infinity && Date.now() - entry.timestamp >= this.ttl) {
+      // Evict on access — expired entries must not accumulate for the client's lifetime
+      this.entries.delete(key);
+      return undefined;
+    }
+    return entry;
+  }
+
+  set(key: string, data: TData): void {
+    this.entries.set(key, { data, timestamp: Date.now() });
+  }
+
+  clear(): void {
+    this.entries.clear();
+  }
 }
 
 /**
@@ -30,15 +72,15 @@ export class ActionStateManager<TData, TPayload = unknown> {
   };
 
   private readonly listeners = new Set<() => void>();
-  private readonly cacheTtl: number; // 0 = disabled, Infinity = forever
-  private readonly cache = new Map<string, CacheEntry<TData>>();
+  /** Monotonic token — only the LATEST execute() may write state (stale
+   *  responses racing back out of order must not overwrite newer results). */
+  private latestExecution = 0;
 
   constructor(
     private readonly callFn: (payload: TPayload, options?: BridgeCallOptions) => Promise<TData>,
-    cache?: number | boolean
-  ) {
-    this.cacheTtl = cache === true ? Infinity : typeof cache === 'number' && cache > 0 ? cache : 0;
-  }
+    /** Shared per-action cache (owns TTL + entries). Omit to disable caching. */
+    private readonly cache?: ActionCache<TData>
+  ) {}
 
   /** Returns current state snapshot. Reference is stable — replaced only when state changes. */
   getSnapshot = (): ActionState<TData> => {
@@ -59,11 +101,12 @@ export class ActionStateManager<TData, TPayload = unknown> {
   };
 
   execute = async (payload: TPayload, options?: BridgeCallOptions): Promise<TData> => {
+    const token = ++this.latestExecution;
+
     // Check cache
-    if (this.cacheTtl > 0) {
-      const key = cacheKey(payload);
-      const entry = this.cache.get(key);
-      if (entry && (this.cacheTtl === Infinity || Date.now() - entry.timestamp < this.cacheTtl)) {
+    if (this.cache) {
+      const entry = this.cache.get(cacheKey(payload));
+      if (entry) {
         this.setState({ status: 'success', data: entry.data, error: null, isLoading: false });
         return entry.data;
       }
@@ -72,12 +115,13 @@ export class ActionStateManager<TData, TPayload = unknown> {
     this.setState({ status: 'loading', data: this.state.data, error: null, isLoading: true });
     try {
       const result = await this.callFn(payload, options);
-      this.setState({ status: 'success', data: result, error: null, isLoading: false });
-
-      // Store in cache
-      if (this.cacheTtl > 0) {
-        this.cache.set(cacheKey(payload), { data: result, timestamp: Date.now() });
+      // Latest-wins: a stale response must not overwrite a newer one's state.
+      // The caller still receives ITS result either way.
+      if (token === this.latestExecution) {
+        this.setState({ status: 'success', data: result, error: null, isLoading: false });
       }
+
+      this.cache?.set(cacheKey(payload), result);
 
       return result;
     } catch (err) {
@@ -85,20 +129,27 @@ export class ActionStateManager<TData, TPayload = unknown> {
         err instanceof BridgeCallError
           ? err
           : new BridgeCallError(err instanceof Error ? err.message : String(err), 'UNKNOWN_ERROR');
-      // preserve previous data on error (matches current useActionCore behavior)
-      this.setState({ status: 'error', data: this.state.data, error, isLoading: false });
+      if (token === this.latestExecution) {
+        // preserve previous data on error (matches current useActionCore behavior)
+        this.setState({ status: 'error', data: this.state.data, error, isLoading: false });
+      }
       throw error;
     }
   };
 
   reset = (): void => {
-    this.cache.clear();
+    // Invalidate in-flight executions too — a completion arriving after
+    // reset() must not resurrect the state it reset.
+    this.latestExecution++;
+    // Cache is shared per action — reset invalidates it for every component
+    // using this action ("cache until reset").
+    this.cache?.clear();
     this.setState({ status: 'idle', data: null, error: null, isLoading: false });
   };
 
-  /** Invalidate cached entries without resetting action state. */
+  /** Invalidate cached entries (for all managers of this action) without resetting state. */
   invalidateCache = (): void => {
-    this.cache.clear();
+    this.cache?.clear();
   };
 
   private setState(next: ActionState<TData>): void {

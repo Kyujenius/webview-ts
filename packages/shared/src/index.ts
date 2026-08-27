@@ -7,8 +7,8 @@
  */
 
 export * from './connection/index';
-export type { AutoDevToolsTarget } from './devtools/auto-devtools';
-export { tryAutoDevTools } from './devtools/auto-devtools';
+export type { AutoDevToolsTarget, DevToolsConnector } from './devtools/registry';
+export { connectDevToolsTarget, registerDevToolsConnector } from './devtools/registry';
 export * from './interceptor/index';
 export * from './plugins/index';
 export * from './schemas/index';
