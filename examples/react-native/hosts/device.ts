@@ -1,8 +1,8 @@
-import * as Device from 'expo-device';
-import { Platform, AppState } from 'react-native';
-import type { NativeEventSubscription } from 'react-native';
-import { device } from '@example/plugins';
 import type { AppStateStatus } from '@example/plugins';
+import { device } from '@example/plugins';
+import * as Device from 'expo-device';
+import type { NativeEventSubscription } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 let appStateSubscription: NativeEventSubscription | null = null;
 

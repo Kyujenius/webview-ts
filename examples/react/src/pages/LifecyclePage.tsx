@@ -54,7 +54,7 @@ export default function LifecyclePage() {
   };
 
   const handleTakePhoto = () => {
-    takePhoto.execute({ quality: 0.8, includeBase64: false }).catch(() => {});
+    takePhoto.execute({ quality: 0.8 }).catch(() => {});
   };
 
   const handleGetLocation = () => {

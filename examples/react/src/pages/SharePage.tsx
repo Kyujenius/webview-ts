@@ -10,7 +10,7 @@ function SharePage() {
   const { share: doShare } = usePlugin(share);
   const [title, setTitle] = useState('Check this out!');
   const [message, setMessage] = useState('Hello from webview-ts');
-  const [url, setUrl] = useState('https://github.com');
+  const [url, setUrl] = useState('https://github.com/Kyujenius/webview-ts');
 
   const handleShare = () =>
     doShare.execute({

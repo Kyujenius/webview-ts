@@ -1,5 +1,5 @@
-import * as ImagePicker from 'expo-image-picker';
 import { camera } from '@example/plugins';
+import * as ImagePicker from 'expo-image-picker';
 
 async function ensurePermission(
   request: () => Promise<{ status: ImagePicker.PermissionStatus }>,

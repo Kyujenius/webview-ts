@@ -1,5 +1,5 @@
-import { Share as RNShare } from 'react-native';
 import { share } from '@example/plugins';
+import { Share as RNShare } from 'react-native';
 
 export const shareHost = share.host({
   share: async (payload) => {

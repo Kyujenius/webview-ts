@@ -243,7 +243,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   paneHidden: {
-    display: 'none',
+    // NOT display:'none' — Android can tear down a display:none WebView
+    // surface (blank/reload, dropping bridge state). Off-screen + invisible
+    // keeps both WebViews alive across tab switches.
+    position: 'absolute',
+    left: -10000,
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
   webview: {
     flex: 1,

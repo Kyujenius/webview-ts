@@ -1,5 +1,5 @@
-import * as Location from 'expo-location';
 import { location } from '@example/plugins';
+import * as Location from 'expo-location';
 
 let watchSubscription: Location.LocationSubscription | null = null;
 

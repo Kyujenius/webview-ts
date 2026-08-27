@@ -10,7 +10,7 @@ const { share: doShare } = usePlugin(share);
 
 const title = ref('Check this out!');
 const message = ref('Hello from webview-ts');
-const url = ref('https://github.com');
+const url = ref('https://github.com/Kyujenius/webview-ts');
 </script>
 
 <template>
@@ -24,11 +24,17 @@ const url = ref('https://github.com');
         <input v-model="message" type="text" placeholder="Message" class="input" />
         <input v-model="url" type="text" placeholder="URL" class="input" />
       </div>
-      <button @click="doShare.execute({
-        title: title || undefined,
-        message: message || undefined,
-        url: url || undefined,
-      })">Share</button>
+      <button
+        @click="
+          doShare.execute({
+            title: title || undefined,
+            message: message || undefined,
+            url: url || undefined,
+          })
+        "
+      >
+        Share
+      </button>
       <div v-if="doShare.data.value" class="result" style="margin-top: 1rem">
         {{ doShare.data.value.shared ? 'Shared successfully!' : 'Share was cancelled' }}
       </div>

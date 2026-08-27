@@ -6,6 +6,11 @@ import { createRouter, createWebHistory } from 'vue-router';
 import App from './App.vue';
 import { bridge } from './bridge';
 
+// DevTools recorder — dev only, registers itself on import
+if (import.meta.env.DEV) {
+  import('@webview-ts/devtools/client');
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [

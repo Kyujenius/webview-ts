@@ -13,8 +13,9 @@
   "dependencies": {
     "@example/plugins": "workspace:*",
     "@webview-ts/core": "workspace:*",
-    "@webview-ts/vue": "workspace:*",
+    "@webview-ts/devtools": "workspace:*",
     "@webview-ts/shared": "workspace:*",
+    "@webview-ts/vue": "workspace:*",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },

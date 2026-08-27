@@ -1,5 +1,5 @@
-import * as LocalAuthentication from 'expo-local-authentication';
 import { biometric } from '@example/plugins';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export const biometricHost = biometric.host({
   checkAvailability: async () => {

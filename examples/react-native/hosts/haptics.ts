@@ -1,5 +1,5 @@
-import * as Haptics from 'expo-haptics';
 import { haptics } from '@example/plugins';
+import * as Haptics from 'expo-haptics';
 
 const impactStyles: Record<string, Haptics.ImpactFeedbackStyle> = {
   light: Haptics.ImpactFeedbackStyle.Light,

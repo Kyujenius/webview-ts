@@ -9,10 +9,16 @@ import ErrorMessage from '../components/ErrorMessage.vue';
 const { connectionMode } = useBridge();
 const { addEvent, getEvents } = usePlugin(calendar);
 
-const title = ref('');
-const startDate = ref('');
-const endDate = ref('');
-const notes = ref('');
+// datetime-local input expects "YYYY-MM-DDTHH:mm" in local time
+const toLocalInput = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const title = ref('Star webview-ts on GitHub ⭐');
+const startDate = ref(toLocalInput(new Date(Date.now() + 60 * 60 * 1000)));
+const endDate = ref(toLocalInput(new Date(Date.now() + 2 * 60 * 60 * 1000)));
+const notes = ref('Typed postMessage — no more raw strings');
 
 const handleAdd = async () => {
   const res = await addEvent.execute({
@@ -53,15 +59,20 @@ const error = computed(() => addEvent.error.value ?? getEvents.error.value);
           Add to Calendar
         </button>
       </div>
-      <div v-if="addEvent.data.value" class="result success">Event created (id: {{ addEvent.data.value.id }})</div>
+      <div v-if="addEvent.data.value" class="result success">
+        Event created (id: {{ addEvent.data.value.id }})
+      </div>
     </div>
     <div class="card">
       <h2>This Month</h2>
       <button class="button button-secondary" @click="handleGetEvents">Load Events</button>
       <div v-if="events.length > 0" style="margin-top: 8px">
         <div v-for="evt in events" :key="evt.id" class="result" style="margin-bottom: 4px">
-          <strong>{{ evt.title }}</strong><br />
-          <span style="font-size: 11px; color: #666">{{ new Date(evt.startDate).toLocaleString() }}</span>
+          <strong>{{ evt.title }}</strong
+          ><br />
+          <span style="font-size: 11px; color: #666">{{
+            new Date(evt.startDate).toLocaleString()
+          }}</span>
         </div>
       </div>
     </div>

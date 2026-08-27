@@ -66,7 +66,7 @@ function handleHapticsImpact() {
 }
 
 function handleTakePhoto() {
-  takePhoto.execute({ quality: 0.8, includeBase64: false }).catch(() => {});
+  takePhoto.execute({ quality: 0.8 }).catch(() => {});
 }
 
 function handleGetLocation() {
@@ -78,9 +78,9 @@ function handleGetLocation() {
   <div>
     <h1>Call Lifecycle</h1>
     <p class="description">
-      Subscribes to <code>call:start</code>, <code>call:end</code>, and <code>call:error</code>
-      events via <code>bridge.onCall()</code>. Every bridge call—from any plugin—appears in the log
-      below in real time.
+      Subscribes to <code>call:start</code>, <code>call:end</code>, and
+      <code>call:error</code> events via <code>bridge.onCall()</code>. Every bridge call—from any
+      plugin—appears in the log below in real time.
     </p>
 
     <div class="card">
@@ -106,11 +106,7 @@ function handleGetLocation() {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="entry in logs"
-            :key="entry.id"
-            style="border-bottom: 1px solid #f3f4f6"
-          >
+          <tr v-for="entry in logs" :key="entry.id" style="border-bottom: 1px solid #f3f4f6">
             <td style="padding: 4px 8px; font-family: monospace">{{ entry.action }}</td>
             <td :style="{ padding: '4px 8px', color: statusColor(entry.status) }">
               {{ statusLabel(entry.status) }}
@@ -125,7 +121,8 @@ function handleGetLocation() {
 
     <div class="card">
       <h2>Code</h2>
-      <pre style="font-size: 11px">const { bridge } = useBridge();
+      <pre style="font-size: 11px">
+const { bridge } = useBridge();
 let unsubStart, unsubEnd, unsubError;
 
 onMounted(() => {
@@ -144,7 +141,8 @@ onUnmounted(() => {
   unsubStart?.();
   unsubEnd?.();
   unsubError?.();
-});</pre>
+});</pre
+      >
     </div>
   </div>
 </template>

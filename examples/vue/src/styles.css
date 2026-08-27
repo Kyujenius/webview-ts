@@ -4,7 +4,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
   font-family:
@@ -67,14 +68,30 @@ html, body {
 }
 
 /* Tab icons */
-.nav a[href="/"]::before { content: "🏠"; }
-.nav a[href="/camera"]::before { content: "📷"; }
-.nav a[href="/location"]::before { content: "📍"; }
-.nav a[href="/biometric"]::before { content: "🔐"; }
-.nav a[href="/phone"]::before { content: "📞"; }
-.nav a[href="/calendar"]::before { content: "📅"; }
-.nav a[href="/device"]::before { content: "📱"; }
-.nav a[href="/share"]::before { content: "📤"; }
+.nav a[href='/']::before {
+  content: '🏠';
+}
+.nav a[href='/camera']::before {
+  content: '📷';
+}
+.nav a[href='/location']::before {
+  content: '📍';
+}
+.nav a[href='/biometric']::before {
+  content: '🔐';
+}
+.nav a[href='/phone']::before {
+  content: '📞';
+}
+.nav a[href='/calendar']::before {
+  content: '📅';
+}
+.nav a[href='/device']::before {
+  content: '📱';
+}
+.nav a[href='/share']::before {
+  content: '📤';
+}
 
 .nav a:hover,
 .nav a.router-link-exact-active {
@@ -86,7 +103,7 @@ html, body {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: calc(170px + env(safe-area-inset-bottom));
 }
 
 .card {
@@ -324,7 +341,7 @@ h3 {
   color: #555;
 }
 
-.compare-table td:nth-child(n+2) {
+.compare-table td:nth-child(n + 2) {
   font-family: monospace;
   font-size: 0.8rem;
 }

@@ -1,6 +1,6 @@
+import { calendar } from '@example/plugins';
 import * as ExpoCalendar from 'expo-calendar';
 import { Platform } from 'react-native';
-import { calendar } from '@example/plugins';
 
 async function ensureCalendarPermission(): Promise<void> {
   const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();

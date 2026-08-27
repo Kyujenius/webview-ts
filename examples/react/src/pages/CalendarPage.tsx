@@ -5,13 +5,23 @@ import { useBridge, usePlugin } from '../bridge';
 import ActionError from '../components/ActionError';
 import ModeBadge from '../components/ModeBadge';
 
+// datetime-local input expects "YYYY-MM-DDTHH:mm" in local time
+function toLocalInput(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function CalendarPage() {
   const { connectionMode } = useBridge();
   const { addEvent, getEvents } = usePlugin(calendar);
-  const [title, setTitle] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [notes, setNotes] = useState('');
+  const [title, setTitle] = useState('Star webview-ts on GitHub ⭐');
+  const [startDate, setStartDate] = useState(() =>
+    toLocalInput(new Date(Date.now() + 60 * 60 * 1000))
+  );
+  const [endDate, setEndDate] = useState(() =>
+    toLocalInput(new Date(Date.now() + 2 * 60 * 60 * 1000))
+  );
+  const [notes, setNotes] = useState('Typed postMessage — no more raw strings');
 
   const handleAdd = async () => {
     const res = await addEvent.execute({
