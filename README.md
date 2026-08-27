@@ -51,7 +51,7 @@ One `definePlugin` call is the single source of truth. Payload and response type
 - **Lifecycle Events** &mdash; `onCall('call:start' | 'call:end' | 'call:error')` for logging, timing, and tracing.
 - **Fallback Mode** &mdash; Develop in the browser without a native app. Plugins ship their own mock handlers.
 - **Multi-WebView Routing** &mdash; one native host, many WebViews: target events to a specific WebView or broadcast to all.
-- **DevTools** &mdash; Zero-config real-time message inspector. Auto-connects in development.
+- **DevTools** &mdash; Real-time message inspector. One dev-only import, zero production footprint.
 - **And more** &mdash; per-action timeout/retry/cache, Vue composables.
 
 ## Architecture
@@ -77,15 +77,11 @@ graph TB
         C_Adapter["Adapters\nRN WebView · Fallback · Disconnected"]
     end
 
-    subgraph clients["Framework Clients"]
+    subgraph frameworks["Frameworks — platform packages, every applicable role"]
         direction TB
-        F_React["@webview-ts/react\ncreateBridgeReact()\nProvider + hooks"]
-        F_Vue["@webview-ts/vue\ncreateBridgeVue()\nPlugin + composables"]
-    end
-
-    subgraph hosts["Native Hosts"]
-        direction TB
-        H_RN["@webview-ts/react-native\nuseBridgeHost()\nReactNativeHostAdapter"]
+        F_React["@webview-ts/react\nclient: createBridgeReact()\nhost: useBridgeHost()"]
+        F_Vue["@webview-ts/vue\nclient: createBridgeVue()\nhost: useBridgeHost()"]
+        F_RN["@webview-ts/react-native\nhost: useBridgeHost()\nReactNativeHostAdapter"]
     end
 
     subgraph devtools["@webview-ts/devtools"]
@@ -96,8 +92,7 @@ graph TB
 
     shared --> core
     shared --> devtools
-    core --> clients
-    core --> hosts
+    core --> frameworks
 
     C_Client -. "postMessage\n(JSON string)" .-> C_Host
     C_Host -. "postMessage\n(JSON string)" .-> C_Client
@@ -205,29 +200,33 @@ function WebViewScreen() {
 
 ## Packages
 
-| Package                    | Description                                                                       |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| `@webview-ts/shared`       | Types, plugin system, interceptor chain, action state, schemas (zero deps)        |
-| `@webview-ts/core`         | BridgeClient + BridgeHost engine                                                  |
-| `@webview-ts/react`        | React hooks &mdash; `createBridgeReact()`, `usePlugin`, `useAction`, `useEvent`   |
-| `@webview-ts/vue`          | Vue composables &mdash; `createBridgeVue()`, `usePlugin`, `useAction`, `useEvent` |
-| `@webview-ts/react-native` | React Native host &mdash; `useBridgeHost()`, `ReactNativeHostAdapter`             |
-| `@webview-ts/devtools`     | Real-time message inspector dashboard                                             |
-| `@webview-ts/cli`          | Contract-to-JSON-Schema export CLI                                                |
+| Package                    | Description                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `@webview-ts/shared`       | Types, plugin system, interceptor chain, action state, schemas (zero deps)              |
+| `@webview-ts/core`         | BridgeClient + BridgeHost engine                                                        |
+| `@webview-ts/react`        | React — client (`createBridgeReact()`, `usePlugin`, …) **and** host (`useBridgeHost()`) |
+| `@webview-ts/vue`          | Vue — client (`createBridgeVue()`, `usePlugin`, …) **and** host (`useBridgeHost()`)     |
+| `@webview-ts/react-native` | React Native — host (`useBridgeHost()`, `ReactNativeHostAdapter`)                       |
+| `@webview-ts/devtools`     | Real-time message inspector dashboard                                                   |
+| `@webview-ts/cli`          | Contract-to-JSON-Schema export CLI                                                      |
 
 ## Platform Support
 
-| Side          | Platform                               | Package                    | Status                                              |
-| ------------- | -------------------------------------- | -------------------------- | --------------------------------------------------- |
-| Web (client)  | React                                  | `@webview-ts/react`        | ✅ Supported                                        |
-| Web (client)  | Vue 3                                  | `@webview-ts/vue`          | ✅ Supported                                        |
-| Web (client)  | Browser without native (fallback mode) | `@webview-ts/core`         | ✅ Supported                                        |
-| Native (host) | React Native WebView                   | `@webview-ts/react-native` | ✅ Supported                                        |
-| Native (host) | iOS / Android (native SDKs)            | —                          | Contract spec available — SDK contributions welcome |
+webview-ts targets **TypeScript hosts**: any environment where a JS runtime embeds web content and can pass strings both ways.
 
-There is no official iOS/Android SDK today, and none is promised. What exists is the **extension seam**: `webview-ts schema export` turns your contract into versioned JSON Schema files (`{ "webviewTs": { "specVersion": 1 } }`), so a Swift/Kotlin SDK can generate typed handlers from the same source of truth. If you want to build one, open an issue — the spec is stable.
+Roles are not tied to platforms. **The web is always both**: a web page is a client when something embeds it (a WebView, an iframe) and a host when it embeds others (an iframe shell) — and a page in the middle of a nesting is both at once. Packages are named by platform and export every role that platform supports:
 
-New platforms only need to implement the `ClientAdapter` (web side) or `HostAdapter` (native side) interface from `@webview-ts/shared` &mdash; core stays untouched.
+| Platform              | Client                      | Host                                | Package / Example                                           |
+| --------------------- | --------------------------- | ----------------------------------- | ----------------------------------------------------------- |
+| React (web)           | ✅ `createBridgeReact()`    | ✅ `useBridgeHost()` (iframe shell) | `@webview-ts/react`                                         |
+| Vue 3 (web)           | ✅ `createBridgeVue()`      | ✅ `useBridgeHost()` (iframe shell) | `@webview-ts/vue`                                           |
+| Vanilla web           | ✅ `BridgeClient` + adapter | ✅ `createBridgeHost()` + adapter   | `@webview-ts/core` ([`examples/iframe`](./examples/iframe)) |
+| React Native          | —                           | ✅ `useBridgeHost()`                | `@webview-ts/react-native`                                  |
+| NativeScript, Lynx, … | adapter pair per platform   | adapter pair per platform           | Seam ready — contributions welcome                          |
+
+Native Swift/Kotlin SDKs are **not** a target: environments without a JS host are served by the contract instead — `webview-ts schema export` turns your plugins into versioned JSON Schema files (`{ "webviewTs": { "specVersion": 1 } }`) for cross-language codegen and docs.
+
+A new platform is exactly one adapter pair: implement `ClientAdapter` (injected via `BridgeConfig.adapter`) and `HostAdapter` (injected via `createBridgeHost({ adapter })`) &mdash; core stays untouched. The built-in iframe adapters (~40 lines each) are the reference.
 
 ## Schema Validation (optional)
 
@@ -279,7 +278,7 @@ hostA.bridgeHost.sendEvent('cart.updated', payload, { target: hostB.sourceId });
 hostA.bridgeHost.sendEvent('session.expired', payload, { target: TARGET.BROADCAST });
 ```
 
-Routing is host-mediated: WebViews never talk to each other directly — the native host relays every message, which keeps a single audit point for all cross-WebView traffic (interceptors and `onCall` telemetry see everything). See [`examples/react-native`](./examples/react-native) for a runnable two-WebView demo.
+Routing is host-mediated: WebViews never talk to each other directly — the native host relays every message, which keeps a single audit point for all cross-WebView traffic (interceptors and `onCall` telemetry see everything). See [`examples/react-native`](./examples/react-native) for a two-WebView demo, or [`examples/iframe`](./examples/iframe) for the same routing between two iframes — no native code involved.
 
 ## Interceptors
 
@@ -332,14 +331,21 @@ The same `onCall` API exists on `BridgeHost` (native side), where the events wra
 
 <!-- TODO: screenshot of DevTools dashboard -->
 
-Zero-config real-time message inspector. Auto-connects to `ws://localhost:4000` in development.
+Real-time message inspector. One import in your dev entry, then run the server:
+
+```typescript
+// main.tsx — dev only; registers the recorder and auto-connects to ws://localhost:4000
+if (import.meta.env.DEV) {
+  import('@webview-ts/devtools/client');
+}
+```
 
 ```bash
 # Start the DevTools server
 pnpm devtools
 ```
 
-All bridge traffic (requests, responses, events, and call timings) is captured and displayed in a web dashboard. No code changes needed &mdash; just run the server.
+All bridge traffic (requests, responses, events, and call timings) is captured and displayed in a web dashboard. The recorder lives in a separate package &mdash; production bundles never carry the DevTools runtime.
 
 ## Development
 
