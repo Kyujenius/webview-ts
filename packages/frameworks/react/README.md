@@ -10,7 +10,7 @@ React hooks and provider for the [@webview-ts](https://github.com/Kyujenius/webv
 npm install @webview-ts/react
 ```
 
-**Peer dependencies:** `react >=17.0.0`
+**Peer dependencies:** `react >=18.0.0`
 
 **Dependencies:** `@webview-ts/core`, `@webview-ts/shared`
 
