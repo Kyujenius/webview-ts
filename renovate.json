@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(chore)"],
+  "labels": ["dependencies"],
+  "timezone": "Asia/Seoul",
+  "schedule": ["before 9am on monday"],
+  "packageRules": [
+    {
+      "description": "Expo SDK 54 alignment — these versions are pinned on purpose",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom",
+        "react-native",
+        "react-native-webview",
+        "expo",
+        "expo-status-bar"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Group non-major dev dependency bumps into one PR",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)"
+    },
+    {
+      "description": "Never narrow published peer dependency ranges",
+      "matchDepTypes": ["peerDependencies"],
+      "rangeStrategy": "widen"
+    }
+  ]
+}
