@@ -28,6 +28,12 @@ jobs:
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-release-${{ github.sha }}
+          restore-keys: turbo-release-
+
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm build
