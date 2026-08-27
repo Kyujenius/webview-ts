@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>webview-ts · iframe shell</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="shell-header">
+      <h1>Shell <span class="sub">(parent page = host, no native code)</span></h1>
+      <div class="controls">
+        <button id="broadcast">Broadcast theme toggle</button>
+        <button id="ping-b">Ping frame-B only</button>
+      </div>
+    </header>
+    <main class="frames">
+      <iframe id="frame-A" src="/child.html?name=frame-A" title="embedded frame A"></iframe>
+      <iframe id="frame-B" src="/child.html?name=frame-B" title="embedded frame B"></iframe>
+    </main>
+    <pre id="log" class="log"></pre>
+    <div id="toast" class="toast"></div>
+    <script type="module" src="/src/parent.ts"></script>
+  </body>
+</html>

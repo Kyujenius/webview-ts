@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>webview-ts · embedded frame</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="child">
+    <header class="child-header">
+      <h2 id="title">frame</h2>
+      <span id="mode" class="badge">…</span>
+    </header>
+    <div class="controls">
+      <button id="who">shell.getUser</button>
+      <button id="toast">shell.showToast</button>
+    </div>
+    <p id="user" class="user">—</p>
+    <pre id="log" class="log"></pre>
+    <script type="module" src="/src/child.ts"></script>
+  </body>
+</html>

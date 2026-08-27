@@ -1,0 +1,22 @@
+{
+  "name": "@example/iframe",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Iframe embed example: parent page as host, iframes as clients — no native code involved",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5177",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@webview-ts/core": "workspace:*",
+    "@webview-ts/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
