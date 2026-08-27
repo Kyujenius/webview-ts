@@ -20,19 +20,19 @@ Built for teams where **web and native live in separate repos**: the native shel
 
 ## How is this different?
 
-|                                    | webview-ts                                          | Manual `postMessage` | [webview-bridge](https://github.com/gronxb/webview-bridge) | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
-| ---------------------------------- | --------------------------------------------------- | -------------------- | ---------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
-| Type safety                        | ✅ contract-first                                   | ❌ strings           | ✅ native-first                                            | ✅ proxy-based                                         | ✅ plugin API                        |
-| Source of truth                    | Neutral plugin file — both sides compile against it | —                    | Native bridge object — web imports its `typeof`            | Exposed object                                         | Plugin definition                    |
-| Browser-only dev                   | ✅ per-plugin fallback mocks                        | ❌                   | Partial                                                    | ❌                                                     | ✅ (web impl)                        |
-| Per-action timeout/retry/cache     | ✅ declared in the contract                         | ❌                   | ❌                                                         | ❌                                                     | ❌                                   |
-| RN WebView transport               | ✅                                                  | manual               | ✅                                                         | ❌ (workers/iframes)                                   | N/A (owns the shell)                 |
-| Runtime validation at the boundary | ✅ optional per-action schemas                      | ❌                   | ❌                                                         | ❌                                                     | ❌                                   |
-| Contract export (JSON Schema)      | ✅ `webview-ts schema export`                       | —                    | ❌                                                         | ❌                                                     | ❌                                   |
-| Multi-WebView routing              | ✅ target / broadcast via `ConnectionRegistry`      | manual               | ❌                                                         | ❌                                                     | —                                    |
-| Scope                              | Typed transport layer                               | —                    | Transport + shared state                                   | Worker RPC                                             | Full app runtime                     |
+|                                    | webview-ts                                          | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
+| ---------------------------------- | --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
+| Type safety                        | ✅ contract-first                                   | ✅ proxy-based                                         | ✅ plugin API                        |
+| Source of truth                    | Neutral plugin file — both sides compile against it | Exposed object                                         | Plugin definition                    |
+| Browser-only dev                   | ✅ per-plugin fallback mocks                        | ❌                                                     | ✅ (web impl)                        |
+| Per-action timeout/retry/cache     | ✅ declared in the contract                         | ❌                                                     | ❌                                   |
+| RN WebView transport               | ✅                                                  | ❌ (workers/iframes)                                   | N/A (owns the shell)                 |
+| Runtime validation at the boundary | ✅ optional per-action schemas                      | ❌                                                     | ❌                                   |
+| Contract export (JSON Schema)      | ✅ `webview-ts schema export`                       | ❌                                                     | ❌                                   |
+| Multi-WebView routing              | ✅ target / broadcast via `ConnectionRegistry`      | ❌                                                     | —                                    |
+| Scope                              | Typed transport layer                               | Worker RPC                                             | Full app runtime                     |
 
-The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports `typeof appBridge`), so native code must exist before web types do. In webview-ts the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists. If your team co-locates everything in one repo and wants shared state out of the box, webview-bridge is a great choice; webview-ts optimizes for contract-first workflows.
+The defining choice: the **contract file is the source of truth** — web and native compile against it independently, which fits teams shipping web and native from separate repos, and lets web development start (with fallback mocks) before any native code exists.
 
 webview-ts is deliberately **not** a Capacitor alternative: it doesn't ship native capabilities (camera, permissions) — it types and structures the transport between _your_ web app and _your_ native app.
 

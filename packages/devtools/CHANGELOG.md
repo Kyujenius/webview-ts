@@ -1,7 +1,7 @@
 # @webview-ts/devtools
 
-## 1.0.0
+## 0.1.0
 
-### Major Changes
+### Minor Changes
 
-- 54bbaf8: v1.0.0 — contract-first typed bridge with optional Standard Schema validation at receiving boundaries, JSON Schema contract export CLI, interceptors, lifecycle events, fallback mode, and DevTools.
+- Initial public release: contract-first, type-safe WebView bridge for TypeScript host ecosystems (React Native, iframe, custom adapters) with schema validation, retry/cache/abort, multi-webview routing, and devtools.

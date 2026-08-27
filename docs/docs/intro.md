@@ -43,17 +43,17 @@ Native Swift/Kotlin shells are _not_ a target. Environments without a JS host ar
 
 ## How it compares
 
-|                                    | webview-ts                     | Manual `postMessage` | webview-bridge       | Comlink        |
-| ---------------------------------- | ------------------------------ | -------------------- | -------------------- | -------------- |
-| Type safety                        | ✅ contract-first              | ❌ strings           | ✅ native-first      | ✅ proxy-based |
-| Source of truth                    | Neutral plugin file            | —                    | Native bridge object | Exposed object |
-| Browser-only dev                   | ✅ per-plugin fallback mocks   | ❌                   | Partial              | ❌             |
-| Per-action timeout/retry/cache     | ✅ declared in the contract    | ❌                   | ❌                   | ❌             |
-| Runtime validation at the boundary | ✅ optional per-action schemas | ❌                   | ❌                   | ❌             |
-| Multi-WebView routing              | ✅ target / broadcast          | manual               | ❌                   | ❌             |
-| Scope                              | Typed transport layer          | —                    | Transport + state    | Worker RPC     |
+|                                    | webview-ts                     | Comlink        | Capacitor         |
+| ---------------------------------- | ------------------------------ | -------------- | ----------------- |
+| Type safety                        | ✅ contract-first              | ✅ proxy-based | ✅ plugin API     |
+| Source of truth                    | Neutral plugin file            | Exposed object | Plugin definition |
+| Browser-only dev                   | ✅ per-plugin fallback mocks   | ❌             | ✅ (web impl)     |
+| Per-action timeout/retry/cache     | ✅ declared in the contract    | ❌             | ❌                |
+| Runtime validation at the boundary | ✅ optional per-action schemas | ❌             | ❌                |
+| Multi-WebView routing              | ✅ target / broadcast          | ❌             | —                 |
+| Scope                              | Typed transport layer          | Worker RPC     | Full app runtime  |
 
-The key design difference from webview-bridge: there the **native implementation is the source of truth** (web imports its `typeof`), so host code must exist before web types do. In webview-ts the **contract file is the source of truth** — both sides compile against it independently, and web development starts with fallback mocks before any host code exists.
+The defining choice: the **contract file is the source of truth** — both sides compile against it independently, and web development starts with fallback mocks before any host code exists.
 
 ## Design principles
 
