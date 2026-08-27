@@ -9,7 +9,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@webview-ts/react-native': path.resolve(__dirname, '../packages/hosts/react-native/src'),
+      '@webview-ts/react-native': path.resolve(
+        __dirname,
+        '../packages/frameworks/react-native/src'
+      ),
       '@webview-ts/core': path.resolve(__dirname, '../packages/core/src'),
       '@webview-ts/shared': path.resolve(__dirname, '../packages/shared/src'),
       'react-native': path.resolve(__dirname, './__mocks__/react-native.ts'),

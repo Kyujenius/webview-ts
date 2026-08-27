@@ -15,7 +15,7 @@
     "test:coverage": "turbo run test:coverage",
     "test:watch": "turbo run test:watch",
     "lint": "turbo run lint",
-    "lint:fix": "eslint --fix 'packages/**/src/**/*.{ts,tsx}' 'examples/**/src/**/*.{ts,tsx}' 'tests/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/**/src/**/*.{ts,tsx}' 'examples/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -24,7 +24,11 @@
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "devtools": "node packages/devtools/dist/cli.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docs": "pnpm --filter @webview-ts/docs start",
+    "docs:ko": "pnpm --filter @webview-ts/docs start --locale ko",
+    "docs:build": "pnpm --filter @webview-ts/docs build",
+    "docs:serve": "pnpm --filter @webview-ts/docs build && pnpm --filter @webview-ts/docs serve"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
@@ -51,7 +55,10 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md}": [
+    "*.vue": [
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
       "prettier --write"
     ]
   },

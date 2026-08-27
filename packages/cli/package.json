@@ -41,7 +41,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@webview-ts/shared": "workspace:*",
+    "@webview-ts/shared": "workspace:^",
     "jiti": "catalog:",
     "zod": "catalog:"
   },

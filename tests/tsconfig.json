@@ -6,7 +6,7 @@
     "noUnusedParameters": false,
     "types": ["vitest/globals"],
     "paths": {
-      "@webview-ts/react-native": ["../packages/hosts/react-native/src"],
+      "@webview-ts/react-native": ["../packages/frameworks/react-native/src"],
       "@webview-ts/core": ["../packages/core/src"],
       "@webview-ts/shared": ["../packages/shared/src"],
       "react-native": ["./__mocks__/react-native"],
