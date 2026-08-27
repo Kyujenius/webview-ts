@@ -42,7 +42,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@webview-ts/shared": "workspace:*"
+    "@webview-ts/shared": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "catalog:",

@@ -12,6 +12,8 @@ interface CallbackEntry {
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
   timeoutId?: ReturnType<typeof setTimeout>;
+  /** Detach the AbortSignal listener when the entry settles */
+  abortCleanup?: () => void;
   timestamp: number;
 }
 
@@ -28,7 +30,8 @@ export class CallbackRegistry {
     messageId: string,
     resolve: (value: unknown) => void,
     reject: (error: Error) => void,
-    timeout?: number
+    timeout?: number,
+    signal?: AbortSignal
   ): void {
     const entry: CallbackEntry = {
       resolve,
@@ -42,6 +45,16 @@ export class CallbackRegistry {
         this.remove(messageId);
         reject(new BridgeCallError(`Bridge call timeout after ${timeout}ms`, 'TIMEOUT'));
       }, timeout);
+    }
+
+    // Abort rejects the wait and cleans the entry — host work is not cancelled
+    if (signal) {
+      const onAbort = () => {
+        this.remove(messageId);
+        reject(new BridgeCallError('Call aborted', 'ABORTED'));
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
+      entry.abortCleanup = () => signal.removeEventListener('abort', onAbort);
     }
 
     this.callbacks.set(messageId, entry);
@@ -61,6 +74,7 @@ export class CallbackRegistry {
     if (entry.timeoutId) {
       clearTimeout(entry.timeoutId);
     }
+    entry.abortCleanup?.();
 
     // Remove callback
     this.callbacks.delete(response.id);
@@ -85,6 +99,7 @@ export class CallbackRegistry {
     if (entry.timeoutId) {
       clearTimeout(entry.timeoutId);
     }
+    entry.abortCleanup?.();
 
     this.callbacks.delete(messageId);
     return true;
@@ -105,6 +120,7 @@ export class CallbackRegistry {
       if (entry.timeoutId) {
         clearTimeout(entry.timeoutId);
       }
+      entry.abortCleanup?.();
       entry.reject(new BridgeCallError('Bridge destroyed', 'NATIVE_UNAVAILABLE'));
     }
 

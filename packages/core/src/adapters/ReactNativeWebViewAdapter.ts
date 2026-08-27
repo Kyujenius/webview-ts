@@ -9,6 +9,8 @@
 import type { BridgeMessage, ConnectionMode } from '@webview-ts/shared';
 import type { ClientAdapter } from '@webview-ts/shared';
 
+import { subscribeWindowMessages } from './window-messages';
+
 interface ReactNativeWebViewInterface {
   postMessage(message: string): void;
 }
@@ -22,10 +24,15 @@ declare global {
 export class ReactNativeWebViewAdapter implements ClientAdapter {
   private bridge: ReactNativeWebViewInterface | undefined;
 
-  constructor() {
+  constructor(private readonly allowedOrigins: ReadonlySet<string> = new Set()) {
     if (typeof window !== 'undefined') {
       this.bridge = window.ReactNativeWebView;
     }
+  }
+
+  onMessage(callback: (raw: string) => void): () => void {
+    // iOS dispatches host messages on window, Android on document — listen on both
+    return subscribeWindowMessages(callback, this.allowedOrigins, { includeDocument: true });
   }
 
   send(message: BridgeMessage): void {

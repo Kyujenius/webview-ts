@@ -28,14 +28,16 @@ import type {
   UseActionOptions,
 } from '@webview-ts/shared';
 import {
+  ActionCache,
   ActionStateManager,
   BridgeCallError,
+  connectDevToolsTarget,
   generateSourceId,
   InterceptorManager,
   isBridgeEvent,
   isBridgeResponse,
+  NON_RETRYABLE_ERROR_CODES,
   TARGET,
-  tryAutoDevTools,
   validateWithSchema,
 } from '@webview-ts/shared';
 
@@ -65,6 +67,8 @@ export class BridgeClient<
     retry?: BridgeConfig['retry'];
     fallback?: BridgeConfig['fallback'];
   };
+  /** Origins whose window-sourced postMessages are accepted (see BridgeConfig.allowedOrigins) */
+  private readonly allowedOrigins: ReadonlySet<string>;
   private adapter: ClientAdapter;
   private callbacks: CallbackRegistry;
   private eventHandlers = new Map<string, Set<(payload: unknown) => void>>();
@@ -94,13 +98,19 @@ export class BridgeClient<
   private actionRetries = new Map<string, RetryConfig>();
   /** Per-action caches from plugins */
   private actionCaches = new Map<string, number | boolean>();
+  /** Shared cache stores — one per action, shared by every ActionStateManager of that action */
+  private actionCacheStores = new Map<string, ActionCache<any>>();
   /** Per-action response schemas from plugins */
   private actionResponseSchemas = new Map<string, StandardSchemaV1>();
   /** Per-event payload schemas from plugins */
   private eventSchemas = new Map<string, StandardSchemaV1>();
   private readonly sourceId: string;
-  /** Message event listener reference for cleanup */
-  private messageListener?: (event: MessageEvent) => void;
+  /** Whether connect() has run (guards idempotency) */
+  private connected = false;
+  /** Set by destroy(); cleared by connect(). Stops in-flight retry loops from re-sending. */
+  private destroyed = false;
+  /** Unsubscribe function for the adapter's inbound message channel */
+  private adapterUnsub?: () => void;
   /** Auto-devtools cleanup function */
   private _devtoolsCleanup?: () => void;
 
@@ -112,8 +122,10 @@ export class BridgeClient<
       retry: config.retry,
       fallback: config.fallback,
     };
+    this.allowedOrigins = new Set(config.allowedOrigins);
 
-    this.adapter = createClientAdapter();
+    // Injected adapter wins; otherwise auto-detect the platform
+    this.adapter = config.adapter ?? createClientAdapter(this.allowedOrigins);
 
     const normalized = this.normalizeFallback(this.config.fallback);
     if (!this.adapter.isAvailable() && normalized.enabled) {
@@ -121,7 +133,8 @@ export class BridgeClient<
       this.adapter = new FallbackAdapter(
         normalized.handlers ?? true,
         (response) => this.handleResponse(response),
-        this.sourceId
+        this.sourceId,
+        this.allowedOrigins
       );
     }
 
@@ -134,9 +147,14 @@ export class BridgeClient<
    * Strict Mode double-invocation leaking event listeners.
    */
   connect(): void {
-    if (this.messageListener) return; // already connected
-    this.setupResponseHandler();
-    this._devtoolsCleanup = tryAutoDevTools(this);
+    if (this.connected) return; // already connected
+    this.connected = true;
+    this.destroyed = false;
+    // Reception is owned by the adapter (transport-specific); the client only
+    // parses and dispatches what the adapter delivers.
+    this.adapterUnsub = this.adapter.onMessage?.((raw) => this.handleRawMessage(raw));
+    // No-op unless @webview-ts/devtools/client has registered its connector
+    this._devtoolsCleanup = connectDevToolsTarget(this);
   }
 
   /**
@@ -146,10 +164,9 @@ export class BridgeClient<
   private disconnect(): void {
     this._devtoolsCleanup?.();
     this._devtoolsCleanup = undefined;
-    if (typeof window !== 'undefined' && this.messageListener) {
-      window.removeEventListener('message', this.messageListener);
-      this.messageListener = undefined;
-    }
+    this.adapterUnsub?.();
+    this.adapterUnsub = undefined;
+    this.connected = false;
   }
 
   /**
@@ -200,10 +217,20 @@ export class BridgeClient<
           timestamp: Date.now(),
         });
         if (attempt < maxAttempts && retryConfig) {
+          // A destroyed bridge must never re-send — the pending attempt was
+          // rejected by destroy(), not by a transient failure.
+          if (this.destroyed) break;
+          // Non-transient errors can never succeed on retry — stop unless
+          // the user takes over the decision via retryIf.
+          const shouldRetry = retryConfig.retryIf
+            ? retryConfig.retryIf(bridgeError)
+            : !NON_RETRYABLE_ERROR_CODES.has(bridgeError.code);
+          if (!shouldRetry) break;
           const delay = retryConfig.exponentialBackoff
             ? retryConfig.delay * Math.pow(2, attempt - 1)
             : retryConfig.delay;
           await new Promise((resolve) => setTimeout(resolve, delay));
+          if (this.destroyed) break; // destroy() ran during the backoff delay
         }
       }
     }
@@ -225,6 +252,9 @@ export class BridgeClient<
   ): Promise<InferResponse<TActions, TAction>> {
     if (!this.isAvailable()) {
       throw new BridgeCallError('Native bridge not available', 'NATIVE_UNAVAILABLE');
+    }
+    if (options?.signal?.aborted) {
+      throw new BridgeCallError('Call aborted', 'ABORTED');
     }
 
     let message: BridgeMessage = {
@@ -263,9 +293,22 @@ export class BridgeClient<
       const responsePromise = new Promise<BridgeResponse>((resolve, reject) => {
         const timeout =
           options?.timeout ?? this.actionTimeouts.get(action as string) ?? this.config.timeout;
-        this.callbacks.register(message.id, resolve as (value: unknown) => void, reject, timeout);
+        this.callbacks.register(
+          message.id,
+          resolve as (value: unknown) => void,
+          reject,
+          timeout,
+          options?.signal
+        );
       });
-      this.adapter.send(message);
+      try {
+        this.adapter.send(message);
+      } catch (sendError) {
+        // A synchronous send failure must not orphan the pending callback —
+        // it would linger until destroy() rejects it into the void.
+        this.callbacks.remove(message.id);
+        throw sendError;
+      }
       let response = await responsePromise;
 
       if (!response.success) {
@@ -493,6 +536,25 @@ export class BridgeClient<
       retry: defaultOptions?.retry ?? this.actionRetries.get(actionKey) ?? this.config.retry,
     };
 
+    // Share one cache per action so components caching the same action hit
+    // the cache instead of each calling native independently.
+    // The first creation wins the TTL; later mounts reuse the same cache.
+    let cache: ActionCache<InferResponse<TActions, TAction>> | undefined;
+    const requested = ActionCache.from<InferResponse<TActions, TAction>>(resolvedCache);
+    if (requested) {
+      cache = this.actionCacheStores.get(actionKey);
+      if (!cache) {
+        cache = requested;
+        this.actionCacheStores.set(actionKey, cache);
+      } else if (cache.ttl !== requested.ttl) {
+        // Mount-order-dependent TTLs are a heisenbug waiting to happen — say so
+        console.warn(
+          `[webview-ts] Action '${actionKey}' already has a shared cache with TTL ${cache.ttl}; ` +
+            `ignoring the differing TTL ${requested.ttl} requested by a later mount.`
+        );
+      }
+    }
+
     return new ActionStateManager(
       (payload: InferPayload<TActions, TAction>, callOptions?: BridgeCallOptions) =>
         this.call(
@@ -500,7 +562,7 @@ export class BridgeClient<
           payload,
           callOptions ? { ...resolvedBridgeDefaults, ...callOptions } : resolvedBridgeDefaults
         ),
-      resolvedCache
+      cache
     );
   }
 
@@ -517,30 +579,20 @@ export class BridgeClient<
   }
 
   /**
-   * Set up response handler from native via standard message event.
-   * Host sends via postMessage(), web receives via 'message' listener.
+   * Parse and dispatch a raw message delivered by the adapter.
    */
-  private setupResponseHandler(): void {
-    if (typeof window !== 'undefined') {
-      this.messageListener = (event: MessageEvent) => {
-        // Ignore non-bridge messages
-        if (!event.data || typeof event.data !== 'string') return;
+  private handleRawMessage(raw: string): void {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return; // Not a JSON message — ignore
+    }
 
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(event.data);
-        } catch {
-          return; // Not a JSON message — ignore
-        }
-
-        if (isBridgeEvent(parsed)) {
-          this.handleEvent(parsed);
-        } else if (isBridgeResponse(parsed)) {
-          this.handleResponse(parsed);
-        }
-      };
-
-      window.addEventListener('message', this.messageListener);
+    if (isBridgeEvent(parsed)) {
+      this.handleEvent(parsed);
+    } else if (isBridgeResponse(parsed)) {
+      this.handleResponse(parsed);
     }
   }
 
@@ -625,7 +677,10 @@ export class BridgeClient<
    * so the instance can be reused after a React Strict Mode cleanup->remount cycle.
    */
   destroy(): void {
+    this.destroyed = true;
     this.disconnect();
     this.callbacks.clear();
+    // Caches are runtime state, not configuration — drop them with the instance
+    this.actionCacheStores.clear();
   }
 }

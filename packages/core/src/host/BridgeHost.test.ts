@@ -112,14 +112,14 @@ describe('BridgeHost', () => {
 
   describe('event emission', () => {
     it('should emit events to WebView', () => {
-      bridgeHost.emit('testEvent', { data: 'test' });
+      bridgeHost.sendEvent('testEvent', { data: 'test' });
 
       expect(mockAdapter.sent.some((s) => s.includes('"event":"testEvent"'))).toBe(true);
       expect(mockAdapter.sent.some((s) => s.includes('"data":"test"'))).toBe(true);
     });
 
     it('should emit events without payload', () => {
-      bridgeHost.emit('testEvent');
+      bridgeHost.sendEvent('testEvent');
 
       expect(mockAdapter.sent.some((s) => s.includes('"event":"testEvent"'))).toBe(true);
     });
@@ -284,5 +284,30 @@ describe('BridgeHost', () => {
       expect(parsed.success).toBe(true);
       expect(parsed.targetId).toBe('webview-a');
     });
+  });
+});
+
+describe('BridgeHost error responses', () => {
+  it('does not leak stack traces to the WebView', async () => {
+    const host = new BridgeHost({ onError: vi.fn() });
+    host.registerHandler('boom', () => {
+      throw new Error('kaboom');
+    });
+
+    const response = await host.handleMessage({
+      id: 'msg-err',
+      action: 'boom',
+      payload: undefined,
+      timestamp: Date.now(),
+      sourceId: 'webview-a',
+      targetId: 'host',
+    });
+
+    expect(response.success).toBe(false);
+    if (!response.success) {
+      expect(response.error.message).toBe('kaboom');
+      expect(response.error.details).toBeUndefined();
+      expect(JSON.stringify(response)).not.toContain('stack');
+    }
   });
 });

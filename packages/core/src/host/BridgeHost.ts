@@ -9,6 +9,8 @@ import type {
   CallStartEvent,
   ConnectionRegistry,
   HostAdapter,
+  HostPluginResult,
+  SendEventOptions,
 } from '@webview-ts/shared';
 import { BridgeCallError, isBridgeMessage, TARGET, toBridgeErrorCode } from '@webview-ts/shared';
 
@@ -24,13 +26,8 @@ export interface BridgeHostConfig {
   registry?: ConnectionRegistry;
 }
 
-/**
- * Options for sendEvent targeting
- */
-export interface SendEventOptions {
-  /** Target WebView sourceId, or '__broadcast__' for all. Defaults to attached adapter. */
-  target?: string;
-}
+// Moved to @webview-ts/shared (host bindings type sendEvent against it) — re-exported for compatibility
+export type { SendEventOptions } from '@webview-ts/shared';
 
 /**
  * Action handler function type
@@ -56,6 +53,8 @@ export class BridgeHost {
   private registry?: ConnectionRegistry;
   private handlers: Map<string, ActionHandler>;
   private adapter?: HostAdapter;
+  /** Unsubscribe for the current adapter's onMessage subscription */
+  private adapterUnsub?: () => void;
   /** Lifecycle event listeners — mirrors BridgeClient.onCall */
   private callListeners = {
     'call:start': new Set<(data: CallStartEvent) => void>(),
@@ -102,15 +101,45 @@ export class BridgeHost {
 
   /**
    * Attach a HostAdapter for bidirectional communication.
-   * Returns a detach function.
+   * Attaching while already attached detaches the previous adapter first,
+   * so repeated attach/destroy cycles (React Strict Mode) never stack
+   * subscriptions. Returns a detach function.
    */
   attach(adapter: HostAdapter): () => void {
+    this.adapterUnsub?.();
     this.adapter = adapter;
     const unsub = adapter.onMessage((json) => this.handleMessageString(json));
+    this.adapterUnsub = unsub;
     return () => {
       unsub();
-      this.adapter = undefined;
+      if (this.adapter === adapter) {
+        this.adapter = undefined;
+        this.adapterUnsub = undefined;
+      }
     };
+  }
+
+  /**
+   * Register every handler from a plugin's host() result.
+   * When the plugin declares events, handlers receive a typed `ctx.emit`
+   * that sends namespaced events through this host — the same wiring on
+   * every platform binding (RN hook, iframe shell, custom hosts).
+   */
+  registerPlugin(plugin: HostPluginResult<Record<string, unknown>>): void {
+    const hasEvents = plugin.eventNames.length > 0;
+    for (const [action, handler] of Object.entries(plugin.handlers)) {
+      if (hasEvents) {
+        const prefix = plugin.pluginName;
+        this.registerHandler(action, (payload: unknown, context: RequestContext) => {
+          const emit = (eventShortName: string, eventPayload: unknown) => {
+            this.sendEvent(`${prefix}.${eventShortName}`, eventPayload);
+          };
+          return handler(payload, { ...context, emit });
+        });
+      } else {
+        this.registerHandler(action, handler);
+      }
+    }
   }
 
   /**
@@ -182,12 +211,12 @@ export class BridgeHost {
                 error instanceof Error && 'code' in error ? error.code : 'HANDLER_ERROR'
               ),
         message: error instanceof Error ? error.message : String(error),
+        // Never put stack traces on the wire — native internals must not leak
+        // into the WebView. Full error objects still reach the local onError.
         details:
           error instanceof BridgeCallError
             ? (error.details as Record<string, unknown> | undefined)
-            : error instanceof Error
-              ? { stack: error.stack }
-              : undefined,
+            : undefined,
       };
 
       this.config.onError(error instanceof Error ? error : new Error(String(error)), {
@@ -257,10 +286,6 @@ export class BridgeHost {
     this.sendViaAdapter(messageJson);
   }
 
-  emit<TPayload = unknown>(event: string, payload?: TPayload, options?: SendEventOptions): void {
-    this.sendEvent(event, payload, options);
-  }
-
   private sendResponse(response: BridgeResponse): void {
     const messageJson = JSON.stringify(response);
 
@@ -285,10 +310,13 @@ export class BridgeHost {
   }
 
   /**
-   * Detach adapter (runtime cleanup). Handlers are preserved
-   * so the instance can be reattached.
+   * Detach adapter (runtime cleanup) — including its onMessage subscription,
+   * so a destroyed host stops receiving. Handlers are preserved so the
+   * instance can be reattached.
    */
   destroy(): void {
+    this.adapterUnsub?.();
+    this.adapterUnsub = undefined;
     this.adapter = undefined;
   }
 }

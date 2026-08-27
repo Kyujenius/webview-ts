@@ -8,9 +8,9 @@ import type { ClientAdapter } from '@webview-ts/shared';
 import { DisconnectedAdapter } from './DisconnectedAdapter';
 import { isReactNativeWebView, ReactNativeWebViewAdapter } from './ReactNativeWebViewAdapter';
 
-export function createClientAdapter(): ClientAdapter {
+export function createClientAdapter(allowedOrigins: ReadonlySet<string>): ClientAdapter {
   if (isReactNativeWebView()) {
-    return new ReactNativeWebViewAdapter();
+    return new ReactNativeWebViewAdapter(allowedOrigins);
   }
   return new DisconnectedAdapter();
 }

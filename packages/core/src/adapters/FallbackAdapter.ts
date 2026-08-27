@@ -7,21 +7,37 @@ import type {
 import type { ClientAdapter } from '@webview-ts/shared';
 import { BridgeCallError } from '@webview-ts/shared';
 
+import { subscribeWindowMessages } from './window-messages';
+
 export class FallbackAdapter implements ClientAdapter {
   private readonly handlers: FallbackMap;
   private readonly logOnly: boolean;
   private readonly responseCallback: (response: BridgeResponse) => void;
   private readonly bridgeSourceId: string;
+  private readonly allowedOrigins: ReadonlySet<string>;
 
   constructor(
     fallback: true | FallbackMap,
     responseCallback: (response: BridgeResponse) => void,
-    bridgeSourceId: string = 'bridge'
+    bridgeSourceId: string = 'bridge',
+    allowedOrigins: ReadonlySet<string> = new Set()
   ) {
     this.logOnly = fallback === true;
     this.handlers = fallback === true ? {} : fallback;
     this.responseCallback = responseCallback;
     this.bridgeSourceId = bridgeSourceId;
+    this.allowedOrigins = allowedOrigins;
+  }
+
+  /**
+   * Browser-dev affordance: events can still be injected as synthetic window
+   * `message` events — `window.dispatchEvent(new MessageEvent('message', {data}))`,
+   * which carries no `source` and passes the spoofing filter. A real
+   * `window.postMessage` sets `source` and is dropped unless its origin is in
+   * `allowedOrigins` (see BridgeConfig.allowedOrigins).
+   */
+  onMessage(callback: (raw: string) => void): () => void {
+    return subscribeWindowMessages(callback, this.allowedOrigins);
   }
 
   send(message: BridgeMessage): void {
