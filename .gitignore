@@ -52,3 +52,8 @@ lerna-debug.log*
 !**/CHANGELOG.md
 .omc/
 .understand-anything/
+
+# Docusaurus
+docs/.docusaurus/
+!docs/docs/**/*.md
+!docs/i18n/**/*.md
