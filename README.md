@@ -18,6 +18,16 @@ Built for teams where **web and native live in separate repos**: the native shel
 
 > _Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference — plus runtime contract validation neither of them has for WebViews._
 
+## How It works 
+
+_Typed calls from a WebView, captured live in DevTools — native handlers, event streams, and multi-WebView routing._
+
+https://github.com/user-attachments/assets/89ad97b1-ec39-472e-ac49-a0b0de528aa3
+
+
+
+
+
 ## How is this different?
 
 |                                    | webview-ts                                          | [Comlink](https://github.com/GoogleChromeLabs/comlink) | [Capacitor](https://capacitorjs.com) |
