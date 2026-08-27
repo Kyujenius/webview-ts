@@ -42,3 +42,14 @@ jobs:
 
       - name: Push release tags
         run: git push --tags
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./packages/shared/package.json').version")
+          if ! gh release view "v$VERSION" >/dev/null 2>&1; then
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+            gh release create "v$VERSION" --title "v$VERSION" --generate-notes
+          fi
