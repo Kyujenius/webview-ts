@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { _resetAutoDevTools, type AutoDevToolsTarget, tryAutoDevTools } from './auto-devtools';
+import { _resetAutoDevTools, type AutoDevToolsTarget, tryAutoDevTools } from './auto-connect';
 
 // --- Mock WebSocket ---
 

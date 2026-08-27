@@ -44,6 +44,7 @@
     "@types/react-dom": "catalog:",
     "@types/ws": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "@webview-ts/shared": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsup": "catalog:",
@@ -51,5 +52,20 @@
     "vite": "catalog:",
     "vite-plugin-singlefile": "catalog:",
     "vitest": "catalog:"
+  },
+  "exports": {
+    "./client": {
+      "import": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    }
+  },
+  "peerDependencies": {
+    "@webview-ts/shared": "workspace:^"
   }
 }

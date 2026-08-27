@@ -1,5 +1,5 @@
 /**
- * Zero-config DevTools auto-connect.
+ * DevTools auto-connect runtime (browser side).
  *
  * In development mode, automatically tries to connect to the DevTools
  * dashboard server (ws://localhost:4000) and subscribe to bridge lifecycle
@@ -12,27 +12,11 @@
  * by bundlers via the `process.env.NODE_ENV` guard.
  */
 
-const DEVTOOLS_PORT = 4000;
+import type { AutoDevToolsTarget } from '@webview-ts/shared';
 
-/**
- * Minimal interface that both BridgeClient (core) and BridgeHost (RN) satisfy.
- */
-export interface AutoDevToolsTarget {
-  onCall(
-    event: 'call:start',
-    handler: (data: { id: string; action: string; payload: unknown; timestamp: number }) => void
-  ): () => void;
-  onCall(
-    event: 'call:end',
-    handler: (data: { id: string; action: string; response: any; duration: number }) => void
-  ): () => void;
-  onCall(
-    event: 'call:error',
-    handler: (data: { id: string; action: string; error: Error; duration: number }) => void
-  ): () => void;
-  /** Subscribe to all events (optional — only BridgeClient has this) */
-  onAnyEvent?(handler: (event: string, payload: unknown) => void): () => void;
-}
+export type { AutoDevToolsTarget } from '@webview-ts/shared';
+
+const DEVTOOLS_PORT = 4000;
 
 interface RecordPayload {
   recordId: string;
@@ -115,12 +99,9 @@ function createRecordingSubscription(target: AutoDevToolsTarget, ws: WebSocket):
 
 // ---- Singleton WebSocket shared across all bridge instances ----
 
-export type DevToolsRole = 'host' | 'client';
-
 const RETRY_INTERVAL = 3000;
 
 let sharedWs: WebSocket | null = null;
-let sharedRole: DevToolsRole = 'client';
 let targets = new Set<AutoDevToolsTarget>();
 let wsReady = false;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -170,15 +151,13 @@ function unsubscribeRecording(target: AutoDevToolsTarget): void {
   }
 }
 
-function getOrCreateWs(role: DevToolsRole): WebSocket | null {
+function getOrCreateWs(): WebSocket | null {
   if (sharedWs && sharedWs.readyState !== WebSocket.CLOSED) {
     return sharedWs;
   }
 
-  sharedRole = role;
-
   try {
-    sharedWs = new WebSocket(`ws://localhost:${DEVTOOLS_PORT}?role=${role}`);
+    sharedWs = new WebSocket(`ws://localhost:${DEVTOOLS_PORT}?role=client`);
   } catch {
     return null;
   }
@@ -213,7 +192,7 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
     if (targets.size > 0 && !retryTimer) {
       retryTimer = setTimeout(() => {
         retryTimer = null;
-        if (targets.size > 0) getOrCreateWs(sharedRole);
+        if (targets.size > 0) getOrCreateWs();
       }, RETRY_INTERVAL);
     }
   };
@@ -226,22 +205,19 @@ function getOrCreateWs(role: DevToolsRole): WebSocket | null {
  * Returns a cleanup function if connected, or undefined if skipped.
  *
  * @param target - Bridge instance to subscribe devtools events on
- * @param role   - 'host' (BridgeHost / RN) or 'client' (BridgeClient / web)
  *
  * Uses a singleton WebSocket — multiple calls share one connection.
  * This prevents duplicate connections from React Strict Mode's
  * double-invocation of useMemo.
  */
-export function tryAutoDevTools(
-  target: AutoDevToolsTarget,
-  role: DevToolsRole = 'client'
-): (() => void) | undefined {
-  if (process.env.NODE_ENV === 'production') return undefined;
+export function tryAutoDevTools(target: AutoDevToolsTarget): (() => void) | undefined {
+  // typeof guard: browsers without a bundler-provided `process` must not throw
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return undefined;
   if (typeof WebSocket === 'undefined') return undefined;
 
   targets.add(target);
 
-  const ws = getOrCreateWs(role);
+  const ws = getOrCreateWs();
 
   // If WS is already open, register immediately
   if (ws && wsReady) {
@@ -251,7 +227,7 @@ export function tryAutoDevTools(
     // First connection failed — schedule retry
     retryTimer = setTimeout(() => {
       retryTimer = null;
-      if (targets.size > 0) getOrCreateWs(sharedRole);
+      if (targets.size > 0) getOrCreateWs();
     }, RETRY_INTERVAL);
   }
 

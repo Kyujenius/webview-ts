@@ -130,6 +130,8 @@ export function App() {
     setTab('response');
   }, []);
 
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
+
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const onMove = (ev: MouseEvent) => {
@@ -139,16 +141,21 @@ export function App() {
       setInspectorWidth(Math.min(80, Math.max(20, pct)));
     };
     const onUp = () => {
+      resizeCleanupRef.current = null;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
+    resizeCleanupRef.current = onUp;
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }, []);
+
+  // Mid-drag unmount must not leave global listeners behind
+  useEffect(() => () => resizeCleanupRef.current?.(), []);
 
   const toggleEventExpand = useCallback((recordId: string) => {
     setExpandedEvents((prev) => {
