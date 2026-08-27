@@ -1,10 +1,31 @@
-import type { ActionState } from '@webview-ts/shared';
-import type { TypedEventSubscriber } from '@webview-ts/shared';
-import { inject, onScopeDispose, ref } from 'vue';
+import type {
+  ActionState,
+  AnyPlugin,
+  PluginActionHandle,
+  PluginActionPayloadIn,
+  PluginActionResponse,
+  StrictKeyOf,
+  TypedEventSubscriber,
+} from '@webview-ts/shared';
+import { inject, onScopeDispose, type Ref, ref } from 'vue';
 
 import { BRIDGE_KEY } from '../bridgeKey';
 
-export function usePlugin(plugin: any) {
+/** Live state + controls for one action — the shared PluginActionHandle with
+ *  its state fields Ref-wrapped for Vue reactivity */
+export type VuePluginActionHandle<TPayloadIn, TResponse> = {
+  [K in keyof ActionState<TResponse>]: Ref<ActionState<TResponse>[K]>;
+} & Pick<PluginActionHandle<TPayloadIn, TResponse>, 'execute' | 'reset'>;
+
+/** Full result of usePlugin: one typed handle per action + typed event subscriber */
+export type VueUsePluginResult<TPlugin extends AnyPlugin> = {
+  [K in StrictKeyOf<TPlugin['actions']>]: VuePluginActionHandle<
+    PluginActionPayloadIn<TPlugin, K>,
+    PluginActionResponse<TPlugin, K>
+  >;
+} & { on: TypedEventSubscriber<TPlugin['_eventTypes']> };
+
+export function usePlugin<TPlugin extends AnyPlugin>(plugin: TPlugin): VueUsePluginResult<TPlugin> {
   const ctx = inject(BRIDGE_KEY);
   if (!ctx) {
     throw new Error(
@@ -42,12 +63,12 @@ export function usePlugin(plugin: any) {
     };
   }
 
-  result.on = ((eventName: string, handler: (payload: any) => void) => {
+  result.on = (eventName: string, handler: (payload: any) => void) => {
     const fullName = `${plugin.name}.${eventName}`;
     return ctx.bridge.on(fullName, handler);
-  }) as TypedEventSubscriber<typeof plugin._eventTypes>;
+  };
 
   onScopeDispose(() => disposers.forEach((fn) => fn()));
 
-  return result;
+  return result as VueUsePluginResult<TPlugin>;
 }

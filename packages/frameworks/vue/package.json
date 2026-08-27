@@ -1,22 +1,10 @@
 {
-  "name": "@webview-ts/react",
+  "name": "@webview-ts/vue",
   "version": "1.0.0",
   "type": "module",
   "sideEffects": false,
-  "description": "React hooks and provider for webview-ts",
+  "description": "Vue 3 composables for webview-ts",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Kyujenius/webview-ts",
-    "directory": "packages/clients/react"
-  },
-  "keywords": [
-    "webview",
-    "bridge",
-    "typescript",
-    "react-native",
-    "type-safe"
-  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -43,23 +31,19 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@webview-ts/core": "workspace:*",
-    "@webview-ts/shared": "workspace:*",
-    "use-sync-external-store": "catalog:"
+    "@webview-ts/core": "workspace:^",
+    "@webview-ts/shared": "workspace:^"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "vue": ">=3.3.0"
   },
   "devDependencies": {
-    "@testing-library/react": "catalog:",
-    "@types/react": "catalog:",
-    "@types/use-sync-external-store": "catalog:",
+    "@vue/test-utils": "^2.4.0",
     "happy-dom": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vue": "^3.4.0"
   },
   "files": [
     "dist"

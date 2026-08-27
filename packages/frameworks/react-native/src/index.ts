@@ -11,10 +11,11 @@ export { ReactNativeHostAdapter } from './adapters/ReactNativeHostAdapter';
 export type {
   CreateBridgeHostOptions,
   CreateBridgeHostResult,
+  DefinedHandlers,
   TypedHandlers,
   UseBridgeHostReturn,
 } from './hooks/useBridgeHost';
-export { createBridgeHost, useBridgeHost } from './hooks/useBridgeHost';
+export { createBridgeHost, defineHandlers, useBridgeHost } from './hooks/useBridgeHost';
 
 // ─── Plugin contract API (re-exported from @webview-ts/shared) ───
 // App code only needs this package: define plugins and use hooks from one import.
@@ -25,4 +26,4 @@ export type {
   RequestInterceptor,
   ResponseInterceptor,
 } from '@webview-ts/shared';
-export { action, definePlugin, event } from '@webview-ts/shared';
+export { action, definePlugin, ERROR_CODE, event } from '@webview-ts/shared';

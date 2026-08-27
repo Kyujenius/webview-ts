@@ -6,7 +6,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Kyujenius/webview-ts",
-    "directory": "packages/hosts/react-native"
+    "directory": "packages/frameworks/react-native"
   },
   "keywords": [
     "webview",
@@ -42,11 +42,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@webview-ts/core": "workspace:*",
-    "@webview-ts/shared": "workspace:*"
+    "@webview-ts/core": "workspace:^",
+    "@webview-ts/shared": "workspace:^"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
+    "react": ">=18.0.0",
     "react-native": ">=0.70.0",
     "react-native-webview": ">=11.0.0"
   },

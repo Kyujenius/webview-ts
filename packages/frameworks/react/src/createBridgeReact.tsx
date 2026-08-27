@@ -17,10 +17,18 @@ import type {
   MergePluginActions,
   MergePluginEvents,
   TypedEventSubscriber,
+  UsePluginResult,
 } from '@webview-ts/shared';
 import { mergeFallbacks } from '@webview-ts/shared';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { useActionCore } from './internal/useActionCore';
 import { useBridgeCore } from './internal/useBridgeCore';
@@ -134,7 +142,7 @@ export function createBridgeReact<
 
   // ---- usePlugin ----
 
-  function usePlugin<TPlugin extends TPlugins[number]>(plugin: TPlugin) {
+  function usePlugin<TPlugin extends TPlugins[number]>(plugin: TPlugin): UsePluginResult<TPlugin> {
     const { bridge } = useTypedContext();
 
     // Create one ActionStateManager per action
@@ -191,7 +199,7 @@ export function createBridgeReact<
         };
       }
       return result;
-    }, [snapshots, managers, on]) as any;
+    }, [snapshots, managers, on]) as UsePluginResult<TPlugin>;
   }
 
   return { BridgeProvider, useBridge, useAction, useEvent, usePlugin };

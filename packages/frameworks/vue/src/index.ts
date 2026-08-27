@@ -15,4 +15,10 @@ export type {
   RequestInterceptor,
   ResponseInterceptor,
 } from '@webview-ts/shared';
-export { action, definePlugin, event } from '@webview-ts/shared';
+export { action, definePlugin, ERROR_CODE, event } from '@webview-ts/shared';
+
+// ─── Host role (a Vue web page can be the host — e.g. an iframe shell) ───
+export type { UseBridgeHostOptions, UseBridgeHostReturn } from './composables/useBridgeHost';
+export { useBridgeHost } from './composables/useBridgeHost';
+export type { DefinedHandlers, TypedHandlers } from '@webview-ts/core';
+export { defineHandlers, IframeClientAdapter, IframeHostAdapter } from '@webview-ts/core';
