@@ -1,6 +1,6 @@
 {
   "name": "@webview-ts/cli",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Contract-to-JSON-Schema export CLI for webview-ts",
   "license": "MIT",
   "repository": {
