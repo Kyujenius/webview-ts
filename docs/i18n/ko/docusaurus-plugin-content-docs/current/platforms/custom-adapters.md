@@ -12,7 +12,7 @@ title: 커스텀 어댑터
 1. **호스트 쪽 JS 런타임** — `BridgeHost`는 순수 TypeScript입니다.
 2. **양방향으로 문자열을 넘길 수단** — `postMessage`든 IPC든 상관없습니다.
 
-NativeScript, 그리고 Lynx 같은 새 프레임워크가 여기 들어옵니다. 레퍼런스 구현은 `@webview-ts/core`에 내장된 [iframe 어댑터](./iframe)입니다(각 ~40줄). Electron도 기술적으로는 조건을 만족하지만, webview-ts의 고통 — 따로 배포되는 양쪽의 버전 스큐, 호스트 없는 브라우저 개발 — 은 호스트와 웹이 한 바이너리로 같이 배포되는 곳엔 존재하지 않아서 타깃이 아닙니다.
+NativeScript, 그리고 Lynx 같은 새 프레임워크가 여기 들어옵니다. 레퍼런스 구현은 `@webview-ts/core`에 내장된 [iframe 어댑터](./iframe)입니다(각 ~40줄). Electron도 기술적으로는 조건을 만족하지만, webview-ts가 풀려는 문제 — 따로 배포되는 양쪽의 버전 스큐, 호스트 없는 브라우저 개발 — 는 호스트와 웹이 한 바이너리로 같이 배포되는 곳엔 존재하지 않아서 타깃이 아닙니다.
 
 ## 클라이언트 쪽: `ClientAdapter`
 
@@ -53,7 +53,7 @@ interface HostAdapter {
 }
 ```
 
-중립 팩토리로 주입합니다 — 모든 프레임워크 바인딩이 감싸는 바로 그 호출입니다:
+중립 팩토리로 주입합니다 — 모든 프레임워크 패키지가 감싸는 바로 그 호출입니다:
 
 ```typescript
 import { createBridgeHost } from '@webview-ts/core';

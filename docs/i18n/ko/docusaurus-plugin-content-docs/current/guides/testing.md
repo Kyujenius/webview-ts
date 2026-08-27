@@ -7,9 +7,9 @@ title: 테스트
 
 세 계층, 세 가지 기법 — 전부 라이브러리가 이미 싣고 있는 장치로 합니다.
 
-## 컴포넌트 테스트: fallback이 곧 테스트 심이다
+## 컴포넌트 테스트: fallback이 곧 테스트 Mock 주입 지점이다
 
-jsdom/happy-dom에는 네이티브 전송이 없으므로 브릿지는 자동으로 [fallback 모드](./fallback-mode)로 돕니다 — 플러그인의 `withFallback` 목이 호출에 답합니다. **테스트별로** 응답을 바꾸고 싶으면 프로바이더에 fallback 맵을 넘기세요(플러그인 목보다 우선합니다):
+jsdom/happy-dom에는 네이티브 전송이 없으므로 브릿지는 자동으로 [fallback 모드](./fallback-mode)로 동작합니다 — 플러그인의 `withFallback` Mock이 호출에 답합니다. **테스트별로** 응답을 바꾸고 싶으면 프로바이더에 fallback 맵을 넘기세요(플러그인 Mock보다 우선합니다):
 
 ```tsx
 render(
@@ -25,7 +25,7 @@ render(
 );
 ```
 
-모킹 라이브러리도, 모듈 가로채기도 필요 없습니다. 브라우저 단독 개발을 굴리는 그 심이 테스트도 굴립니다.
+모킹 라이브러리도, 모듈 가로채기도 필요 없습니다. 브라우저 단독 개발을 받치는 그 장치가 테스트도 그대로 받칩니다.
 
 ## 핸들러 테스트: 그냥 함수다
 
@@ -51,7 +51,7 @@ const response = await bridgeHost.handleMessage({
 expect(response.success).toBe(false); // 프로덕션과 똑같이 직렬화된 VALIDATION_ERROR
 ```
 
-## 계약 왕복 테스트: 루프백 자작
+## 계약 왕복 테스트: 루프백 직접 만들기
 
 인터셉터·스키마·에러 코드까지 전체 경로를 검증하려면, 인메모리 어댑터 한 쌍으로 클라이언트와 호스트를 맞물리세요:
 

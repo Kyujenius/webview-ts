@@ -46,7 +46,7 @@ sendEvent('location.updated', { lat: 'x' }); // ❌ 컴파일 에러
 sendEvent('app.custom', { anything: true }); // ✅ 열린 집합
 ```
 
-플러그인 핸들러 안의 `ctx.emit`은 짧은 이름을 쓰고, 해당 플러그인의 이벤트 타입으로 잠깁니다:
+플러그인 핸들러 안의 `ctx.emit`은 짧은 이름을 쓰고, 해당 플러그인의 이벤트 타입으로 고정됩니다:
 
 ```typescript
 location.host({

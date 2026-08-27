@@ -33,7 +33,7 @@ Strict Mode도 문제없습니다. 프로바이더가 인스턴스 생성(`useMe
 ```tsx
 const { takePhoto } = usePlugin(camera);
 
-takePhoto.execute({ quality: 0.9 }); // 타입 페이로드 → 타입 Promise
+takePhoto.execute({ quality: 0.9 }); // 타입이 붙은 페이로드 → 타입이 붙은 Promise
 takePhoto.status; // 'idle' | 'loading' | 'success' | 'error'
 takePhoto.data; // response | null
 takePhoto.error; // BridgeCallError | null
@@ -74,7 +74,7 @@ const { call, on, off, isAvailable, connectionMode, bridge } = useBridge();
 
 ## 호스트 역할 — React 페이지가 iframe 쉘일 때
 
-**웹은 언제나 양쪽 다입니다.** WebView 안에서 클라이언트였던 그 React 앱이, iframe들을 임베드하는 *호스트*가 될 수도 있습니다. `useBridgeHost`는 중립 core 팩토리를 감싼 훅이고, 전송은 어댑터로 주입합니다:
+**웹은 host이자 client, 두 가지로 볼 수 있습니다.** WebView 안에서 클라이언트였던 그 React 앱이, iframe들을 임베드하는 *호스트*가 될 수도 있습니다. `useBridgeHost`는 중립 core 팩토리를 감싼 훅이고, 전송은 어댑터로 주입합니다:
 
 ```tsx
 import { useBridgeHost, IframeHostAdapter, defineHandlers } from '@webview-ts/react';

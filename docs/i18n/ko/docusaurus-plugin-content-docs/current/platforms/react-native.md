@@ -73,7 +73,7 @@ const { sendEvent } = useBridgeHost({
 sendEvent('location.updated', { lat, lng });
 ```
 
-WebView 여러 장과 타깃/브로드캐스트 전달은 [멀티 WebView 라우팅](../guides/multi-webview-routing)에서 다룹니다.
+WebView 여러 개와 타깃/브로드캐스트 전달은 [멀티 WebView 라우팅](../guides/multi-webview-routing)에서 다룹니다.
 
 ## 어댑터가 흡수하는 플랫폼 특이사항
 

@@ -26,7 +26,7 @@ pnpm devtools
 
 ## 설계 노트
 
-- recorder는 **별도 패키지**(`@webview-ts/devtools/client`)에 삽니다. 프로덕션 번들에 DevTools 런타임이 실릴 일은 없습니다.
-- 브릿지의 공개 라이프사이클 API(`onCall`, `onAnyEvent`)로만 관찰합니다. 엔진이 DevTools에 대해 아는 것은 20줄짜리 등록 시임이 전부입니다.
+- recorder는 **별도 패키지**(`@webview-ts/devtools/client`)에 있습니다. 프로덕션 번들에 DevTools 런타임이 실릴 일은 없습니다.
+- 브릿지의 공개 라이프사이클 API(`onCall`, `onAnyEvent`)로만 관찰합니다. 엔진이 DevTools에 대해 아는 것은 20줄짜리 등록 지점(seam)이 전부입니다.
 - import 순서는 상관없습니다. 브릿지가 먼저 연결된 뒤에 recorder가 로드돼도 소급해서 붙습니다.
 - 서버가 꺼져 있으면 recorder는 뒤에서 조용히 재시도합니다. 콘솔도 조용하고, 호출에도 영향이 없습니다.

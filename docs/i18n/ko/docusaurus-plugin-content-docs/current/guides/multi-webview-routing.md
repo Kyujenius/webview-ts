@@ -5,7 +5,7 @@ title: 멀티 WebView 라우팅
 
 # 멀티 WebView 라우팅
 
-WebView 여러 장을 동시에 살려 두는 앱 — 탭바, 메인 뷰 + 모달, 미니앱 쉘 — 은 금방 같은 질문에 부딪힙니다: _이 이벤트, 어느 WebView가 받아야 하지?_
+WebView 여러 개를 동시에 살려 두는 앱 — 탭바, 메인 뷰 + 모달, 미니앱 쉘 — 은 금방 같은 질문에 부딪힙니다: _이 이벤트, 어느 WebView가 받아야 하지?_
 
 webview-ts의 답은 `ConnectionRegistry`입니다. WebView마다 호스트가 자기 id로 등록하고, 응답은 요청을 보낸 WebView로 알아서 돌아가며, 호스트는 이벤트를 특정 WebView에 보내거나 전체에 뿌립니다.
 
@@ -32,6 +32,6 @@ hostA.bridgeHost.sendEvent('session.expired', payload, { target: TARGET.BROADCAS
 
 ## 모바일만의 이야기가 아니다
 
-같은 레지스트리가 iframe 사이도 라우팅합니다. [iframe 예제](../platforms/iframe)는 임베드된 프레임 두 장을 띄워 테마 변경을 양쪽에 뿌리고, 한 프레임만 핑을 받는 동안 다른 프레임은 조용히 있게 합니다 — 네이티브 코드 없이요.
+같은 레지스트리가 iframe 사이도 라우팅합니다. [iframe 예제](../platforms/iframe)는 임베드된 프레임 두 개를 띄워 테마 변경을 양쪽에 뿌리고, 한 프레임만 핑을 받는 동안 다른 프레임은 조용히 있게 합니다 — 네이티브 코드 없이요.
 
 모바일에서 돌려볼 데모는 [`examples/react-native`](https://github.com/Kyujenius/webview-ts/tree/main/examples/react-native)에 있습니다.

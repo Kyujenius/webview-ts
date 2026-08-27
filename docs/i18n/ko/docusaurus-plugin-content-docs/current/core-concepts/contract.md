@@ -5,7 +5,7 @@ title: 계약
 
 # 계약
 
-`definePlugin` 호출 하나가 단일 기준입니다. 페이로드와 응답 타입이 여기서 양끝 — 웹 클라이언트의 훅과 호스트의 핸들러 — 으로 흘러가고, 수동 캐스팅은 어디에도 없습니다.
+`definePlugin` 함수로 plugin을 설정하고, 이것이 하나의 기준으로 작용합니다. 페이로드와 응답 타입이 여기서 양끝 — 웹 클라이언트의 훅과 호스트의 핸들러 — 으로 흘러갑니다.
 
 ## 액션
 
@@ -24,7 +24,7 @@ export const camera = definePlugin('camera', {
 
 ### 팬텀 모드 vs 스키마 모드
 
-모든 액션은 두 모드 중 하나로 쓰는데, 차이의 본질은 *타입이 어디에 사는가*입니다.
+모든 액션은 두 모드 중 하나로 쓰는데, 본질적인 차이는 *타입을 어디에 두느냐*입니다.
 
 **팬텀 모드** — `action<Payload, Response>()`. 제네릭은 컴파일 타임에만 존재하고, 컴파일되면 사라집니다("팬텀(유령)" 타입 — 런타임 마커 객체에는 흔적이 없습니다). 런타임 비용도 의존성도 0이지만, 런타임 검사도 0입니다. 상대편이 계약에 없는 모양을 보내와도 경계에서 잡아 주지 않습니다.
 
@@ -84,9 +84,9 @@ export const location = definePlugin(
 
 이벤트 이름도 같은 방식으로 네임스페이스가 붙습니다: `location.updated`. 클라이언트의 `on()` 핸들러도, 호스트의 `sendEvent` / `ctx.emit`도 전부 타입이 붙습니다. [이벤트](../guides/events)에서 이어집니다.
 
-## Fallback 목
+## Fallback Mock
 
-플러그인은 브라우저 개발용 목을 스스로 갖고 다닙니다:
+플러그인은 브라우저 개발용 Mock을 스스로 갖고 다닙니다:
 
 ```typescript
 export const camera = definePlugin('camera', {
@@ -96,7 +96,7 @@ export const camera = definePlugin('camera', {
 });
 ```
 
-목의 시그니처는 액션 마커에서 타입이 붙기 때문에, 목의 반환 모양이 틀리면 컴파일 에러입니다. [Fallback 모드](../guides/fallback-mode)를 참고하세요.
+Mock에도 계약의 타입이 그대로 적용되므로, 반환값 모양이 틀리면 컴파일 에러가 납니다. [Fallback 모드](../guides/fallback-mode)를 참고하세요.
 
 ## 호스트 핸들러
 
@@ -117,8 +117,8 @@ camera.host({
 
 ## 타입 보장
 
-추론 체인은 컴파일 타임 테스트(`tsc` + vitest typecheck 모드)로 잠겨 있습니다. 계약이 보장하는 것:
+추론 체인은 컴파일 타임 테스트(`tsc` + vitest typecheck 모드)로 고정되어 있습니다. 계약이 보장하는 것:
 
 - 액션·이벤트 **이름은 정확히 유지됩니다.** `useAction('camera.nope')`는 런타임 404가 아니라 컴파일 에러입니다.
-- **페이로드와 응답**은 모든 자리에서 검사됩니다: `execute`, `call`, 핸들러, 목, `sendEvent`, `emit`.
+- **페이로드와 응답**은 모든 자리에서 검사됩니다: `execute`, `call`, 핸들러, Mock, `sendEvent`, `emit`.
 - 스키마를 쓰면 **입력/출력 타입이 올바르게 갈라집니다.** 보내는 쪽은 스키마의 입력 타입(`.default()` 필드는 옵셔널)을 쓰고, 받는 쪽은 출력 타입을 받습니다.

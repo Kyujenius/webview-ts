@@ -59,6 +59,6 @@ The defining choice: the **contract file is the source of truth** — both sides
 
 - **Contract-first** — one `definePlugin` call generates typed client hooks, host handlers, mocks, and JSON Schema.
 - **Zero dependencies** — `@webview-ts/shared` has no runtime deps; core is pure TypeScript.
-- **Layered** — bindings → core → shared, one direction only, enforced by lint rules and type tests.
+- **Layered** — frameworks → core → shared, one direction only, enforced by lint rules and type tests.
 - **Transport-agnostic** — the engine never touches a platform API; adapters own every platform quirk.
 - **Roles over platforms** — client/host are protocol roles, not package boundaries. Every platform package exports each role it can play.

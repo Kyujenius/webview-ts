@@ -5,7 +5,7 @@ title: Vue
 
 # Vue
 
-`@webview-ts/vue`는 React 바인딩과 같은 API를 Vue 3 플러그인 + 컴포저블로 제공합니다. 두 바인딩이 같은 공유 상태 기계를 구독하므로 동작도 같습니다.
+`@webview-ts/vue`는 React 패키지와 같은 API를 Vue 3 플러그인 + 컴포저블로 제공합니다. 두 패키지가 같은 공유 상태 기계를 구독하므로 동작도 같습니다.
 
 ## 셋업
 
@@ -62,7 +62,7 @@ on('updated', (pos) => {
 
 ## 호스트 역할 — Vue 페이지가 iframe 쉘일 때
 
-**웹은 언제나 양쪽 다입니다.** Vue 앱도 `useBridgeHost` 컴포저블로 iframe들을 호스팅할 수 있습니다 — 같은 중립 core 팩토리에, 전송만 어댑터로 주입합니다:
+**웹은 host이자 client, 두 가지로 볼 수 있습니다.** Vue 앱도 `useBridgeHost` 컴포저블로 iframe들을 호스팅할 수 있습니다 — 같은 중립 core 팩토리에, 전송만 어댑터로 주입합니다:
 
 ```typescript
 import { useBridgeHost, IframeHostAdapter } from '@webview-ts/vue';

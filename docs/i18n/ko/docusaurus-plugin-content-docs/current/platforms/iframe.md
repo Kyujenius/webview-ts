@@ -7,7 +7,7 @@ title: Iframe 임베드
 
 네이티브 코드 없이 같은 브릿지를 씁니다. **부모 페이지가 호스트**, 각 **iframe이 클라이언트**입니다. 결제 위젯, 서드파티/파트너 임베드, 보안 경계, 레거시 앱 임베딩에 그대로 가져다 쓸 수 있는 템플릿입니다.
 
-돌려볼 수 있는 데모는 [`examples/iframe`](https://github.com/Kyujenius/webview-ts/tree/main/examples/iframe)에 있습니다 — 프레임 두 장, 타입 호출, 브로드캐스트 + 타깃 이벤트, standalone fallback 모드까지.
+돌려볼 수 있는 데모는 [`examples/iframe`](https://github.com/Kyujenius/webview-ts/tree/main/examples/iframe)에 있습니다 — 프레임 두 개, 타입 호출, 브로드캐스트 + 타깃 이벤트, standalone fallback 모드까지.
 
 ## 이것은 무엇이고, 무엇이 아닌가
 
@@ -60,7 +60,7 @@ class IframeClientAdapter implements ClientAdapter {
 }
 ```
 
-부모 쉘 없이 단독으로 열면 `isAvailable()`이 false가 되고, 플러그인의 [fallback 목](../guides/fallback-mode)이 이어받습니다.
+부모 쉘 없이 단독으로 열면 `isAvailable()`이 false가 되고, 플러그인의 [fallback Mock](../guides/fallback-mode)이 이어받습니다.
 
 ## 호스트 쪽 (부모 페이지)
 

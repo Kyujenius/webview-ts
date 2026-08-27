@@ -38,7 +38,7 @@ interface TakePhotoResponse {
 export const camera = definePlugin('camera', {
   takePhoto: action<TakePhotoPayload, TakePhotoResponse>(),
 }).withFallback({
-  // 호스트 없는 브라우저 개발 — 목 데이터를 반환
+  // 호스트 없는 브라우저 개발 — Mock 데이터를 반환
   takePhoto: async () => ({
     uri: 'https://picsum.photos/400/300',
     width: 400,
@@ -102,11 +102,11 @@ function WebViewScreen() {
 }
 ```
 
-루프는 이게 전부입니다. 웹이 `takePhoto.execute`를 호출하면 페이로드가 JSON 문자열로 WebView 경계를 건너가고, 호스트 핸들러가 실행된 뒤 응답이 원래의 프로미스를 resolve합니다. 응답 타입은 끝에서 끝까지 추론됩니다.
+한 사이클은 이게 전부입니다. 웹이 `takePhoto.execute`를 호출하면 페이로드가 JSON 문자열로 WebView 경계를 건너가고, 호스트 핸들러가 실행된 뒤 응답이 원래의 프로미스를 resolve합니다. 응답 타입은 끝에서 끝까지 추론됩니다.
 
 ## 다음으로 볼 것
 
 - [계약](./core-concepts/contract) — `definePlugin`이 표현하는 모든 것
 - [스키마 검증](./guides/schema-validation) — zod/valibot/arktype 런타임 검증
 - [Fallback 모드](./guides/fallback-mode) — 호스트 없이 브라우저에서 개발하기
-- [아키텍처](./core-concepts/architecture) — 호출 한 번이 실제로 지나가는 경로
+- [아키텍처](./core-concepts/architecture) — 호출 한 사이클이 실제로 지나가는 경로
