@@ -18,15 +18,11 @@ Built for teams where **web and native live in separate repos**: the native shel
 
 > _Comlink's problem definition (postMessage abstraction) + Capacitor's plugin architecture + tRPC's end-to-end type inference — plus runtime contract validation neither of them has for WebViews._
 
-## How It works 
+## How It works
 
 _Typed calls from a WebView, captured live in DevTools — native handlers, event streams, and multi-WebView routing._
 
 https://github.com/user-attachments/assets/89ad97b1-ec39-472e-ac49-a0b0de528aa3
-
-
-
-
 
 ## How is this different?
 
@@ -352,7 +348,7 @@ if (import.meta.env.DEV) {
 
 ```bash
 # Start the DevTools server
-pnpm devtools
+vp run devtools
 ```
 
 All bridge traffic (requests, responses, events, and call timings) is captured and displayed in a web dashboard. The recorder lives in a separate package &mdash; production bundles never carry the DevTools runtime.
@@ -361,22 +357,22 @@ All bridge traffic (requests, responses, events, and call timings) is captured a
 
 ```bash
 # Install dependencies
-pnpm install
+vp install
 
 # Build all packages
-pnpm build
+vp run build
 
 # Run tests
-pnpm test
+vp run test
 
 # Lint fix (all packages + examples)
-pnpm lint:fix
+vp run lint:fix
 
 # Start dev mode with examples
-pnpm dev
+vp run dev
 
 # Start DevTools server
-pnpm devtools
+vp run devtools
 ```
 
 ## Contributing

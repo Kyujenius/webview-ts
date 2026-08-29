@@ -2,7 +2,7 @@
  * Action cache is shared per action across ActionStateManager instances —
  * two components using the same cached action must not each hit native.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { BridgeClient } from './BridgeClient';
 

@@ -5,7 +5,7 @@
  */
 import type { ActionStatus, BridgeCallError } from '@webview-ts/shared';
 import { action, definePlugin } from '@webview-ts/shared';
-import { describe, expectTypeOf, test } from 'vitest';
+import { describe, expectTypeOf, test } from 'vite-plus/test';
 import type { Ref } from 'vue';
 
 import type { VueUsePluginResult } from './usePlugin';

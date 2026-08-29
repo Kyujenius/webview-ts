@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { defineComponent, h, inject } from 'vue';
 
 import { BRIDGE_KEY, type BridgeContext } from '../bridgeKey';
@@ -7,7 +7,7 @@ import { createBridgeVue } from '../createBridgeVue';
 
 // Mock BridgeClient so tests don't need a real WebView environment
 vi.mock('@webview-ts/core', () => {
-  const BridgeClient = vi.fn(() => {
+  const BridgeClient = vi.fn(function BridgeClient() {
     const instance: Record<string, any> = {
       connect: vi.fn(),
       destroy: vi.fn(),

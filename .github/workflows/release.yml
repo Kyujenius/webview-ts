@@ -20,28 +20,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: '20'
+          cache: true
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-release-${{ github.sha }}
-          restore-keys: turbo-release-
+      - run: vp run build
 
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm build
-
-      - run: pnpm test
+      - run: vp run test
 
       - name: Publish packages
-        run: pnpm changeset publish
+        run: vp exec changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'

@@ -31,7 +31,9 @@ const handleClearWatch = async () => {
 };
 
 const position = computed(() => getCurrentPosition.data.value);
-const error = computed(() => getCurrentPosition.error.value ?? watchPosition.error.value ?? clearWatch.error.value);
+const error = computed(
+  () => getCurrentPosition.error.value ?? watchPosition.error.value ?? clearWatch.error.value
+);
 </script>
 
 <template>
@@ -41,13 +43,25 @@ const error = computed(() => getCurrentPosition.error.value ?? watchPosition.err
     <div class="card">
       <h2>Location Actions</h2>
       <div class="flex-row-gap">
-        <button class="button" @click="getCurrentPosition.execute()" :disabled="getCurrentPosition.isLoading.value">
+        <button
+          class="button"
+          @click="getCurrentPosition.execute()"
+          :disabled="getCurrentPosition.isLoading.value"
+        >
           {{ getCurrentPosition.isLoading.value ? 'Loading...' : 'Get Current Position' }}
         </button>
-        <button class="button button-secondary" @click="handleWatchPosition" :disabled="watchId !== null">
+        <button
+          class="button button-secondary"
+          @click="handleWatchPosition"
+          :disabled="watchId !== null"
+        >
           {{ watchId !== null ? 'Watching...' : 'Watch Position' }}
         </button>
-        <button class="button button-secondary" @click="handleClearWatch" :disabled="watchId === null">
+        <button
+          class="button button-secondary"
+          @click="handleClearWatch"
+          :disabled="watchId === null"
+        >
           Clear Watch
         </button>
       </div>
@@ -56,7 +70,10 @@ const error = computed(() => getCurrentPosition.error.value ?? watchPosition.err
     <div v-if="position" class="card">
       <h2>Current Position</h2>
       <div class="result success">
-        <p><strong>Location:</strong> {{ position.latitude.toFixed(6) }}, {{ position.longitude.toFixed(6) }}</p>
+        <p>
+          <strong>Location:</strong> {{ position.latitude.toFixed(6) }},
+          {{ position.longitude.toFixed(6) }}
+        </p>
         <p><strong>Accuracy:</strong> ±{{ position.accuracy.toFixed(2) }}m</p>
         <details style="margin-top: 1rem">
           <summary>Full Data</summary>
@@ -70,14 +87,18 @@ const error = computed(() => getCurrentPosition.error.value ?? watchPosition.err
         Listens for <code>location.updated</code> events pushed from Native host.
       </p>
       <div v-if="livePosition" class="result success">
-        <p><strong>Live:</strong> {{ livePosition.latitude.toFixed(6) }}, {{ livePosition.longitude.toFixed(6) }}</p>
+        <p>
+          <strong>Live:</strong> {{ livePosition.latitude.toFixed(6) }},
+          {{ livePosition.longitude.toFixed(6) }}
+        </p>
         <p><strong>Updates received:</strong> {{ eventCount }}</p>
       </div>
       <div v-else class="result">No events received yet.</div>
     </div>
     <div class="card">
       <h2>Usage</h2>
-      <pre>// Request-Response + Event — all from usePlugin
+      <pre>
+// Request-Response + Event — all from usePlugin
 const { getCurrentPosition } = usePlugin(location);
 const pos = await getCurrentPosition();
 

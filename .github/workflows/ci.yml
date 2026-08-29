@@ -15,55 +15,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-lint-${{ github.sha }}
-          restore-keys: turbo-lint-
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+          node-version: '20'
+          cache: true
+      - run: vp run lint
 
   type-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-type-check-${{ github.sha }}
-          restore-keys: turbo-type-check-
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm type-check
+          node-version: '20'
+          cache: true
+      - run: vp run type-check
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-build-${{ github.sha }}
-          restore-keys: turbo-build-
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+          node-version: '20'
+          cache: true
+      - run: vp run build
 
   test:
     runs-on: ubuntu-latest
@@ -72,16 +48,8 @@ jobs:
         node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-test-${{ matrix.node-version }}-${{ github.sha }}
-          restore-keys: turbo-test-${{ matrix.node-version }}-
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+          cache: true
+      - run: vp run test

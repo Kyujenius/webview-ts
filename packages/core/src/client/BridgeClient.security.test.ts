@@ -6,7 +6,7 @@
  * Messages carrying a `source` window (real postMessage from an iframe or
  * parent) must be dropped unless their origin is explicitly allowed.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { BridgeClient } from './BridgeClient';
 

@@ -8,18 +8,18 @@
     "pnpm": ">=8.0.0"
   },
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run build --output-logs=errors-only && turbo run dev --filter='./examples/*'",
-    "test": "turbo run test",
-    "test:integration": "vitest run --config tests/vitest.config.ts",
-    "test:coverage": "turbo run test:coverage",
-    "test:watch": "turbo run test:watch",
-    "lint": "turbo run lint",
+    "build": "vp run -r --cache build",
+    "dev": "vp run build && vp run --filter './examples/*' --parallel dev",
+    "test": "vp run build && vp run -r --cache test",
+    "test:integration": "vp test run --config tests/vite.config.ts",
+    "test:coverage": "vp run build && vp run -r test:coverage",
+    "test:watch": "vp run -r --parallel test:watch",
+    "lint": "vp run build && vp run -r --cache lint",
     "lint:fix": "eslint --fix 'packages/**/src/**/*.{ts,tsx}' 'examples/**/*.{ts,tsx}' 'tests/**/*.ts'",
-    "type-check": "turbo run type-check",
-    "clean": "turbo run clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "vp run build && vp run -r --cache type-check",
+    "clean": "vp run -r clean && rm -rf node_modules",
+    "format": "vp fmt \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "vp fmt --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
@@ -34,33 +34,49 @@
     "@changesets/cli": "catalog:",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "@typescript-eslint/parser": "catalog:",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "catalog:",
     "lint-staged": "catalog:",
-    "prettier": "catalog:",
-    "turbo": "catalog:",
     "typescript": "catalog:",
     "valibot": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "vite-plus": "catalog:"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
-      "prettier --write"
+      "vp fmt"
     ],
     "*.{js,jsx}": [
       "eslint --fix",
-      "prettier --write"
+      "vp fmt"
     ],
     "*.vue": [
-      "prettier --write"
+      "vp fmt"
     ],
     "*.{json,md,css}": [
-      "prettier --write"
+      "vp fmt"
     ]
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "overrides": {
+      "vite@*": "npm:@voidzero-dev/vite-plus-core@0.3.0",
+      "vitest@*": "4.1.11"
+    },
+    "peerDependencyRules": {
+      "allowAny": [
+        "vite",
+        "vitest"
+      ],
+      "allowedVersions": {
+        "vite": "*",
+        "vitest": "*"
+      }
+    }
+  }
 }

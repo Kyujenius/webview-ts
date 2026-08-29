@@ -1,5 +1,5 @@
 import { BridgeCallError } from '@webview-ts/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { CallbackRegistry } from './CallbackRegistry';
 

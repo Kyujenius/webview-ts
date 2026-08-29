@@ -15,7 +15,7 @@
 import { BridgeHost, createClient } from '@webview-ts/core';
 import type { BridgeMessage } from '@webview-ts/shared';
 import { action, definePlugin } from '@webview-ts/shared';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 // ─── Define plugins ───
 

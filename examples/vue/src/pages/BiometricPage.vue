@@ -32,7 +32,11 @@ const loading = computed(() => checkAvailability.isLoading.value || authenticate
     </div>
     <div class="card">
       <h2>Authentication</h2>
-      <button class="button" @click="authenticate.execute({ reason: 'Authenticate to continue' })" :disabled="loading">
+      <button
+        class="button"
+        @click="authenticate.execute({ reason: 'Authenticate to continue' })"
+        :disabled="loading"
+      >
         {{ authenticate.isLoading.value ? 'Authenticating...' : 'Authenticate' }}
       </button>
     </div>
@@ -46,7 +50,8 @@ const loading = computed(() => checkAvailability.isLoading.value || authenticate
     </div>
     <div class="card">
       <h2>Usage</h2>
-      <pre>import { usePlugin } from '../bridge';
+      <pre>
+import { usePlugin } from '../bridge';
 import { biometric } from '@example/plugins';
 
 const { checkAvailability, authenticate } = usePlugin(biometric);

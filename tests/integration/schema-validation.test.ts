@@ -1,7 +1,7 @@
 import type { BridgeError } from '@webview-ts/shared';
 import { action, definePlugin, event } from '@webview-ts/shared';
 import * as v from 'valibot';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { z } from 'zod';
 
 import { createLoopbackPair } from './helpers/create-loopback-pair';
@@ -95,10 +95,8 @@ describe('schema validation — event boundary', () => {
     expect(received).toEqual([]); // not delivered
     expect(errors[0]?.code).toBe('VALIDATION_ERROR');
     expect(errors[0]?.details).toMatchObject({ side: 'client-event' });
-    expect(
-      Array.isArray((errors[0]?.details as { issues?: unknown[] })?.issues) &&
-        (errors[0]?.details as { issues?: unknown[] }).issues!.length > 0
-    ).toBe(true);
+    const issues = (errors[0]?.details as { issues?: unknown[] })?.issues;
+    expect(Array.isArray(issues) && issues.length > 0).toBe(true);
     destroy();
   });
 });

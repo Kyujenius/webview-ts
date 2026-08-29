@@ -109,15 +109,15 @@ async function handleBrokenHost() {
     <div v-if="result.kind === 'validation-error'" class="card">
       <h2>Validation Error</h2>
       <div class="result error">
-        <p><strong>code:</strong> <code>{{ result.code }}</code></p>
-        <p><strong>side:</strong> <code>{{ result.side }}</code></p>
+        <p>
+          <strong>code:</strong> <code>{{ result.code }}</code>
+        </p>
+        <p>
+          <strong>side:</strong> <code>{{ result.side }}</code>
+        </p>
         <p style="margin-top: 0.75rem"><strong>issues:</strong></p>
         <ul style="margin-left: 1.5rem; margin-top: 0.25rem">
-          <li
-            v-for="(issue, i) in result.issues"
-            :key="i"
-            style="margin-bottom: 0.25rem"
-          >
+          <li v-for="(issue, i) in result.issues" :key="i" style="margin-bottom: 0.25rem">
             <code v-if="issue.path && issue.path.length > 0" style="margin-right: 6px">{{
               issue.path.join('.')
             }}</code>
@@ -133,7 +133,8 @@ async function handleBrokenHost() {
 
     <div class="card">
       <h2>How It Works</h2>
-      <pre style="font-size: 11px">// Plugin definition
+      <pre style="font-size: 11px">
+// Plugin definition
 const profileResponse = z.object({
   name: z.string(),
   age:  z.number().int().min(0),

@@ -109,8 +109,8 @@ function handleCleanup() {
       <h2>Try It</h2>
       <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px">
         Note: <code>device.getInfo</code> has <code>cache: true</code> — only the
-        <strong>first</strong> click crosses the bridge and fires interceptors. Subsequent clicks are
-        served from cache (no interceptor logs). Use this as a cache demo, or click
+        <strong>first</strong> click crosses the bridge and fires interceptors. Subsequent clicks
+        are served from cache (no interceptor logs). Use this as a cache demo, or click
         <strong>Add Calendar Event</strong> for uncached interceptor calls.
       </p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap">
@@ -123,9 +123,9 @@ function handleCleanup() {
         <button class="button secondary" @click="handleCleanup">Remove Interceptors</button>
       </div>
       <div v-if="lastEventId" class="result success" style="margin-top: 8px">
-        Event created — id: <code>{{ lastEventId }}</code>. The <code>stamp-source</code> per-action
-        interceptor injected <code>source: "webview-ts-example"</code> into the payload before
-        dispatch.
+        Event created — id: <code>{{ lastEventId }}</code
+        >. The <code>stamp-source</code> per-action interceptor injected
+        <code>source: "webview-ts-example"</code> into the payload before dispatch.
       </div>
     </div>
 
@@ -138,7 +138,8 @@ function handleCleanup() {
 
     <div class="card">
       <h2>Code</h2>
-      <pre style="font-size: 11px">// 1. Inline logger (request interceptor)
+      <pre style="font-size: 11px">
+// 1. Inline logger (request interceptor)
 const unsub = bridge.interceptors.request.use({
   name: 'logger',
   fn: (request) =&gt; {
@@ -180,7 +181,8 @@ bridge.interceptors.response.use({
         <code>source: "webview-ts-example"</code> to every <code>addEvent</code> payload
         automatically.
       </p>
-      <pre style="font-size: 11px">// ─── Global Interceptor ───
+      <pre style="font-size: 11px">
+// ─── Global Interceptor ───
 // Runs on EVERY action. Registered at bridge level.
 bridge.interceptors.request.use(logger);   // Log all calls
 bridge.interceptors.request.use(auth);     // Inject token on all requests

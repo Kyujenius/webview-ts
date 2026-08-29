@@ -5,9 +5,9 @@
   "description": "Iframe embed example: parent page as host, iframes as clients — no native code involved",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5177",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "vp dev --port 5177",
+    "build": "vp build",
+    "preview": "vp preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src"
   },
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

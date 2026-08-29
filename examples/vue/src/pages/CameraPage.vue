@@ -23,7 +23,11 @@ const result = computed(() => takePhoto.data.value ?? pickImage.data.value);
         <button class="button" @click="takePhoto.execute({ quality: 0.8 })" :disabled="isLoading">
           {{ takePhoto.isLoading.value ? 'Loading...' : 'Take Photo' }}
         </button>
-        <button class="button button-secondary" @click="pickImage.execute({ multiple: false })" :disabled="isLoading">
+        <button
+          class="button button-secondary"
+          @click="pickImage.execute({ multiple: false })"
+          :disabled="isLoading"
+        >
           {{ pickImage.isLoading.value ? 'Loading...' : 'Pick Image' }}
         </button>
       </div>
