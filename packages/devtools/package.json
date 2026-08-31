@@ -55,6 +55,7 @@
   },
   "exports": {
     "./client": {
+      "source": "./src/client/index.ts",
       "import": {
         "types": "./dist/client.d.ts",
         "default": "./dist/client.js"
