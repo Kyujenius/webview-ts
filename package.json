@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Type-safe WebView-Native bridge library for TypeScript",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.18.0",
     "pnpm": ">=8.0.0"
   },
   "scripts": {

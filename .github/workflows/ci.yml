@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: true
       - run: vp run lint
 
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: true
       - run: vp run type-check
 
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: '20'
+          node-version: '22'
           cache: true
       - run: vp run build
 
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: voidzero-dev/setup-vp@v1.18.0
