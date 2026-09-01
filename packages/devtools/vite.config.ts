@@ -30,6 +30,9 @@ export default defineConfig({
       outExtensions: ({ format }) => ({ js: format === 'es' ? '.js' : '.cjs' }),
       dts: true,
       platform: 'browser',
+      define: {
+        'process.env.NODE_ENV': 'process.env.NODE_ENV',
+      },
       sourcemap: false,
       clean: false,
       treeshake: true,
