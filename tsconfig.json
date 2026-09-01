@@ -17,7 +17,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "customConditions": ["source"]
   },
   "exclude": ["node_modules", "dist", "build", "examples/react-native"]
 }

@@ -1,3 +1,6 @@
+// Browser tsconfigs (no @types/node) also type-check this file via the `source` export condition
+declare const process: { env: Record<string, string | undefined> };
+
 /**
  * DevTools auto-connect runtime (browser side).
  *

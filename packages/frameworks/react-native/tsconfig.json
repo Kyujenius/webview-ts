@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "jsx": "react-native",
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+    "customConditions": []
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
