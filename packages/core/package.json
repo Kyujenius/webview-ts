@@ -32,11 +32,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run",
+    "test:coverage": "vp test run --coverage",
+    "test:watch": "vp test",
     "type-check": "tsc --noEmit",
     "lint": "eslint src",
     "clean": "rm -rf dist"
@@ -48,8 +48,9 @@
     "@types/node": "catalog:",
     "@vitest/ui": "catalog:",
     "happy-dom": "catalog:",
-    "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

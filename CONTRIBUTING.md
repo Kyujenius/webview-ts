@@ -4,22 +4,22 @@ Thanks for your interest in contributing! This guide will help you get started.
 
 ## Prerequisites
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
+- Node.js >= 20.0.0
+- Vite+ CLI
 
 ## Setup
 
 ```bash
 git clone https://github.com/<your-fork>/ts-bridge.git
 cd ts-bridge
-pnpm install
-pnpm build
+vp install
+vp run build
 ```
 
 ## Package Structure
 
-| Package               | Path                          | Description              |
-| --------------------- | ----------------------------- | ------------------------ |
+| Package                | Path                          | Description              |
+| ---------------------- | ----------------------------- | ------------------------ |
 | `@webview-ts/shared`   | `packages/shared`             | Shared types (zero deps) |
 | `@webview-ts/core`     | `packages/core`               | Web-side bridge engine   |
 | `@webview-ts/react`    | `packages/clients/react`      | React hooks and provider |
@@ -29,12 +29,12 @@ pnpm build
 ## Development
 
 ```bash
-pnpm dev          # Watch mode for all packages
-pnpm test         # Run all tests
-pnpm test:watch   # Watch mode tests
-pnpm lint         # Lint all packages
-pnpm type-check   # TypeScript type checking
-pnpm format       # Format with Prettier
+vp run dev          # Watch mode for all packages
+vp run test         # Run all tests
+vp run test:watch   # Watch mode tests
+vp run lint         # Lint all packages
+vp run type-check   # TypeScript type checking
+vp fmt              # Format with Oxfmt
 ```
 
 ## Making Changes
@@ -42,8 +42,8 @@ pnpm format       # Format with Prettier
 1. Create a branch from `main`
 2. Make your changes
 3. Write or update tests
-4. Run `pnpm build && pnpm test` to verify
-5. Add a changeset: `pnpm changeset`
+4. Run `vp run build && vp run test` to verify
+5. Add a changeset: `vp run changeset`
 6. Submit a pull request
 
 ## Commit Convention

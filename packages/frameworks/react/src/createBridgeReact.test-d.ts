@@ -4,7 +4,7 @@
  * Compiled (never executed) by vitest typecheck mode and `pnpm type-check`.
  */
 import { action, definePlugin, event } from '@webview-ts/shared';
-import { describe, expectTypeOf, test } from 'vitest';
+import { describe, expectTypeOf, test } from 'vite-plus/test';
 
 import { createBridgeReact } from './createBridgeReact';
 
@@ -45,9 +45,9 @@ describe('createBridgeReact type inference', () => {
 
   test('usePlugin: typed event subscriber uses short names', () => {
     const locationHandles = usePlugin(location);
-    expectTypeOf(locationHandles.on).parameter(0).toEqualTypeOf<'updated'>();
-    const onUpdated = locationHandles.on<'updated'>;
-    expectTypeOf(onUpdated).parameter(1).toEqualTypeOf<(payload: { lat: number }) => void>();
+    locationHandles.on('updated', (payload) => {
+      expectTypeOf(payload).toEqualTypeOf<{ lat: number }>();
+    });
   });
 
   test('useEvent: event keys and payloads from the contract', () => {

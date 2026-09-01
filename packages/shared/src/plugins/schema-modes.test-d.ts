@@ -2,7 +2,7 @@
  * Type-level tests for action()/event() schema vs phantom overloads.
  * Compiled (never executed) by vitest typecheck mode and `pnpm type-check`.
  */
-import { describe, expectTypeOf, test } from 'vitest';
+import { describe, expectTypeOf, test } from 'vite-plus/test';
 import { z } from 'zod';
 
 import type { ExtractPayload, ExtractPayloadIn, ExtractResponse, ExtractResponseIn } from './index';

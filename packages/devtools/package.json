@@ -23,11 +23,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build --config vite.config.dashboard.ts && tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run --passWithNoTests",
-    "test:coverage": "vitest run --coverage --passWithNoTests",
-    "test:watch": "vitest",
+    "build": "vp build --config vite.config.dashboard.ts && vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run --passWithNoTests",
+    "test:coverage": "vp test run --coverage --passWithNoTests",
+    "test:watch": "vp test",
     "type-check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint src",
     "clean": "rm -rf dist",
@@ -47,11 +47,10 @@
     "@webview-ts/shared": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tsup": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-singlefile": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "exports": {
     "./client": {

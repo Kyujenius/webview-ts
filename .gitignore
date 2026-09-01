@@ -17,7 +17,6 @@ coverage/
 .expo/
 
 # Cache
-.turbo/
 .cache/
 .eslintcache
 

@@ -20,28 +20,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: '22'
+          cache: true
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: actions/cache@v4
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: turbo-release-${{ github.sha }}
-          restore-keys: turbo-release-
+          path: node_modules/.vite/task-cache
+          key: vite-task-release-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-release-
 
-      - run: pnpm install --frozen-lockfile
+      - run: vp run build
 
-      - run: pnpm build
+      - run: vp run test
 
-      - run: pnpm test
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
       - name: Publish packages
-        run: pnpm changeset publish
+        run: vp exec changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { action, definePlugin, event } from '@webview-ts/shared';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createBridgeReact } from './createBridgeReact';
 

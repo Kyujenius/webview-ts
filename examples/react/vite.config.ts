@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: lazyPlugins(() => [react()]),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -1,7 +1,7 @@
 import type { BridgeMessage } from '@webview-ts/shared';
 import type { HostAdapter } from '@webview-ts/shared';
 import { ConnectionRegistry, TARGET } from '@webview-ts/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { BridgeHost } from './BridgeHost';
 

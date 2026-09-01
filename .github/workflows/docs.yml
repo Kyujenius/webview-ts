@@ -23,16 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: '22'
+          cache: true
 
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm --filter @webview-ts/docs build
+      - run: vp run --filter @webview-ts/docs build
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -13,7 +13,8 @@ const { getInfo } = usePlugin(device);
 
     <div class="card">
       <h2>useAction</h2>
-      <pre>// Subscribe to a single action by full name
+      <pre>
+// Subscribe to a single action by full name
 const deviceInfo = useAction('device.getInfo');
 
 deviceInfo.execute()   // trigger
@@ -25,13 +26,16 @@ deviceInfo.reset()     // clear state</pre>
       <button @click="deviceInfo.execute({})" :disabled="deviceInfo.isLoading.value">
         {{ deviceInfo.isLoading.value ? 'Loading...' : 'Get Device Info' }}
       </button>
-      <pre v-if="deviceInfo.data.value" class="result success" style="margin-top: 0.75rem">{{ JSON.stringify(deviceInfo.data.value, null, 2) }}</pre>
+      <pre v-if="deviceInfo.data.value" class="result success" style="margin-top: 0.75rem">{{
+        JSON.stringify(deviceInfo.data.value, null, 2)
+      }}</pre>
       <ErrorMessage :error="deviceInfo.error.value" />
     </div>
 
     <div class="card">
       <h2>usePlugin</h2>
-      <pre>// Subscribe to all actions of a plugin at once
+      <pre>
+// Subscribe to all actions of a plugin at once
 const { getInfo } = usePlugin(device);
 
 getInfo.execute()   // same shape per action
@@ -43,7 +47,9 @@ getInfo.reset()</pre>
       <button @click="getInfo.execute()" :disabled="getInfo.isLoading.value">
         {{ getInfo.isLoading.value ? 'Loading...' : 'Get Device Info' }}
       </button>
-      <pre v-if="getInfo.data.value" class="result success" style="margin-top: 0.75rem">{{ JSON.stringify(getInfo.data.value, null, 2) }}</pre>
+      <pre v-if="getInfo.data.value" class="result success" style="margin-top: 0.75rem">{{
+        JSON.stringify(getInfo.data.value, null, 2)
+      }}</pre>
       <ErrorMessage :error="getInfo.error.value" />
     </div>
 
@@ -57,13 +63,16 @@ getInfo.reset()</pre>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="[label, a, b] in [
-            ['Scope', 'single action', 'all actions in a plugin'],
-            ['Argument', `useAction('device.getInfo')`, 'usePlugin(device)'],
-            ['Returns', '{ execute, data, … }', '{ getInfo, getBattery, … }'],
-            ['Events', '—', `.on('name', handler)`],
-            ['Analogy', 'useQuery()', 'useQueries([…])'],
-          ]" :key="label">
+          <tr
+            v-for="[label, a, b] in [
+              ['Scope', 'single action', 'all actions in a plugin'],
+              ['Argument', `useAction('device.getInfo')`, 'usePlugin(device)'],
+              ['Returns', '{ execute, data, … }', '{ getInfo, getBattery, … }'],
+              ['Events', '—', `.on('name', handler)`],
+              ['Analogy', 'useQuery()', 'useQueries([…])'],
+            ]"
+            :key="label"
+          >
             <td>{{ label }}</td>
             <td>{{ a }}</td>
             <td>{{ b }}</td>

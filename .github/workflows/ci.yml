@@ -15,73 +15,105 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
+          node-version: '22'
+          cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: turbo-lint-${{ github.sha }}
-          restore-keys: turbo-lint-
+          path: node_modules/.vite/task-cache
+          key: vite-task-lint-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-lint-
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      - run: vp run lint
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   type-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
+          node-version: '22'
+          cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: turbo-type-check-${{ github.sha }}
-          restore-keys: turbo-type-check-
+          path: node_modules/.vite/task-cache
+          key: vite-task-type-check-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-type-check-
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm type-check
+      - run: vp run type-check
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
-          node-version: 20
-          cache: pnpm
-      - uses: actions/cache@v4
+          node-version: '22'
+          cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: turbo-build-${{ github.sha }}
-          restore-keys: turbo-build-
+          path: node_modules/.vite/task-cache
+          key: vite-task-build-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-build-
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      - run: vp run build
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.18.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - uses: actions/cache@v4
+          cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: turbo-test-${{ matrix.node-version }}-${{ github.sha }}
-          restore-keys: turbo-test-${{ matrix.node-version }}-
+          path: node_modules/.vite/task-cache
+          key: vite-task-test-${{ matrix.node-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-test-${{ matrix.node-version }}-
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: vp run test
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}

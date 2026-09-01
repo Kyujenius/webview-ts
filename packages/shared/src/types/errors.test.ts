@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { BridgeCallError, ERROR_CODE, toBridgeErrorCode } from './errors';
 

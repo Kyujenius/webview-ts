@@ -13,8 +13,10 @@ const MODE_CONFIG: Record<string, string> = {
 
 <template>
   <p class="mode-badge">
-    {{ connectionMode === 'fallback' && fallbackLabel
-      ? fallbackLabel
-      : MODE_CONFIG[connectionMode] ?? connectionMode }}
+    {{
+      connectionMode === 'fallback' && fallbackLabel
+        ? fallbackLabel
+        : (MODE_CONFIG[connectionMode] ?? connectionMode)
+    }}
   </p>
 </template>

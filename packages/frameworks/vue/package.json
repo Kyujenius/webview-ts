@@ -34,11 +34,11 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest watch",
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run",
+    "test:coverage": "vp test run --coverage",
+    "test:watch": "vp test watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/",
     "clean": "rm -rf dist"
@@ -53,10 +53,10 @@
   "devDependencies": {
     "@vue/test-utils": "^2.4.0",
     "happy-dom": "catalog:",
-    "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:",
-    "vue": "^3.4.0"
+    "vite": "catalog:",
+    "vue": "^3.4.0",
+    "vite-plus": "catalog:"
   },
   "files": [
     "dist"

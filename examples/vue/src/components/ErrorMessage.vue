@@ -5,7 +5,5 @@ defineProps<{
 </script>
 
 <template>
-  <div v-if="error" class="result error">
-    <strong>Error:</strong> {{ error.message }}
-  </div>
+  <div v-if="error" class="result error"><strong>Error:</strong> {{ error.message }}</div>
 </template>

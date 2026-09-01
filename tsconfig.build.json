@@ -4,7 +4,6 @@
     "node_modules",
     "dist",
     "build",
-    ".turbo",
     "tests",
     "examples/react-native",
     "**/*.test.ts",
