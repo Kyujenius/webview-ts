@@ -26,9 +26,25 @@ jobs:
           cache: true
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-release-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-release-
+
       - run: vp run build
 
       - run: vp run test
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
       - name: Publish packages
         run: vp exec changeset publish

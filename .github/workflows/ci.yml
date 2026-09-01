@@ -19,7 +19,23 @@ jobs:
         with:
           node-version: '22'
           cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-lint-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-lint-
+
       - run: vp run lint
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   type-check:
     runs-on: ubuntu-latest
@@ -29,7 +45,23 @@ jobs:
         with:
           node-version: '22'
           cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-type-check-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-type-check-
+
       - run: vp run type-check
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   build:
     runs-on: ubuntu-latest
@@ -39,7 +71,23 @@ jobs:
         with:
           node-version: '22'
           cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-build-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-build-
+
       - run: vp run build
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   test:
     runs-on: ubuntu-latest
@@ -52,4 +100,20 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: true
+      - name: Restore Vite Task cache
+        id: task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-test-${{ matrix.node-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-test-${{ matrix.node-version }}-
+
       - run: vp run test
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}
